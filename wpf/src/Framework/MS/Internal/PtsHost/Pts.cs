@@ -2958,8 +2958,7 @@ namespace MS.Internal.PtsHost.UnsafeNativeMethods
             IntPtr pmcsclientIn,
             int dvrDisplaced,
             out int pdvrUsed);
-    
-
+   
 
 
         [SecurityCritical] internal delegate int GetFirstHeaderRow(

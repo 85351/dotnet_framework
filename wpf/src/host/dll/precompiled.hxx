@@ -15,7 +15,7 @@
 //  History:
 //     2002/06/12-murrayw
 //          Created
-//     2007/09/20-[....]
+//     2007/09/20-Microsoft
 //          Ported Windows->DevDiv. See SourcesHistory.txt.
 //
 //------------------------------------------------------------------------
@@ -41,7 +41,7 @@
 #include <mshtml.h>
 #include <shlobj.h>
 #include <shellapi.h>
-#include <msxml2.h>
+#include <msxml6.h>
 #include <comdef.h>
 #include <muiload.h>
 #include <windowsx.h>

@@ -181,7 +181,7 @@ namespace System.Windows.Forms {
 		// Note: ADVF_ONLYONCE and ADVF_PRIMEFIRST values now conform with objidl.dll but are backwards from
 		// Platform SDK documentation as of 07/21/2003.
         // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/htm/oen_a2z_8jxi.asp.
-        // See VSWhidbey bug#96162.
+        // See VSWhidbey 
 
         public const int BCM_GETIDEALSIZE = 0x1601,
         BI_RGB = 0,
@@ -1042,6 +1042,8 @@ namespace System.Windows.Forms {
 
         public const int MEMBERID_NIL = (-1),
         MAX_PATH = 260,
+        MAX_UNICODESTRING_LEN =  short.MaxValue, // maximum unicode string length 
+        ERROR_INSUFFICIENT_BUFFER = 122, //https://msdn.microsoft.com/en-us/library/windows/desktop/ms681382(v=vs.85).aspx
         MA_ACTIVATE = 0x0001,
         MA_ACTIVATEANDEAT = 0x0002,
         MA_NOACTIVATE = 0x0003,
@@ -2085,6 +2087,10 @@ namespace System.Windows.Forms {
         WM_MDIREFRESHMENU = 0x0234,
         WM_MOUSEHOVER = 0x02A1,
         WM_MOUSELEAVE = 0x02A3,
+        WM_DPICHANGED = 0x02E0,
+        WM_GETDPISCALEDSIZE = 0x02e1,
+        WM_DPICHANGED_BEFOREPARENT = 0x02E2,
+        WM_DPICHANGED_AFTERPARENT = 0x02E3,
         WM_CUT = 0x0300,
         WM_COPY = 0x0301,
         WM_PASTE = 0x0302,
@@ -4315,7 +4321,7 @@ namespace System.Windows.Forms {
                     else if (t == typeof(Decimal)) {
                         v.vt = (int)tagVT.VT_CY;
                         Decimal c = (Decimal)var;
-                        // [....], it's bizzare that we need to call this as a static!
+                        // Microsoft, it's bizzare that we need to call this as a static!
                         v.SetLong(Decimal.ToInt64(c));
                     }
                     else if (t == typeof(decimal)) {
@@ -4951,7 +4957,7 @@ namespace System.Windows.Forms {
             
             public    /*NativeMethods.tagELEMDESC*/ IntPtr lprgelemdescParam = IntPtr.Zero;
 
-            // cpb, [....], the EE chokes on Enums in structs
+            // cpb, Microsoft, the EE chokes on Enums in structs
             
             public    /*NativeMethods.tagFUNCKIND*/ int funckind = 0;
             
@@ -5142,7 +5148,7 @@ namespace System.Windows.Forms {
 
 
     /*
-    [....]: dead code. Keep it in case we need an HDITEM class where the pszText is actually set.
+    Microsoft: dead code. Keep it in case we need an HDITEM class where the pszText is actually set.
     [StructLayout(LayoutKind.Sequential,CharSet=CharSet.Auto)]
     public class HDITEM
     {
@@ -6261,7 +6267,7 @@ namespace System.Windows.Forms {
             [MarshalAs(UnmanagedType.U2)]
             public   short wMinorVerNum = 0;
             
-            // [....] these are inline too
+            // Microsoft these are inline too
             //public    NativeMethods.tagTYPEDESC tdescAlias;
             [MarshalAs(UnmanagedType.U4)]
             public   int tdescAlias_unionMember = 0;
@@ -6400,6 +6406,19 @@ namespace System.Windows.Forms {
             OLERENDER_FORMAT = 2,
             OLERENDER_ASIS = 3 
         }
+
+        public enum PROCESS_DPI_AWARENESS
+        {
+            PROCESS_DPI_UNINITIALIZED = -1, 
+            PROCESS_DPI_UNAWARE = 0,
+            PROCESS_SYSTEM_DPI_AWARE = 1,
+            PROCESS_PER_MONITOR_DPI_AWARE = 2
+        }
+
+        public const int DPI_AWARENESS_CONTEXT_UNAWARE = -1;
+        public const int DPI_AWARENESS_CONTEXT_SYSTEM_AWARE = -2;
+        public const int DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE = -3;
+        public const int DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
 
         // Theming/Visual Styles stuff
         public const int STAP_ALLOW_NONCLIENT    =  (1 << 0);

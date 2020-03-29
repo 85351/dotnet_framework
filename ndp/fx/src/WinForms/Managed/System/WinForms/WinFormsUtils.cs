@@ -63,6 +63,21 @@ namespace System.Windows.Forms {
         public static Graphics CreateMeasurementGraphics() {
             return Graphics.FromHdcInternal(WindowsGraphicsCacheManager.MeasurementGraphics.DeviceContext.Hdc);
         }
+       
+        /// this graphics requires disposal.
+        [ResourceExposure(ResourceScope.Process)]
+        [ResourceConsumption(ResourceScope.Process)]
+        public static Graphics CreateMeasurementGraphics(Control control) {
+            Graphics g = null;
+            if (DpiHelper.EnableDpiChangedMessageHandling && control != null && control.IsHandleCreated) {
+                HandleRef handle = new HandleRef(control, control.Handle);
+                g = Graphics.FromHdcInternal(Screen.GetMeasurementsGraphicsForHandleRef(handle).DeviceContext.Hdc);
+            } else {
+                g = CreateMeasurementGraphics();  
+            }
+            return g;
+        }
+
         // If you want to know if a piece of text contains one and only one &
         // this is your function.  If you have a character "t" and want match it to &Text
         // Control.IsMnemonic is a better bet.
@@ -135,7 +150,7 @@ namespace System.Windows.Forms {
         /// FOCUS debugging code.  This is really handy if you stick it in Application.Idle event.
         /// It will watch when the focus has changed and will print out the new guy who's gotten focus.
         /// If it is an unmanaged window, it will report the window text.  You'll need to #define DEBUG_FOCUS 
-        /// or use something like /define:DEBUG_FOCUS in the CSC_FLAGS and either [....] the 
+        /// or use something like /define:DEBUG_FOCUS in the CSC_FLAGS and either sync the 
         /// Application.Idle event or stick this in Application.FDoIdle.
         ///
         /// This can be used in conjunction with the ControlKeyboardRouting trace switch to debug keyboard

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{cada5f73-ae87-422c-a140-ee1bffbd9fcf}</ProjectGuid>
+    <ProjectGuid>{c77f2e8f-852c-4b9b-8daf-fef2230c0136}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>System.Web.Entity.Design</AssemblyName>
@@ -20,59 +20,59 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\clr\src\bcl\mscorlib.csproj">
-      <Project>{7c36d311-04e5-48ad-8d3f-f969b3e24ddd}</Project>
+      <Project>{b2eee131-63ac-43b5-a843-e555ae346910}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\System.csproj">
-      <Project>{45b8d1e3-adb9-41bc-b6f4-de3c79a3d157}</Project>
+      <Project>{511d1c68-d48e-465d-bae9-4448a54d9531}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\Configuration\System.Configuration.csproj">
-      <Project>{32b059d5-61a1-47d6-9bd6-6bdc8660cfad}</Project>
+      <Project>{be3abd4b-c69a-488f-8ddd-2b19956a2584}</Project>
       <Name>System.Configuration</Name>
     </ProjectReference>
     <ProjectReference Include="..\Core\System.Core.csproj">
-      <Project>{027422eb-9e92-49f3-b8bb-ee9b97985138}</Project>
+      <Project>{caacfa4b-c342-483e-9cfe-6a553daed945}</Project>
       <Name>System.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\data\System.Data.csproj">
-      <Project>{bd91c18e-116c-453e-b644-3855114e0c82}</Project>
+      <Project>{0a776382-2e17-48c6-9a71-4cd18671fbd6}</Project>
       <Name>System.Data</Name>
     </ProjectReference>
     <ProjectReference Include="..\DataEntity\System.Data.Entity.csproj">
-      <Project>{91a676cc-011a-4fa1-ad1e-f0aa7ecf4255}</Project>
+      <Project>{f8577d20-ec5f-482a-8101-848ca6311699}</Project>
       <Name>System.Data.Entity</Name>
     </ProjectReference>
     <ProjectReference Include="..\System.Drawing.csproj">
-      <Project>{56c1ebe4-7318-40f7-a6b3-eced5deb84a0}</Project>
+      <Project>{ce1925d0-c475-4233-9cca-bb74a2c8ce3a}</Project>
       <Name>System.Drawing</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\cdf\src\WCF\Serialization\System.Runtime.Serialization.csproj">
-      <Project>{26f214c7-c06f-4f39-9067-14ca49bb6c63}</Project>
+      <Project>{3b8c3fe8-e3c7-448a-9685-900965489a00}</Project>
       <Name>System.Runtime.Serialization</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\cdf\src\NetFx20\System.Transactions\System.Transactions.csproj">
-      <Project>{ab276eb2-3ae1-4c4b-b273-c1e321fa056d}</Project>
+      <Project>{1b5d8cf9-fd56-47c7-94d5-3372951115c7}</Project>
       <Name>System.Transactions</Name>
     </ProjectReference>
     <ProjectReference Include="..\xsp\system\Web\System.Web.csproj">
-      <Project>{e87e7613-2003-4553-b407-ac6ac169e436}</Project>
+      <Project>{346408a9-5c03-43a1-8be9-47e4a1c45cab}</Project>
       <Name>System.Web</Name>
     </ProjectReference>
     <ProjectReference Include="..\DataWebControls\System.Web.Entity.csproj">
-      <Project>{c9cb682d-33e8-487f-9e91-ea7064ef5914}</Project>
+      <Project>{3300e9a8-bed3-4605-9654-6e1a39331017}</Project>
       <Name>System.Web.Entity</Name>
     </ProjectReference>
     <ProjectReference Include="..\xsp\system\Extensions\System.Web.Extensions.csproj">
-      <Project>{87446755-576f-4f56-a5f7-0b6079450cfd}</Project>
+      <Project>{bc72a304-8d79-4bb4-9253-44a20cf56b00}</Project>
       <Name>System.Web.Extensions</Name>
     </ProjectReference>
     <ProjectReference Include="..\System.Windows.Forms.csproj">
-      <Project>{81ab4a01-276f-4b4f-8e1a-8791127bea7b}</Project>
+      <Project>{6d6783ab-9f81-48ed-bd4d-eb9a460b3285}</Project>
       <Name>System.Windows.Forms</Name>
     </ProjectReference>
     <ProjectReference Include="..\Xml\System.Xml.csproj">
-      <Project>{de666f01-fb7c-4239-a4b1-91741ed0c421}</Project>
+      <Project>{653cd7dd-5b36-428d-8d35-c00dcd1e209e}</Project>
       <Name>System.Xml</Name>
     </ProjectReference>
   </ItemGroup>

@@ -35,11 +35,21 @@ namespace System.Windows.Forms {
         internal static readonly object EventSelectionChangeCommitted                    = new object();
         internal static readonly object EventTextUpdate                                   = new object();
 
+        private static readonly Padding dropDownPadding = new Padding(2);
+        private static readonly Padding padding = new Padding(1, 0, 1, 0);
+
+        private Padding scaledDropDownPadding = dropDownPadding;
+        private Padding scaledPadding = padding;
     
         /// <include file='doc\ToolStripComboBox.uex' path='docs/doc[@for="ToolStripComboBox.ToolStripComboBox"]/*' />
         public ToolStripComboBox() : base(CreateControlInstance()) {
             ToolStripComboBoxControl combo = Control as ToolStripComboBoxControl;
             combo.Owner = this;
+
+            if (DpiHelper.EnableToolStripHighDpiImprovements) {
+                scaledPadding = DpiHelper.LogicalToDeviceUnits(padding);
+                scaledDropDownPadding = DpiHelper.LogicalToDeviceUnits(dropDownPadding);
+            }
         }
         public ToolStripComboBox(string name) : this() {
             this.Name = name;
@@ -144,10 +154,10 @@ namespace System.Windows.Forms {
         protected internal override Padding DefaultMargin {
             get {
                 if (IsOnDropDown) {
-                    return new Padding(2);
+                    return scaledDropDownPadding;
                 }
                 else {
-                    return new Padding(1, 0, 1, 0);
+                    return scaledPadding;
                 }
             }
         }
@@ -485,7 +495,7 @@ namespace System.Windows.Forms {
         protected override void OnSubscribeControlEvents(Control control) {
             ComboBox comboBox = control as ComboBox;
             if (comboBox != null) {
-                // Please keep this alphabetized and in [....] with Unsubscribe
+                // Please keep this alphabetized and in sync with Unsubscribe
                 // 
                 comboBox.DropDown                   += new EventHandler(HandleDropDown);
                 comboBox.DropDownClosed             += new EventHandler(HandleDropDownClosed);
@@ -502,7 +512,7 @@ namespace System.Windows.Forms {
         protected override void OnUnsubscribeControlEvents(Control control) {
             ComboBox comboBox = control as ComboBox;
             if (comboBox != null) {
-               // Please keep this alphabetized and in [....] with Unsubscribe
+               // Please keep this alphabetized and in sync with Unsubscribe
                // 
                comboBox.DropDown                   -= new EventHandler(HandleDropDown);
                comboBox.DropDownClosed             -= new EventHandler(HandleDropDownClosed);

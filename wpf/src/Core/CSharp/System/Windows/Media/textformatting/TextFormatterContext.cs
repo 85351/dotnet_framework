@@ -40,7 +40,7 @@ namespace System.Windows.Media.TextFormatting
     /// </summary>
     /// <remarks>
     /// We do not want to make this class finalizable because its lifetime already ties
-    /// to TextFormatterImp which is finalizable. It is not efficient to have too many 
+    /// to TextFormatterImp which is finalizable. It is not efficient to have too many
     /// finalizable object around in the GC heap.
     /// </remarks>
 #if OPTIMALBREAK_API
@@ -54,8 +54,9 @@ namespace System.Windows.Media.TextFormatting
         private LineServicesCallbacks               _callbacks;         // object to hold all delegates for callback
         private State                               _state;             // internal state flags
         private BreakStrategies                     _breaking;          // context's breaking strategy
+        private static Dictionary<char,bool>        _specialCharacters; // special characters
 
-        
+
         /// <SecurityNote>
         /// Critical - as this calls the constructor for  SecurityCriticalDataForSet.
         /// Safe - as this just initializes it with the default value.
@@ -151,8 +152,8 @@ namespace System.Windows.Media.TextFormatting
                 IntPtr ppenaltyModule = IntPtr.Zero;
 
                 lserr = UnsafeNativeMethods.LoCreateContext(
-                    ref contextInfo, 
-                    ref lscbkRedef, 
+                    ref contextInfo,
+                    ref lscbkRedef,
                     out ploc
                     );
 
@@ -161,10 +162,15 @@ namespace System.Windows.Media.TextFormatting
                     ThrowExceptionFromLsError(SR.Get(SRID.CreateContextFailure, lserr), lserr);
                 }
 
+                if (_specialCharacters == null)
+                {
+                    SetSpecialCharacters(ref contextInfo);
+                }
+
                 _ploc.Value = ploc;
                 GC.KeepAlive(contextInfo);
 
-                //  There is a trick here to pass in this resolution as in twips 
+                //  There is a trick here to pass in this resolution as in twips
                 //  (1/1440 an inch).
                 //
                 //  LSCreateLine assumes the max width passed in is in twips so to
@@ -212,7 +218,7 @@ namespace System.Windows.Media.TextFormatting
         internal void Release()
         {
             this.CallbackException = null;
-            this.Owner = null;      
+            this.Owner = null;
         }
 
 
@@ -220,7 +226,7 @@ namespace System.Windows.Media.TextFormatting
         /// context's owner
         /// </summary>
         /// <SecurityNote>
-        /// Critical - Owner object is critical 
+        /// Critical - Owner object is critical
         /// </SecurityNote>
         internal object Owner
         {
@@ -235,11 +241,11 @@ namespace System.Windows.Media.TextFormatting
         /// Exception thrown during LS callback
         /// </summary>
         /// <SecurityNote>
-        /// Critical - Exception and its message are critical 
-        /// </SecurityNote>        
+        /// Critical - Exception and its message are critical
+        /// </SecurityNote>
         internal Exception CallbackException
         {
-            [SecurityCritical]        
+            [SecurityCritical]
             get { return _callbacks.Exception; }
             [SecurityCritical]
             set { _callbacks.Exception = value; }
@@ -314,7 +320,7 @@ namespace System.Windows.Media.TextFormatting
             {
                 Invariant.Assert(_ploc.Value != System.IntPtr.Zero);
                 LsErr lserr = UnsafeNativeMethods.LoSetBreaking(_ploc.Value, (int) breaking);
-                
+
                 if (lserr != LsErr.None)
                 {
                     ThrowExceptionFromLsError(SR.Get(SRID.SetBreakingFailure, lserr), lserr);
@@ -376,7 +382,7 @@ namespace System.Windows.Media.TextFormatting
             IntPtr          previousLineBreakRecord,
             IntPtr          ploparabreak,
             IntPtr          ptslinevariantRestriction,
-            ref LsBreaks    lsbreaks, 
+            ref LsBreaks    lsbreaks,
             out int         bestFitIndex
             )
         {
@@ -434,8 +440,8 @@ namespace System.Windows.Media.TextFormatting
         {
             Invariant.Assert(_ploc.Value != System.IntPtr.Zero);
             LsErr lserr = UnsafeNativeMethods.LoSetDoc(
-                _ploc.Value, 
-                isDisplay ? 1 : 0, 
+                _ploc.Value,
+                isDisplay ? 1 : 0,
                 isReferencePresentationEqual ? 1 : 0,
                 ref deviceInfo
                 );
@@ -480,6 +486,73 @@ namespace System.Windows.Media.TextFormatting
                 throw new OutOfMemoryException (message);
 
             throw new Exception(message);
+        }
+
+
+        static internal bool IsSpecialCharacter(char c)
+        {
+            return _specialCharacters.ContainsKey(c);
+        }
+
+        static private void SetSpecialCharacters(ref LsContextInfo contextInfo)
+        {
+            Dictionary<char,bool> dict = new Dictionary<char,bool>();
+
+            /* The first three char fields do not designate special characters
+            dict[contextInfo.wchUndef] = true;
+            dict[contextInfo.wchNull] = true;
+            dict[contextInfo.wchSpace] = true;
+            */
+            dict[contextInfo.wchHyphen] = true;
+            dict[contextInfo.wchTab] = true;
+            dict[contextInfo.wchPosTab] = true;
+            dict[contextInfo.wchEndPara1] = true;
+            dict[contextInfo.wchEndPara2] = true;
+            dict[contextInfo.wchAltEndPara] = true;
+            dict[contextInfo.wchEndLineInPara] = true;
+            dict[contextInfo.wchColumnBreak] = true;
+            dict[contextInfo.wchSectionBreak] = true;
+            dict[contextInfo.wchPageBreak] = true;
+            dict[contextInfo.wchNonBreakSpace] = true;
+            dict[contextInfo.wchNonBreakHyphen] = true;
+            dict[contextInfo.wchNonReqHyphen] = true;
+            dict[contextInfo.wchEmDash] = true;
+            dict[contextInfo.wchEnDash] = true;
+            dict[contextInfo.wchEmSpace] = true;
+            dict[contextInfo.wchEnSpace] = true;
+            dict[contextInfo.wchNarrowSpace] = true;
+            dict[contextInfo.wchOptBreak] = true;
+            dict[contextInfo.wchNoBreak] = true;
+            dict[contextInfo.wchFESpace] = true;
+            dict[contextInfo.wchJoiner] = true;
+            dict[contextInfo.wchNonJoiner] = true;
+            dict[contextInfo.wchToReplace] = true;
+            dict[contextInfo.wchReplace] = true;
+            dict[contextInfo.wchVisiNull] = true;
+            dict[contextInfo.wchVisiAltEndPara] = true;
+            dict[contextInfo.wchVisiEndLineInPara] = true;
+            dict[contextInfo.wchVisiEndPara] = true;
+            dict[contextInfo.wchVisiSpace] = true;
+            dict[contextInfo.wchVisiNonBreakSpace] = true;
+            dict[contextInfo.wchVisiNonBreakHyphen] = true;
+            dict[contextInfo.wchVisiNonReqHyphen] = true;
+            dict[contextInfo.wchVisiTab] = true;
+            dict[contextInfo.wchVisiPosTab] = true;
+            dict[contextInfo.wchVisiEmSpace] = true;
+            dict[contextInfo.wchVisiEnSpace] = true;
+            dict[contextInfo.wchVisiNarrowSpace] = true;
+            dict[contextInfo.wchVisiOptBreak] = true;
+            dict[contextInfo.wchVisiNoBreak] = true;
+            dict[contextInfo.wchVisiFESpace] = true;
+            dict[contextInfo.wchEscAnmRun] = true;
+            dict[contextInfo.wchPad] = true;
+
+            // Many of these fields have value 'wchUndef'.  Remove it now.
+            // (This is robust, even if Init() changes the char field assignments.)
+            dict.Remove(contextInfo.wchUndef);
+
+            // Remember the result.  First thread to get here wins.
+            System.Threading.Interlocked.CompareExchange<Dictionary<char,bool>>(ref _specialCharacters, dict, null);
         }
 
 

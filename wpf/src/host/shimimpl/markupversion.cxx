@@ -6,8 +6,8 @@
 //     Implements the interface to the application manifest
 //
 // History:
-//      2005/05/09 - [....]     Created
-//      2007/09/20   [....]     Ported Windows->DevDiv. See SourcesHistory.txt.
+//      2005/05/09 - Microsoft     Created
+//      2007/09/20   Microsoft     Ported Windows->DevDiv. See SourcesHistory.txt.
 //
 //------------------------------------------------------------------------
 
@@ -167,7 +167,7 @@ HRESULT CMarkupVersion::Read()
 
     if (m_mapNamespaceVersion.GetCount() > 0)
     {
-        CKHR(CoCreateInstance(__uuidof(SAXXMLReader), NULL, CLSCTX_INPROC_SERVER, __uuidof(ISAXXMLReader), (void**)&pReader));
+        CKHR(CoCreateInstance(__uuidof(SAXXMLReader60), NULL, CLSCTX_INPROC_SERVER, __uuidof(ISAXXMLReader), (void**)&pReader));
         CKHR(pReader->putContentHandler(this));
         hr = pReader->parseURL(GetLocalMarkupPath());
 

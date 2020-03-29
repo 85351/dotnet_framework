@@ -10,7 +10,7 @@
 //
 // History:
 //  ??        ??            Created
-//  11/14/05: [....]       "Island Frame" implementation: Frame can have its own Journal/JournalNavigationScope.
+//  11/14/05: Microsoft       "Island Frame" implementation: Frame can have its own Journal/JournalNavigationScope.
 //
 //---------------------------------------------------------------------------
 
@@ -36,6 +36,7 @@ using MS.Internal.Utility;
 using MS.Internal.KnownBoxes;
 using MS.Utility;
 using MS.Internal.Controls;
+using MS.Internal.Telemetry.PresentationFramework;
 using System.Collections.Generic;
 
 using SecurityHelper=MS.Internal.PresentationFramework.SecurityHelper;
@@ -139,6 +140,8 @@ namespace System.Windows.Controls
             NavigationService.NavigationServiceProperty.OverrideMetadata(
                     typeof(Frame),
                     new FrameworkPropertyMetadata(new PropertyChangedCallback(OnParentNavigationServiceChanged)));
+
+            ControlsTraceLogger.AddControl(TelemetryControls.Frame);
         }
 
         private static object CoerceContent(DependencyObject d, object value)
@@ -622,7 +625,7 @@ namespace System.Windows.Controls
             }
         }
 
-        /// <remarks> Keep this method in [....] with Window.PostContentRendered(). </remarks>
+        /// <remarks> Keep this method in sync with Window.PostContentRendered(). </remarks>
         private void PostContentRendered()
         {
             // Post the firing of ContentRendered as Input priority work item so

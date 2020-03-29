@@ -6,6 +6,7 @@
 
 using MS.Internal;
 using MS.Internal.KnownBoxes;
+using MS.Internal.Telemetry.PresentationFramework;
 using MS.Utility;
 
 using System;
@@ -27,6 +28,11 @@ namespace System.Windows.Controls.Primitives
     // There is no need for this panel to be a StackPanel.
     public class ToolBarPanel : StackPanel
     {
+        static ToolBarPanel()
+        {
+            ControlsTraceLogger.AddControl(TelemetryControls.ToolBarPanel);
+        }
+
         /// <summary>
         ///     Instantiates a new instance of this class.
         /// </summary>
@@ -143,7 +149,7 @@ namespace System.Windows.Controls.Primitives
                                 childrenCount++;
                             }
 
-                            Debug.Assert(children[childrenIndex] == child, "InternalChildren is out of [....] with _generatedItemsCollection.");
+                            Debug.Assert(children[childrenIndex] == child, "InternalChildren is out of sync with _generatedItemsCollection.");
                             childrenIndex++;
                         }
                     }
@@ -190,7 +196,7 @@ namespace System.Windows.Controls.Primitives
                         // If the child is in this panel's visual tree, remove it.
                         if (visualParent == this)
                         {
-                            Debug.Assert(children[childrenIndex] == child, "InternalChildren is out of [....] with _generatedItemsCollection.");
+                            Debug.Assert(children[childrenIndex] == child, "InternalChildren is out of sync with _generatedItemsCollection.");
                             children.RemoveNoVerify(child);
                             childrenCount--;
                             overflowNeedsInvalidation = true;

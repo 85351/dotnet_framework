@@ -21,6 +21,7 @@
 using MS.Internal;                                      // For Invariant.Assert
 using MS.Internal.Commands;
 using MS.Internal.Documents;
+using MS.Internal.Telemetry.PresentationFramework;
 using MS.Utility;
 using System;
 using System.Collections;
@@ -75,6 +76,8 @@ namespace System.Windows.Controls
 
             // Register property metadata
             RegisterMetadata();
+
+            ControlsTraceLogger.AddControl(TelemetryControls.DocumentViewer);
         }
 
         /// <summary>
@@ -1372,7 +1375,7 @@ namespace System.Windows.Controls
 
         /// <summary>
         /// Merely calls the base's InvalidatePageViews (which is protected).
-        /// Used by our IDSI to keep the DPV collection in [....].
+        /// Used by our IDSI to keep the DPV collection in sync.
         /// </summary>
         internal void InvalidatePageViewsInternal()
         {

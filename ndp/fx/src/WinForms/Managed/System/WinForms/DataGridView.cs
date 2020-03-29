@@ -401,7 +401,7 @@ namespace System.Windows.Forms
         private MouseClickInfo lastMouseClickInfo;
 
 #if DEBUG
-        // set to false when the grid is not in [....] with the underlying data store
+        // set to false when the grid is not in sync with the underlying data store
         // in virtual mode, and OnCellValueNeeded cannot be called.
 // disable csharp compiler warning #0414: field assigned unused value
 #pragma warning disable 0414
@@ -519,8 +519,17 @@ namespace System.Windows.Forms
             PerformLayout();
 
             this.toolTipControl = new DataGridViewToolTip(this);
-            
+            this.rowHeadersWidth = ScaleToCurrentDpi(defaultRowHeadersWidth);
+            this.columnHeadersHeight = ScaleToCurrentDpi(defaultColumnHeadersHeight);
             Invalidate();
+        }
+
+        /// <summary>
+        /// Scaling row header width and column header height.
+        /// </summary>
+        private int ScaleToCurrentDpi(int value)
+        {
+            return DpiHelper.EnableDataGridViewControlHighDpiImprovements ? LogicalToDeviceUnits(value) : value;
         }
 
         /// <include file='doc\DataGridView.uex' path='docs/doc[@for="DataGridView.AdjustedTopLeftHeaderBorderStyle"]/*' />
@@ -3074,7 +3083,7 @@ namespace System.Windows.Forms
                                 false /*forCurrentCellChange*/, false /*forCurrentRowChange*/))
                 {
                     // Could not commit edited cell value - return silently
-                    // [....]: should we throw an error here?
+                    // Microsoft: should we throw an error here?
                     return;
                 }
                 if (IsColumnOutOfBounds(value))
@@ -3150,7 +3159,7 @@ namespace System.Windows.Forms
                                 false /*forCurrentCellChange*/, false /*forCurrentRowChange*/))
                 {
                     // Could not commit edited cell value - return silently
-                    // [....]: should we throw an error here?
+                    // Microsoft: should we throw an error here?
                     return;
                 }
                 if (IsRowOutOfBounds(value))

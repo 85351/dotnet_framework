@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{027422eb-9e92-49f3-b8bb-ee9b97985138}</ProjectGuid>
+    <ProjectGuid>{caacfa4b-c342-483e-9cfe-6a553daed945}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>System.Core</AssemblyName>
@@ -20,19 +20,19 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\clr\src\bcl\mscorlib.csproj">
-      <Project>{7c36d311-04e5-48ad-8d3f-f969b3e24ddd}</Project>
+      <Project>{b2eee131-63ac-43b5-a843-e555ae346910}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\System.csproj">
-      <Project>{45b8d1e3-adb9-41bc-b6f4-de3c79a3d157}</Project>
+      <Project>{511d1c68-d48e-465d-bae9-4448a54d9531}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\Numerics\System.Numerics.csproj">
-      <Project>{8f8b0a52-c276-486a-b47e-bcdd67bfdcc4}</Project>
+      <Project>{c36b5942-44b6-4199-af16-eb3c2115ba9a}</Project>
       <Name>System.Numerics</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\clr\src\managedlibraries\security\System.Security.csproj">
-      <Project>{7537e9c3-586c-4cf6-87d5-791a0e795cbb}</Project>
+      <Project>{8eb6db73-d251-4cfa-b544-c30357e416ce}</Project>
       <Name>System.Security</Name>
     </ProjectReference>
   </ItemGroup>

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{395e27ce-8277-441f-8dba-265dc9159132}</ProjectGuid>
+    <ProjectGuid>{78f69e57-7e0f-4722-92c5-33b0102dd425}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>PresentationCore</AssemblyName>
@@ -20,27 +20,27 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ndp\clr\src\bcl\mscorlib.csproj">
-      <Project>{7c36d311-04e5-48ad-8d3f-f969b3e24ddd}</Project>
+      <Project>{b2eee131-63ac-43b5-a843-e555ae346910}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\ndp\fx\src\System.csproj">
-      <Project>{45b8d1e3-adb9-41bc-b6f4-de3c79a3d157}</Project>
+      <Project>{511d1c68-d48e-465d-bae9-4448a54d9531}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\ndp\fx\src\Configuration\System.Configuration.csproj">
-      <Project>{32b059d5-61a1-47d6-9bd6-6bdc8660cfad}</Project>
+      <Project>{be3abd4b-c69a-488f-8ddd-2b19956a2584}</Project>
       <Name>System.Configuration</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\ndp\fx\src\Xml\System.Xml.csproj">
-      <Project>{de666f01-fb7c-4239-a4b1-91741ed0c421}</Project>
+      <Project>{653cd7dd-5b36-428d-8d35-c00dcd1e209e}</Project>
       <Name>System.Xml</Name>
     </ProjectReference>
     <ProjectReference Include="UIAutomation\UIAutomationClient\UIAutomationClient.csproj">
-      <Project>{a624a509-e440-4593-9d55-f3b56c136756}</Project>
+      <Project>{cca45460-437d-4ecc-a8af-47ac2905c4d4}</Project>
       <Name>UIAutomationClient</Name>
     </ProjectReference>
     <ProjectReference Include="WindowsBase.csproj">
-      <Project>{2fbfec40-d5b1-4297-92c7-f05be01f1962}</Project>
+      <Project>{4ee8ffb5-03d6-4fac-a798-2eecc987739c}</Project>
       <Name>WindowsBase</Name>
     </ProjectReference>
   </ItemGroup>
@@ -186,7 +186,6 @@
     <Compile Include="Core\CSharp\MS\Internal\Media3D\LineUtil.cs" />
     <Compile Include="Core\CSharp\MS\Internal\Media3D\M3DUtil.cs" />
     <Compile Include="Core\CSharp\MS\Internal\MediaTrace.cs" />
-    <Compile Include="Core\CSharp\MS\Internal\MemoryPressure.cs" />
     <Compile Include="Core\CSharp\MS\Internal\PartialArray.cs" />
     <Compile Include="Core\CSharp\MS\Internal\Resources\ContentFileHelper.cs" />
     <Compile Include="Core\CSharp\MS\Internal\Resources\ResourceManagerWrapper.cs" />
@@ -456,57 +455,6 @@
     <Compile Include="Core\CSharp\System\Windows\Input\RawUIStateTargets.cs" />
     <Compile Include="Core\CSharp\System\Windows\Input\RestoreFocusMode.cs" />
     <Compile Include="Core\CSharp\System\Windows\Input\StagingAreaInputItem.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\DynamicRenderer.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\DynamicRendererThreadManager.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\MultiTouchSystemGestureLogic.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\PenContext.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\PenContextInfo.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\PenContexts.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\PenImcRcw.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\PenThread.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\PenThreadPool.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\PenThreadWorker.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\RawStylusActions.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\RawStylusInput.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\RawStylusInputCustomData.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\RawStylusInputCustomDataList.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\RawStylusInputReport.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\RawStylusSystemGestureInputReport.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\Stylus.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusButton.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusButtonCollection.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusButtonEventArgs.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusButtonEventHandler.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusButtonState.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusCollection.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusDevice.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusDeviceInfo.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusDownEventArgs.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusDownEventHandler.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusEventArgs.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusEventHandler.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusLogic.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusPlugin.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusPlugInCollection.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusPoint.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusPointCollection.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusPointDescription.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusPointProperties.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusPointProperty.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusPointPropertyId.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusPointPropertyInfo.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusPointPropertyInfoDefaults.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusPointPropertyUnit.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusSystemGesture.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusSystemGestureEventArgs.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusSystemGestureEventHandler.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\StylusTouchDevice.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\Tablet.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\TabletCollection.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\TabletDevice.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\TabletDeviceInfo.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\TabletDeviceType.cs" />
-    <Compile Include="Core\CSharp\System\Windows\Input\Stylus\TabletHardwareCapabilities.cs" />
     <Compile Include="Core\CSharp\System\Windows\Input\TextComposition.cs" />
     <Compile Include="Core\CSharp\System\Windows\Input\TextCompositionEventArgs.cs" />
     <Compile Include="Core\CSharp\System\Windows\Input\TextCompositionEventHandler.cs" />

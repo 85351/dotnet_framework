@@ -13,11 +13,11 @@
 //
 //  History:
 //     2005/03/10 - Created the file based on code we got from Anantha Ganjam in the IE team.
-//     2007/07/06 - [....] - Switched to using the LSA APIs to replace the use of LookupPrivilegeValue()
+//     2007/07/06 - Microsoft - Switched to using the LSA APIs to replace the use of LookupPrivilegeValue()
 //          with a more efficient version for our scenario.
 //          In lieu of SDK documentation of the LSA APIs, there's this KB article:
 //          http://support.microsoft.com/kb/132958.
-//     2007/09/20-[....]
+//     2007/09/20-Microsoft
 //          Ported Windows->DevDiv. See SourcesHistory.txt.
 //
 //------------------------------------------------------------------------
@@ -121,18 +121,12 @@ BOOL ShouldProcessBeRestricted(void)
     HKEY    hKey = NULL;
     DWORD   dwUnrestricted = 0;
     DWORD   dwSize = sizeof(dwUnrestricted);
-    OSVERSIONINFOEX osVersion ; 
-    osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX); 
 
-    if ( GetVersionEx( (LPOSVERSIONINFO) & osVersion ) )
-    {
-        if  ((osVersion.dwMajorVersion == 5) && (osVersion.dwMinorVersion == 1))
-        {
-            // We are on XP here, terminate the process if SP level < SP2 
-            if (osVersion.wServicePackMajor < 2)
-                ExitProcess(1);
-        }
-    }
+    // We used to have an OS check here to terminate the 
+    // process if we were running on version < XP SP2. 
+    // We no longer need this check since we are guaranteed to 
+    // be running on version >= Vista 
+    // 
        
     //  Check the RunUnrestricted registry value.
     //  If it exists and is 0 then run PresentationHost with no restrictions or as the user

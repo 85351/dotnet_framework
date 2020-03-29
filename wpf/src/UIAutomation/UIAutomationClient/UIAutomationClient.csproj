@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{a624a509-e440-4593-9d55-f3b56c136756}</ProjectGuid>
+    <ProjectGuid>{cca45460-437d-4ecc-a8af-47ac2905c4d4}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>UIAutomationClient</AssemblyName>
@@ -20,19 +20,19 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\ndp\clr\src\bcl\mscorlib.csproj">
-      <Project>{7c36d311-04e5-48ad-8d3f-f969b3e24ddd}</Project>
+      <Project>{b2eee131-63ac-43b5-a843-e555ae346910}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\ndp\fx\src\System.csproj">
-      <Project>{45b8d1e3-adb9-41bc-b6f4-de3c79a3d157}</Project>
+      <Project>{511d1c68-d48e-465d-bae9-4448a54d9531}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\ndp\clr\src\managedlibraries\remoting\System.Runtime.Remoting.csproj">
-      <Project>{f480b357-4856-41cc-b431-3236089a07a6}</Project>
+      <Project>{35a1f566-8715-419d-a62d-bc81a4352bb6}</Project>
       <Name>System.Runtime.Remoting</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\WindowsBase.csproj">
-      <Project>{2fbfec40-d5b1-4297-92c7-f05be01f1962}</Project>
+      <Project>{4ee8ffb5-03d6-4fac-a798-2eecc987739c}</Project>
       <Name>WindowsBase</Name>
     </ProjectReference>
   </ItemGroup>
