@@ -8,6 +8,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.Collections.Generic;
+using System.Windows.Automation;
 using System.Windows.Automation.Provider;
 
 using MS.Internal;
@@ -201,6 +202,8 @@ namespace System.Windows.Automation.Peers
         InputReachedOtherElement,
         ///
         InputDiscarded,
+        ///
+        LiveRegionChanged,
     }
 
 
@@ -685,6 +688,12 @@ namespace System.Windows.Automation.Peers
 
         ///
         abstract protected void SetFocusCore();
+        
+        ///
+        virtual protected AutomationLiveSetting GetLiveSettingCore()
+        {
+            return AutomationLiveSetting.Off;
+        }
 
         //
         // INTERNAL STUFF - NOT OVERRIDABLE
@@ -1149,6 +1158,25 @@ namespace System.Windows.Automation.Peers
                 _publicSetFocusInProgress = false;
             }
         }
+        
+        ///
+        public AutomationLiveSetting GetLiveSetting()
+        {
+            AutomationLiveSetting result = AutomationLiveSetting.Off;
+            if (_publicCallInProgress)
+                throw new InvalidOperationException(SR.Get(SRID.Automation_RecursivePublicCall));
+
+            try
+            {
+                _publicCallInProgress = true;
+                result = GetLiveSettingCore();
+            }
+            finally
+            {
+                _publicCallInProgress = false;
+            }
+            return result;
+        }
 
         ///
         public AutomationPeer GetParent()
@@ -1334,28 +1362,28 @@ namespace System.Windows.Automation.Peers
         // is shown in the TabControls large display area).  In that case the item
         // peer has extra children, corresponding to the displayed content.
         //
-        // Dev11 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        // Dev11 bug 496434 (and DDVSO 294272) illustrates the problem this can
+        // cause. The app does something that causes the wrapper peer to call
+        // EnsureChildren (e.g. changes TabControl.IsEnabled).  Now the shared
+        // children all point back to the wrapper peer, while the extra children
+        // still point back to the item peer.  An automation client that searches
+        // through, or iterates over, the children of the item peer will not see
+        // the extra children.  It (effectively) calls itemPeer.GetFirstChild,
+        // followed by repeated calls to childPeer.GetNextSibling;  those calls
+        // are evaluated using the _parent's child collection, but _parent points
+        // to the wrapper peer (which doesn't have the extra children).
+        //
+        // To patch this problem, the navigation methods should use the parent that
+        // started the iteration, i.e. the one where GetFirstChild was called.  But
+        // we can't change _parent (the "custody parent") - we tried that, and it
+        // caused Dev11 746574. Instead we add a new pointer, referring to the
+        // "iteration parent". GetFirstChild sets it, and GetNextSibling propagates
+        // it through the family as the iteration proceeds.  We only need to do
+        // this if the iteration parent differs from the custody parent and has
+        // a different set of children (a rare situation), so to make it pay-for-play
+        // we implement the new pointer as an indirection through an existing field.
+        // We chose _eventsSource - it's already encapsulated in a property, and is used
+        // in situations that aren't perf-critical (creation of new peers, et al.).
 
         // Called by GetFirstChild, GetLastChild.
         // Choose which of the custody parent (_parent) and the caller
@@ -2038,6 +2066,10 @@ namespace System.Windows.Automation.Peers
             s_propertyInfo[AutomationElementIdentifiers.FrameworkIdProperty.Id] = new GetProperty(GetFrameworkId);
             s_propertyInfo[AutomationElementIdentifiers.IsRequiredForFormProperty.Id] = new GetProperty(IsRequiredForForm);
             s_propertyInfo[AutomationElementIdentifiers.ItemStatusProperty.Id] = new GetProperty(GetItemStatus);
+            if (!CoreAppContextSwitches.UseLegacyAccessibilityFeatures && AutomationElementIdentifiers.LiveSettingProperty != null)
+            {
+                s_propertyInfo[AutomationElementIdentifiers.LiveSettingProperty.Id] = new GetProperty(GetLiveSetting);
+            }
         }
 
         private delegate object WrapObject(AutomationPeer peer, object iface);
@@ -2085,6 +2117,7 @@ namespace System.Windows.Automation.Peers
         private static object GetFrameworkId(AutomationPeer peer)           {   return peer.GetFrameworkId();   }
         private static object IsRequiredForForm(AutomationPeer peer)        {   return peer.IsRequiredForForm();    }
         private static object GetItemStatus(AutomationPeer peer)            {   return peer.GetItemStatus();    }
+        private static object GetLiveSetting(AutomationPeer peer)           {   return peer.GetLiveSetting();    }
 
         private static Hashtable s_patternInfo;
         private static Hashtable s_propertyInfo;

@@ -380,6 +380,9 @@ namespace System.Windows.Forms {
                 return base.TabStop;
             }
             set {
+                if (AccessibilityImprovements.Level2) {
+                    SetStyle(ControlStyles.Selectable, value);
+                }
                 base.TabStop = value;
             }
         }
@@ -1016,7 +1019,7 @@ namespace System.Windows.Forms {
                                 (currentToolStripPanelRow.ToolStripPanel != this) : true;
 #endif
 
-            // Dev10 
+            // Dev10 bug 477755 - in design mode toolstrip location jump back after being set.
             bool pointInCurrentRow = false;
             if (currentToolStripPanelRow != null && currentToolStripPanelRow.Visible && currentToolStripPanelRow.ToolStripPanel == this) {
                 if (toolStripToDrag.IsCurrentlyDragging) {

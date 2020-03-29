@@ -57,7 +57,7 @@ namespace System.Windows
         /// </summary>
         /// <param name="key">The resource id to search for.</param>
         /// <returns>The resource if it exists, null otherwise.</returns>
-        //[CodeAnalysis("AptcaMethodsShouldOnlyCallAptcaMethods")] //Tracking 
+        //[CodeAnalysis("AptcaMethodsShouldOnlyCallAptcaMethods")] //Tracking Bug: 29647
         internal static object FindThemeStyle(DependencyObjectType key)
         {
             // Find a cached theme style
@@ -102,7 +102,7 @@ namespace System.Windows
         /// </summary>
         /// <param name="key">The resource id to search for.</param>
         /// <returns>The resource if it exists, null otherwise.</returns>
-        //[CodeAnalysis("AptcaMethodsShouldOnlyCallAptcaMethods")] //Tracking 
+        //[CodeAnalysis("AptcaMethodsShouldOnlyCallAptcaMethods")] //Tracking Bug: 29647
         internal static object FindResourceInternal(object key)
         {
             // Call Forwarded
@@ -269,7 +269,7 @@ namespace System.Windows
 
         #region Implementation
 
-        //[CodeAnalysis("AptcaMethodsShouldOnlyCallAptcaMethods")] //Tracking 
+        //[CodeAnalysis("AptcaMethodsShouldOnlyCallAptcaMethods")] //Tracking Bug: 29647
         internal static void CacheResource(object key, object resource, bool isTraceEnabled)
         {
             // Thread safety handled by FindResourceInternal. Be sure to have locked _resourceCache.SyncRoot.
@@ -943,7 +943,7 @@ namespace System.Windows
                     settings.LocalAssembly = assembly;
 
                     // For system themes, we don't seem to be passing the BAML Uri to the Baml2006Reader
-                    Baml2006Reader bamlReader = new Baml2006Reader(stream, new Baml2006SchemaContext(settings.LocalAssembly), settings);
+                    Baml2006Reader bamlReader = new Baml2006ReaderInternal(stream, new Baml2006SchemaContext(settings.LocalAssembly), settings);
 
                     System.Xaml.XamlObjectWriterSettings owSettings = XamlReader.CreateObjectWriterSettingsForBaml();
                     if (assembly != null)

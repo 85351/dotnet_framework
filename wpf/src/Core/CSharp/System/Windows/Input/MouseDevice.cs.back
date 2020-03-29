@@ -83,7 +83,7 @@ namespace System.Windows.Input
         /// </returns>
         protected MouseButtonState GetButtonState(MouseButton mouseButton)
         {
-            // 
+            // Bug 839668,StylusDevice could have been disposed internally here.
             if ( _stylusDevice != null && _stylusDevice.IsValid)
                 return _stylusDevice.GetMouseButtonState(mouseButton, this);
             else
@@ -437,11 +437,11 @@ namespace System.Windows.Input
                     if (element != null)
                     {
                         // CaptureMouse can raise a MouseMove event in some cases
-                        // (see HwndMouseInputProvider.CaptureMouse - "WORKAROUND for 
-
-
-
-
+                        // (see HwndMouseInputProvider.CaptureMouse - "WORKAROUND for bug 969748")
+                        // and listeners that query Mouse.Captured should not see the old
+                        // value that's being replaced.   We'll expose 'null' instead.
+                        // [This situation arises in a ComboBox that has a TextBox in
+                        // its dropdown window - DDVSO 209754.]
                         bool savedIsCaptureMouseInProgress = _isCaptureMouseInProgress;
                         _isCaptureMouseInProgress = true;
 

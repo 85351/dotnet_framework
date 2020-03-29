@@ -380,10 +380,10 @@ namespace System.Windows.Forms {
                 Debug.WriteLineIf(Control.FocusTracing.TraceVerbose, "Form::set_Active - " + this.Name);
                 if ((formState[FormStateIsActive] != 0) != value) {
                     if (value) {
-                        // There is a weird user32 
-
-
-
+                        // There is a weird user32 bug (see ASURT 124232) where it will
+                        // activate the MDIChild even when it is not visible, when
+                        // we set it's parent handle. Ignore this. We will get
+                        // activated again when the MDIChild's visibility is set to true.
                         if (!CanRecreateHandle()){
                             //Debug.Fail("Setting Active window when not yet visible");
                             return;
@@ -870,8 +870,8 @@ namespace System.Windows.Forms {
 
                 formState[FormStateBorderStyle] = (int)value;
 
-                //(
-
+                //(bug 112024).. It seems that the FormBorderStyle is Code serialised after the ClientSize is Set...
+                //Hence in the Setter for FormBodrstyle we need to push in the Correct ClientSize once again..
                 if (formState[FormStateSetClientSize] == 1 && !IsHandleCreated) {
                     ClientSize = ClientSize;
                 }
@@ -1905,7 +1905,7 @@ namespace System.Windows.Forms {
                 }
 
                 bool oldVisibleBit = GetState(STATE_VISIBLE);
-                //
+                //bug(108303) .. this should apply whether or not value  == null.
                 Visible = false;
 
                 try {
@@ -1934,10 +1934,10 @@ namespace System.Windows.Forms {
 
                         // If it is an MDIChild, and it is not yet visible, we'll
                         // hold off on recreating the window handle. We'll do that
-                        // when MdiChild's visibility is set to true (see 
+                        // when MdiChild's visibility is set to true (see bug 124232).
 
                         // But if the handle has already been created, we need to destroy it
-                        // so the form gets MDI-parented properly. See 
+                        // so the form gets MDI-parented properly. See bug#382992.
                         if (ParentInternal.IsHandleCreated && IsMdiChild && IsHandleCreated) {
                             DestroyHandle();
                         }
@@ -2728,8 +2728,8 @@ namespace System.Windows.Forms {
                 OnVisibleChanged(EventArgs.Empty);
             }
 
-            //(
-
+            //(bug 111549)... For FormWindowState.Maximized.. Wm_activate is not Fired before setting Focus
+            //on Active Control..
             
             if (value && !IsMdiChild && (WindowState == FormWindowState.Maximized || TopMost)) {
                 if (ActiveControl == null){
@@ -5105,14 +5105,20 @@ namespace System.Windows.Forms {
 
                 if (!e.Cancel) {
                     float factor = (float)e.DeviceDpiNew / (float)e.DeviceDpiOld;
-                    SafeNativeMethods.SetWindowPos(new HandleRef(this, HandleInternal), NativeMethods.NullHandleRef, e.SuggestedRectangle.X, e.SuggestedRectangle.Y, e.SuggestedRectangle.Width, e.SuggestedRectangle.Height, NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE);
-                    if (AutoScaleMode != AutoScaleMode.Font) {
-                        Font = new Font(this.Font.FontFamily, this.Font.Size * factor, this.Font.Style);
-                        FormDpiChanged(factor);
+                    SuspendAllLayout(this);
+                    try {
+                        SafeNativeMethods.SetWindowPos(new HandleRef(this, HandleInternal), NativeMethods.NullHandleRef, e.SuggestedRectangle.X, e.SuggestedRectangle.Y, e.SuggestedRectangle.Width, e.SuggestedRectangle.Height, NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE);
+                        if (AutoScaleMode != AutoScaleMode.Font) {
+                            Font = new Font(this.Font.FontFamily, this.Font.Size * factor, this.Font.Style);
+                            FormDpiChanged(factor);
+                        }
+                        else {
+                            ScaleFont(factor);
+                            FormDpiChanged(factor);
+                        }
                     }
-                    else {
-                        ScaleFont(factor);
-                        FormDpiChanged(factor);
+                    finally {
+                        ResumeAllLayout(this, false);
                     }
                 }
             }
@@ -5120,7 +5126,7 @@ namespace System.Windows.Forms {
 
         /// <include file='doc\Form.uex' path='docs/doc[@for="Form.DpiChanged"]/*' />
         /// <devdoc>
-        ///    <para> Occurs when the DPI resolution of the screen this control is displayed on changes, 
+        ///    <para> Occurs when the DPI resolution of the screen this top level window is displayed on changes, 
         ///    either when the top level window is moved between monitors or when the OS settings are changed.
         ///    </para>
         /// </devdoc>
@@ -6995,10 +7001,10 @@ namespace System.Windows.Forms {
                     // based on this call.
                     //
                     // NOTE: We should also check !Validate(true) below too in the modal case,
-                    // but we cannot, because we didn't to this in Everett (
-
-
-
+                    // but we cannot, because we didn't to this in Everett (bug), and doing so
+                    // now would introduce a breaking change. User can always validate in the
+                    // FormClosing event if they really need to. :-(
+                    //
                     e.Cancel = !CheckCloseDialog(true);
                 }
                 else {
@@ -7047,6 +7053,10 @@ namespace System.Windows.Forms {
 
                 if (m.Msg == NativeMethods.WM_QUERYENDSESSION) {
                     m.Result = (IntPtr)(e.Cancel ? 0 : 1);
+                }
+                else if (e.Cancel && (MdiParent != null)) {
+                    // This is the case of an MDI child close event being canceled by the user.
+                    CloseReason = CloseReason.None;
                 }
 
                 if (Modal) {

@@ -709,7 +709,7 @@ using System.Security;
 			// Create image from stream
 			imageStream.Seek(0, SeekOrigin.Begin);
             System.Drawing.Image tempImage = System.Drawing.Image.FromStream(imageStream);
-			System.Drawing.Bitmap image = new Bitmap(tempImage);	// !!! .Net 
+			System.Drawing.Bitmap image = new Bitmap(tempImage);	// !!! .Net bug when image source stream is closed - can create brush using the image
             image.SetResolution(tempImage.HorizontalResolution, tempImage.VerticalResolution); //The bitmap created using the constructor does not copy the resolution of the image
 
 			// Close image stream
@@ -2086,7 +2086,7 @@ using System.Security;
 			foreach(XmlNode childNode in xmlParentNode.ChildNodes)
 			{
                 // Special handling for the collections
-                // 
+                // Bug VSTS #235707 - The collections IsSerializableContent are already checked as a property in the else statement.
                 if (list != null)
                 {
                     // Create new item object
@@ -3187,7 +3187,7 @@ using System.Security;
 					imageStream.Write(reader.ReadBytes(imageSize), 0, imageSize);
 
 					// Create image object
-					objValue = new Bitmap(System.Drawing.Image.FromStream(imageStream));	// !!! .Net 
+					objValue = new Bitmap(System.Drawing.Image.FromStream(imageStream));	// !!! .Net bug when image source stream is closed - can create brush using the image
 
 					// Close image stream
 					imageStream.Close();

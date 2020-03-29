@@ -1623,7 +1623,7 @@ namespace System.Windows.Controls
                 // - the newText as "1" (after the conversion)
                 // - the _newTextValue as "01" which is what the user typed in
                 // - the CaretIndex here as 2 which corresponds to the _newTextValue not the oldText
-                // See Dev11 
+                // See Dev11 bug 301456 for details on the scenario.
                 oldTextForCaretIndexComputation = (string)_newTextValue;
             }
             else if (hasExpression)

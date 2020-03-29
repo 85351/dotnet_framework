@@ -115,7 +115,10 @@ namespace System.Windows.Controls.Primitives
             UIElement oldChild = (UIElement) e.OldValue;
             UIElement newChild = (UIElement) e.NewValue;
 
-            if ((popup._popupRoot.Value != null) && popup.IsOpen)
+            // If the Popup is open, change the PopupRoot's child to show the new content.
+            // Also change if the PopupRoot has a non-null child, to enable that
+            // child to participate elsewhere in the visual tree (DDVSO 161345).
+            if ((popup._popupRoot.Value != null) && (popup.IsOpen || popup._popupRoot.Value.Child != null))
             {
                 popup._popupRoot.Value.Child = newChild;
             }
@@ -241,7 +244,7 @@ namespace System.Windows.Controls.Primitives
                     // This causes Popup and its descedents to miss some change notifications.
                     // Thus a Popup that isnt connected to the tree in any way should be
                     // designated standalone and thus IsSelfInheritanceParent = true. Please
-                    // see Dev11 
+                    // see Dev11 bug# 246558 for manifestation of these missing invalidations.
                     if (!this.IsSelfInheritanceParent)
                     {
                         this.SetIsSelfInheritanceParent();
@@ -483,7 +486,7 @@ namespace System.Windows.Controls.Primitives
         /// <summary>
         ///     The DependencyProperty for the StaysOpen property.
         ///     Flags:              None
-        ///     Default Value:      false
+        ///     Default Value:      true
         /// </summary>
         public static readonly DependencyProperty StaysOpenProperty =
                 DependencyProperty.Register(
@@ -1032,7 +1035,8 @@ namespace System.Windows.Controls.Primitives
         private void OnPreviewMouseButton(MouseButtonEventArgs e)
         {
             // We should only react to mouse buttons if we are in an auto close mode (where we have capture)
-            if (_cacheValid[(int)CacheBits.CaptureEngaged] && !StaysOpen)
+            if (_cacheValid[(int)CacheBits.CaptureEngaged] && !StaysOpen &&
+                !_cacheValid[(int)CacheBits.IsIgnoringMouseEvents])
             {
                 Debug.Assert( Mouse.Captured == _popupRoot.Value, "_cacheValid[(int)CacheBits.CaptureEngaged] == true but Mouse.Captured != _popupRoot");
 
@@ -1050,18 +1054,58 @@ namespace System.Windows.Controls.Primitives
                     }
                 }
             }
+
+            // once a mouse event arrives with neither button pressed, stop ignoring
+            if (_cacheValid[(int)CacheBits.IsIgnoringMouseEvents] &&
+                e.LeftButton == MouseButtonState.Released &&
+                e.RightButton == MouseButtonState.Released)
+            {
+                _cacheValid[(int)CacheBits.IsIgnoringMouseEvents] = false;
+            }
         }
 
-        private void EstablishPopupCapture()
+        private void EstablishPopupCapture(bool isRestoringCapture=false)
         {
             if (!_cacheValid[(int)CacheBits.CaptureEngaged] && (_popupRoot.Value != null) &&
-                (!StaysOpen) && (Mouse.Captured == null))
+                (!StaysOpen))
             {
-                // When the mouse is not already captured, we will consider the following:
-                // In all cases but Modeless, we want the popup and subtree to receive
-                // mouse events and prevent other elements from receiving those messages.
-                Mouse.Capture(_popupRoot.Value, CaptureMode.SubTree);
-                _cacheValid[(int)CacheBits.CaptureEngaged] = true;
+                IInputElement capturedElement = Mouse.Captured;
+                PopupRoot parentPopupRoot = capturedElement as PopupRoot;
+                if (parentPopupRoot != null)
+                {
+                    if (isRestoringCapture)
+                    {
+                        // if the other PopupRoot is restoring capture back to this
+                        // popup, ignore mouse button events until both buttons have been
+                        // released.  Otherwise a mouse click outside a chain of
+                        // "nested" popups would dismiss two of them - one on MouseDown
+                        // and another on MouseUp.
+                        if (Mouse.LeftButton != MouseButtonState.Released ||
+                            Mouse.RightButton != MouseButtonState.Released)
+                        {
+                            _cacheValid[(int)CacheBits.IsIgnoringMouseEvents] = true;
+                        }
+                    }
+                    else
+                    {
+                        // this is a "nested" popup, invoked while another popup is open.
+                        // We need to restore capture to the previous popup root when
+                        // we're done (DDVSO 94132)
+                        ParentPopupRootField.SetValue(this, parentPopupRoot);
+                    }
+
+                    // in either case, taking capture away from the other PopupRoot is OK.
+                    capturedElement = null;
+                }
+
+                if (capturedElement == null)
+                {
+                    // When the mouse is not already captured, we will consider the following:
+                    // In all cases but Modeless, we want the popup and subtree to receive
+                    // mouse events and prevent other elements from receiving those messages.
+                    Mouse.Capture(_popupRoot.Value, CaptureMode.SubTree);
+                    _cacheValid[(int)CacheBits.CaptureEngaged] = true;
+                }
             }
         }
 
@@ -1069,11 +1113,25 @@ namespace System.Windows.Controls.Primitives
         {
             if (_cacheValid[(int)CacheBits.CaptureEngaged])
             {
-                // Popup's default implementation did not take capture from anyone, so it doesn't need to return capture.
-                // Only give up focus if we have it (someone may have taken it from us).
+                PopupRoot parentPopupRoot = ParentPopupRootField.GetValue(this);
+                ParentPopupRootField.ClearValue(this);
+
+                // Only give up capture if we have it (someone may have taken it from us).
                 if (Mouse.Captured == _popupRoot.Value)
                 {
-                    Mouse.Capture(null);
+                    if (parentPopupRoot == null)
+                    {
+                        Mouse.Capture(null);
+                    }
+                    else
+                    {
+                        // restore capture to popup we took it from, if there was one
+                        Popup parentPopup = parentPopupRoot.Parent as Popup;
+                        if (parentPopup != null)
+                        {
+                            parentPopup.EstablishPopupCapture(isRestoringCapture:true);
+                        }
+                    }
                 }
                 _cacheValid[(int)CacheBits.CaptureEngaged] = false;
             }
@@ -1091,8 +1149,8 @@ namespace System.Windows.Controls.Primitives
             // Try to accomplish "subcapture" -- allowing elements within our
             // subtree to take mouse capture and reclaim it when they lose capture.
             // This is a workaround until we can get real subcapture:
-            //   * 
-
+            //   * Bug 940198: Need real solution for subcapture
+            //
             if (!popup.StaysOpen)
             {
                 PopupRoot root = popup._popupRoot.Value;
@@ -1117,7 +1175,12 @@ namespace System.Windows.Controls.Primitives
                         popup._cacheValid[(int)CacheBits.CaptureEngaged] = false;
                     }
 
-                    bool newCaptureInsidePopup = Mouse.Captured != null && MenuBase.IsDescendant(root, Mouse.Captured as DependencyObject);
+                    PopupRoot newRoot = Mouse.Captured as PopupRoot;
+                    Popup newPopup = (newRoot == null) ? null : newRoot.Parent as Popup;
+                    bool childPopupTookCapture = newPopup != null && root != null &&
+                        root == ParentPopupRootField.GetValue(newPopup);
+
+                    bool newCaptureInsidePopup = childPopupTookCapture || (Mouse.Captured != null && MenuBase.IsDescendant(root, Mouse.Captured as DependencyObject));
                     bool newCaptureOutsidePopup = !newCaptureInsidePopup && Mouse.Captured != root;
                     if(newCaptureOutsidePopup && !popup.IsDragDropActive)
                     {
@@ -1147,7 +1210,7 @@ namespace System.Windows.Controls.Primitives
                 // A drag drop operation steals capture from the Popup because
                 // there is an intermediate hwnd created internally by OleDragDrop
                 // which holds capture temporarily.  So upon completion of the
-                // operation we re-establish capture. See Dev11 
+                // operation we re-establish capture. See Dev11 bug#290233.
                 popup.EstablishPopupCapture();
             }
         }
@@ -2751,6 +2814,7 @@ namespace System.Windows.Controls.Primitives
         private const int AnimationDelay = 150;
         internal static TimeSpan AnimationDelayTime = new TimeSpan(0, 0, 0, 0, AnimationDelay);
         internal static RoutedEventHandler CloseOnUnloadedHandler;
+        private static readonly UncommonField<PopupRoot> ParentPopupRootField = new UncommonField<PopupRoot>();
 
         private PositionInfo _positionInfo;
 
@@ -2774,6 +2838,7 @@ namespace System.Windows.Controls.Primitives
             AnimateFromBottom       = 0x40,
             HitTestable             = 0x80,  // False for tooltips
             IsDragDropActive        = 0x100,
+            IsIgnoringMouseEvents   = 0x200,
         }
 
         #endregion

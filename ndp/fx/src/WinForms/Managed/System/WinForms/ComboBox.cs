@@ -90,7 +90,7 @@ namespace System.Windows.Forms {
         // for the actual height of the control.
         // When the style is non-simple, the height of the control
         // is determined by the OS.
-        // This fixes 
+        // This fixes bug #20966
         private int requestedHeight;
 
         private ComboBoxChildNativeWindow childEdit;
@@ -687,7 +687,7 @@ namespace System.Windows.Forms {
                         return itemHeight;
                     }
                     else {
-                        return FontHeight + 2;   // 
+                        return FontHeight + 2;   // bug (90774)+2 for the 1 pixel gap on each side (up and Bottom) of the Text.
                     }
                 }
 
@@ -1049,7 +1049,7 @@ namespace System.Windows.Forms {
                 int x = -1;
 
                 if (itemsCollection != null) {
-                    //
+                    //bug (82115)
                     if (value != null)
                         x = itemsCollection.IndexOf(value);
                     else
@@ -1253,8 +1253,8 @@ namespace System.Windows.Forms {
                 selectedItem = SelectedItem;
 
                 if (!DesignMode) {
+                    //bug <70650> Subhag removed 'value.Length == 0' check to handle String.Empty.
                     //
-
                     if (value == null) {
                         SelectedIndex = -1;
                     }
@@ -1527,7 +1527,12 @@ namespace System.Windows.Forms {
         /// <devdoc>
         /// </devdoc>
         protected override AccessibleObject CreateAccessibilityInstance() {
-            return new ComboBoxAccessibleObject(this);
+            if (AccessibilityImprovements.Level1) {
+                return new ComboBoxExAccessibleObject(this);
+            }
+            else {
+                return new ComboBoxAccessibleObject(this);
+            }
         }
 
          /// <devdoc>
@@ -1828,10 +1833,10 @@ namespace System.Windows.Forms {
                     mouseEvents = true;
 
                     //set the mouse capture .. this is the Child Wndproc..
-                    // 
-
-
-
+                    // Bug# 112108: If I set the capture=true here, the
+                    // DefWndProc() never fires the WM_CONTEXTMENU that would show
+                    // the default context menu.
+                    //
                     if (this.ContextMenu != null || this.ContextMenuStrip != null)
                         CaptureInternal = true;
                     DefChildWndProc(ref m);
@@ -2322,9 +2327,9 @@ namespace System.Windows.Forms {
         /// <include file='doc\ComboBox.uex' path='docs/doc[@for="ComboBox.CreateHandle"]/*' />
         /// <devdoc>
         ///     Overridden to avoid multiple layouts during handle creation due to combobox size change
-        ///     see 
-
-
+        ///     see bug 458948
+        /// </devdoc>
+        /// <internalonly/>
         protected override void CreateHandle()
         {
             using (new LayoutTransaction(ParentInternal, this, PropertyNames.Bounds))
@@ -2821,9 +2826,9 @@ namespace System.Windows.Forms {
         protected override void OnDisplayMemberChanged(EventArgs e) {
             base.OnDisplayMemberChanged(e);
 
-            // 
-
-
+            // bug 63005: when we change the displayMember, we need to refresh the
+            // items collection
+            //
             RefreshItems();
         }
 
@@ -3107,7 +3112,7 @@ namespace System.Windows.Forms {
         protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified) {
             // If we are changing height, store the requested height.
             // Requested height is used if the style is changed to simple.
-            // (
+            // (Bug fix #20966)
             if ((specified & BoundsSpecified.Height) != BoundsSpecified.None) {
                 requestedHeight = height;
             }
@@ -3129,12 +3134,12 @@ namespace System.Windows.Forms {
             // it will be provided before changing the list though...
             if (this.DataManager != null) {
                 if (this.DataSource is ICurrencyManagerProvider) {
-                    // Everett ListControl's had a 
-
-
-
-
-
+                    // Everett ListControl's had a bug where they would not fire
+                    // OnSelectedValueChanged if their list of items were refreshed.
+                    // We fix this post-Everett.
+                    // However, for APPCOMPAT reasons, we only want to fix it when binding to 
+                    // Whidbey components.
+                    // vsw 547279.
                     this.selectedValueChangedFired = false;
                 }
 
@@ -3643,7 +3648,7 @@ namespace System.Windows.Forms {
                     break;
 
                 case NativeMethods.WM_SETFONT:
-                    //(
+                    //(bug 119265)
                     if (Width == 0) {
                         suppressNextWindosPos = true;
                     }
@@ -4239,6 +4244,99 @@ namespace System.Windows.Forms {
         }
 
         /// <devdoc>
+        /// </devdoc>
+        [ComVisible(true)]
+        internal class ComboBoxExAccessibleObject : ComboBoxAccessibleObject {
+
+            private ComboBox ownerItem = null;
+
+            private void ComboBoxDefaultAction(bool expand)
+            {
+                if (ownerItem.DroppedDown != expand) {
+                    ownerItem.DroppedDown = expand;
+                }
+            }
+
+            public ComboBoxExAccessibleObject(ComboBox ownerControl)
+                : base(ownerControl) {
+                    ownerItem = ownerControl;
+            }
+
+            internal override bool IsIAccessibleExSupported() {
+                if (ownerItem != null) {
+                    return true;
+                }
+                return base.IsIAccessibleExSupported();
+            }
+
+            internal override bool IsPatternSupported(int patternId) {
+                if (patternId == NativeMethods.UIA_ExpandCollapsePatternId) {
+                    if (ownerItem.DropDownStyle == ComboBoxStyle.Simple) {
+                        return false;
+                    }
+                    return true;
+                }
+                else {
+                    if (patternId == NativeMethods.UIA_ValuePatternId) {
+                        if (ownerItem.DropDownStyle == ComboBoxStyle.DropDownList) {
+                            return false;
+                        }
+                        return true;
+                    }
+                }
+                return base.IsPatternSupported(patternId);
+            }
+
+            internal override int[] RuntimeId {
+                get {
+                    if (ownerItem != null) {
+                        // we need to provide a unique ID
+                        // others are implementing this in the same manner
+                        // first item is static - 0x2a
+                        // second item can be anything, but here it is a hash
+
+                        var runtimeId = new int[3];
+                        runtimeId[0] = 0x2a;
+                        runtimeId[1] = (int)(long)ownerItem.Handle;
+                        runtimeId[2] = ownerItem.GetHashCode();
+                        return runtimeId;
+                    }
+                    
+                    return base.RuntimeId;
+                }
+            }
+
+            internal override object GetPropertyValue(int propertyID) {
+
+                if (propertyID == NativeMethods.UIA_NamePropertyId) {
+                    return Name;
+                }
+                else if (propertyID == NativeMethods.UIA_IsExpandCollapsePatternAvailablePropertyId) {
+                    return (object)this.IsPatternSupported(NativeMethods.UIA_ExpandCollapsePatternId);
+                }
+                else if (propertyID == NativeMethods.UIA_IsValuePatternAvailablePropertyId) {
+                    return (object)this.IsPatternSupported(NativeMethods.UIA_ValuePatternId);
+                }
+
+                return base.GetPropertyValue(propertyID);
+            }
+            
+            internal override void Expand() {
+                ComboBoxDefaultAction(true);
+            }
+
+            internal override void Collapse() {
+                ComboBoxDefaultAction(false);
+            }
+
+            internal override UnsafeNativeMethods.ExpandCollapseState ExpandCollapseState {
+                get {
+                    return ownerItem.DroppedDown == true ? UnsafeNativeMethods.ExpandCollapseState.Expanded : UnsafeNativeMethods.ExpandCollapseState.Collapsed;
+                }
+            }
+        }
+
+        /// <devdoc>
         ///  This subclasses an autocomplete window so that we can determine if control is inside the AC wndproc.
         /// </devdoc>
         private sealed class ACNativeWindow : NativeWindow {
@@ -4408,21 +4506,17 @@ namespace System.Windows.Forms {
 
              private static bool isScalingInitialized = false;
              private static int OFFSET_2PIXELS = 2;
-             protected static int Offset2X = OFFSET_2PIXELS;
-             protected static int Offset2Y = OFFSET_2PIXELS;
+             protected static int Offset2Pixels = OFFSET_2PIXELS;
            
              public FlatComboAdapter(ComboBox comboBox, bool smallButton) {
-
-                 if (!isScalingInitialized) {
-                     if (DpiHelper.IsScalingRequired) {
-                         Offset2X = DpiHelper.LogicalToDeviceUnitsX(OFFSET_2PIXELS);
-                         Offset2Y = DpiHelper.LogicalToDeviceUnitsY(OFFSET_2PIXELS);
-                     }
+                 // adapter is re-created when combobox is resized, see IsValid method, thus we don't need to handle DPI changed explicitly 
+                 if ((!isScalingInitialized && DpiHelper.IsScalingRequired) || DpiHelper.EnableDpiChangedMessageHandling) {
+                     Offset2Pixels = comboBox.LogicalToDeviceUnits(OFFSET_2PIXELS);
                      isScalingInitialized = true;
                  }
 
                  clientRect = comboBox.ClientRectangle;
-                 int dropDownButtonWidth = System.Windows.Forms.SystemInformation.HorizontalScrollBarArrowWidth;
+                 int dropDownButtonWidth = SystemInformation.GetHorizontalScrollBarArrowWidthForDpi(comboBox.deviceDpi);
                  outerBorder = new Rectangle(clientRect.Location, new Size(clientRect.Width - 1, clientRect.Height - 1));
                  innerBorder = new Rectangle(outerBorder.X + 1, outerBorder.Y + 1, outerBorder.Width - dropDownButtonWidth - 2, outerBorder.Height - 2);
                  innerInnerBorder = new Rectangle(innerBorder.X + 1, innerBorder.Y + 1, innerBorder.Width - 2, innerBorder.Height - 2);
@@ -4550,9 +4644,9 @@ namespace System.Windows.Forms {
              
              protected virtual void DrawFlatComboDropDown(ComboBox comboBox, Graphics g, Rectangle dropDownRect) {
              
-                 g.FillRectangle(SystemBrushes.Control, dropDownRect);
-             
-                 Brush brush = (comboBox.Enabled) ? SystemBrushes.ControlText : SystemBrushes.ControlDark;
+                g.FillRectangle(SystemBrushes.Control, dropDownRect);
+
+                Brush brush = (comboBox.Enabled) ? SystemBrushes.ControlText : SystemBrushes.ControlDark;
              
                  Point middle = new Point(dropDownRect.Left + dropDownRect.Width / 2, dropDownRect.Top + dropDownRect.Height / 2);
                  if (origRightToLeft == RightToLeft.Yes) {
@@ -4565,9 +4659,9 @@ namespace System.Windows.Forms {
                  }
              
                  g.FillPolygon(brush, new Point[] {
-                     new Point(middle.X - Offset2X, middle.Y - 1),
-                     new Point(middle.X + Offset2X + 1, middle.Y - 1),
-                     new Point(middle.X, middle.Y + Offset2Y)
+                     new Point(middle.X - Offset2Pixels, middle.Y - 1),
+                     new Point(middle.X + Offset2Pixels + 1, middle.Y - 1),
+                     new Point(middle.X, middle.Y + Offset2Pixels)
                  });
              }
              

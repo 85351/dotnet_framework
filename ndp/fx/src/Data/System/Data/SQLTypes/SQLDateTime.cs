@@ -198,9 +198,9 @@ namespace System.Data.SqlTypes {
                 // ISSUE: Is this code reachable?  For this code to be reached there
                 //    must be a value for dblVal such that:
                 //        dblVal - (long)dblVal = 1.0
-                //    This seems odd, but there was a 
-
-
+                //    This seems odd, but there was a bug (51261) that resulted because
+                //    there was a negative value for dblVal such that dblVal + 1.0 = 1.0
+                //
                 day ++;
                 time -= SQLTicksPerDay;
             }

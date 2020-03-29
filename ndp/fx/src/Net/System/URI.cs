@@ -2157,9 +2157,14 @@ namespace System {
                         m_Flags |= Flags.AuthorityFound;
                         idx+=2;
                     }
+                    // 
                     else if (m_Syntax.NotAny(UriSyntaxFlags.MailToLikeUri)) {
-                        // There is no Authority component, save the Path index
-                        // 
+                        // By now we know the URI has no Authority, so if the URI must be normalized, initialize it without one.
+                        if (m_iriParsing && (m_Flags & Flags.HasUnicode) != 0 && (m_Flags & Flags.HostUnicodeNormalized) == 0)
+                        {
+                            m_String = m_String.Substring(0, idx);
+                        }
+                        // Since there is no Authority, the path index is just the end of the scheme.
                         m_Flags |= ((Flags)idx | Flags.UnknownHostType);
                         return ParsingError.None;
                     }
@@ -2167,9 +2172,14 @@ namespace System {
                 else if (m_Syntax.InFact(UriSyntaxFlags.MustHaveAuthority)) {
                     return ParsingError.BadAuthority;
                 }
+                // 
                 else if (m_Syntax.NotAny(UriSyntaxFlags.MailToLikeUri)) {
-                    // There is no Authority component, save the Path index
-                    // 
+                    // By now we know the URI has no Authority, so if the URI must be normalized, initialize it without one.
+                    if (m_iriParsing && (m_Flags & Flags.HasUnicode) != 0 && (m_Flags & Flags.HostUnicodeNormalized) == 0)
+                    {
+                        m_String = m_String.Substring(0, idx);
+                    }
+                    // Since there is no Authority, the path index is just the end of the scheme.
                     m_Flags |= ((Flags)idx | Flags.UnknownHostType);
                     return ParsingError.None;
                 }
@@ -2593,7 +2603,7 @@ namespace System {
                     host = string.Empty;
                     break;
 
-                default: //it's a 
+                default: //it's a bug
                     throw GetException(ParsingError.BadHostName);
             }
 
@@ -3269,7 +3279,7 @@ namespace System {
                             cF |= Flags.SchemeNotCanonical;
                     }
                     // For an authority Uri only // after the scheme would be canonical
-                    // (compatibility 
+                    // (compatibility bug http:\\host)
                     if (((m_Flags & Flags.AuthorityFound) != 0) && (idx + i + 3 >= length || str[idx + i + 1] != '/' || 
                         str[idx + i + 2] != '/')) 
                     {
@@ -4060,7 +4070,15 @@ namespace System {
                 if (UncNameHelper.IsValid(pString, start, ref end, StaticNotAny(flags, Flags.ImplicitFile)))
                 {
                     if (end - start <= UncNameHelper.MaximumInternetNameLength)
+                    {
                         flags |= Flags.UncHostType;
+                        if (hasUnicode && iriParsing && hostNotUnicodeNormalized)
+                        {
+                            newHost += new string(pString, start, end - start);
+                            flags |= Flags.HostUnicodeNormalized;
+                            justNormalized = true;
+                        }
+                    }
                 }
             }
 #endif // !PLATFORM_UNIX
@@ -4145,8 +4163,8 @@ namespace System {
             {
                 //No user info for a Basic hostname
                 flags &= ~Flags.HasUserInfo;
-                // Some schemes do not allow HostType = Basic (plus V1 almost never understands this cause of a 
-
+                // Some schemes do not allow HostType = Basic (plus V1 almost never understands this cause of a bug)
+                //
                 if(syntax.InFact(UriSyntaxFlags.AllowAnyOtherHost))
                 {
                     flags |= Flags.BasicHostType;
@@ -4546,8 +4564,8 @@ namespace System {
             int dosPathIdx = SecuredPathIndex;
 
             // Note that unescaping and then escapig back is not transitive hence not safe.
-            // We are vulnerable due to the way the UserEscaped flag is processed (see NDPWhidbey#10612 
-
+            // We are vulnerable due to the way the UserEscaped flag is processed (see NDPWhidbey#10612 bug).
+            // Try to unescape only needed chars.
             if (formatAs == UriFormat.UriEscaped)
             {
                 if (InFact(Flags.ShouldBeCompressed))

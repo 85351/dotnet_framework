@@ -665,7 +665,7 @@ namespace System.Windows.Controls
                                 // dependency case described above. We now repeatedly
                                 // measure Group3 and Group2 until their sizes settle. We
                                 // also use a count heuristic to break a loop in case of one.
-                                // Please see Dev11 
+                                // Please see Dev11 bug# 26662 that inspired this fix.
 
                                 bool hasDesiredSizeUChanged = false;
                                 int cnt=0;
@@ -1787,7 +1787,7 @@ namespace System.Windows.Controls
             }
         }
 
-        // new implementation as of 4.6.3.  Several improvements:
+        // new implementation as of 4.7.  Several improvements:
         // 1. Allocate to *-defs hitting their min or max constraints, before allocating
         //      to other *-defs.  A def that hits its min uses more space than its
         //      proportional share, reducing the space available to everyone else.
@@ -2004,7 +2004,7 @@ namespace System.Windows.Controls
                 {
                     // if no *-defs remain and we haven't allocated all the space, reconsider the defs
                     // resolved as 'min'.   Their allocation can be increased to make up the gap.
-                    for (int i = 0; i < minCountPhase2; ++i)
+                    for (int i = minCount; i < minCountPhase2; ++i)
                     {
                         DefinitionBase def = tempDefinitions[i];
                         if (def != null)
@@ -2020,7 +2020,7 @@ namespace System.Windows.Controls
                 {
                     // if we've allocated too much space, reconsider the defs
                     // resolved as 'max'.   Their allocation can be decreased to make up the gap.
-                    for (int i = 0; i < maxCountPhase2; ++i)
+                    for (int i = maxCount; i < maxCountPhase2; ++i)
                     {
                         DefinitionBase def = tempDefinitions[defCount + i];
                         if (def != null)
@@ -2362,7 +2362,7 @@ namespace System.Windows.Controls
             }
         }
 
-        // new implementation, as of 4.6.2.  This incorporates the same algorithm
+        // new implementation, as of 4.7.  This incorporates the same algorithm
         // as in ResolveStarMaxDiscrepancy.  It differs in the same way that SetFinalSizeLegacy
         // differs from ResolveStarLegacy, namely (a) leaves results in def.SizeCache
         // instead of def.MeasureSize, (b) implements LayoutRounding if requested,
@@ -2646,7 +2646,7 @@ namespace System.Windows.Controls
                 {
                     // if no *-defs remain and we haven't allocated all the space, reconsider the defs
                     // resolved as 'min'.   Their allocation can be increased to make up the gap.
-                    for (int i = 0; i < minCountPhase2; ++i)
+                    for (int i = minCount; i < minCountPhase2; ++i)
                     {
                         if (definitionIndices[i] >= 0)
                         {
@@ -2662,7 +2662,7 @@ namespace System.Windows.Controls
                 {
                     // if we've allocated too much space, reconsider the defs
                     // resolved as 'max'.   Their allocation can be decreased to make up the gap.
-                    for (int i = 0; i < maxCountPhase2; ++i)
+                    for (int i = maxCount; i < maxCountPhase2; ++i)
                     {
                         if (definitionIndices[defCount + i] >= 0)
                         {
@@ -2760,29 +2760,29 @@ namespace System.Windows.Controls
                 // increasing the available space by one pixel might actually decrease
                 // the space allocated to a given column, or increasing the weight of
                 // a column might decrease its allocation.   This is worth knowing
-                // in case someone complains about this behavior;  it's not a 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                // in case someone complains about this behavior;  it's not a bug so
+                // much as something inherent to the problem.  Cite the book mentioned
+                // above or one of the 100s of references, and resolve as WontFix.
+                //
+                // Fortunately, our scenarios tend to have a small number of columns (~10 or fewer)
+                // each being allocated a large number of pixels (~50 or greater), and
+                // people don't even notice the kind of 1-pixel anomolies that are
+                // theoretically inevitable, or don't care if they do.  At least they shouldn't
+                // care - no one should be using the results WPF's grid layout to make
+                // quantitative decisions; its job is to produce a reasonable display, not
+                // to allocate seats in Congress.
+                //
+                // Our algorithm is more susceptible to paradox than the one currently
+                // used for Congressional allocation ("Huntington-Hill" algorithm), but
+                // it is faster to run:  O(N log N) vs. O(S * N), where N=number of
+                // definitions, S = number of available pixels.  And it produces
+                // adequate results in practice, as mentioned above.
+                //
+                // To reiterate one point:  all this only applies when layout rounding
+                // is in effect.  When fractional sizes are allowed, the algorithm
+                // behaves as well as possible, subject to the min/max constraints
+                // and precision of floating-point computation.  (However, the resulting
+                // display is subject to anti-aliasing problems.   TANSTAAFL.)
 
                 if (!_AreClose(roundedTakenSize, finalSize))
                 {

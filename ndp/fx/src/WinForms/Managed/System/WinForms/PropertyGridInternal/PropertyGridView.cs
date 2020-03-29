@@ -84,6 +84,8 @@ namespace System.Windows.Forms.PropertyGridInternal {
         private const int DOTDOTDOT_ICONWIDTH = 7;
         private const int DOTDOTDOT_ICONHEIGHT = 8;
 
+        private static int OFFSET_2PIXELS = 2;
+
         protected static readonly Point InvalidPosition = new Point(int.MinValue, int.MinValue);
 
 
@@ -2267,6 +2269,17 @@ namespace System.Windows.Forms.PropertyGridInternal {
             if (selectedGridEntry != null && selectedGridEntry.GetValueOwner() != null) {
                 UpdateHelpAttributes(null, selectedGridEntry);
             }
+
+            // For empty GridView, draw a focus-indicator rectangle, just inside GridView borders
+            if ((totalProps <= 0) && AccessibilityImprovements.Level1) {
+                int doubleOffset = 2 * OFFSET_2PIXELS;
+
+                if ((Size.Width > doubleOffset) && (Size.Height > doubleOffset)) {
+                    using (Graphics g = CreateGraphicsInternal()) {
+                        ControlPaint.DrawFocusRectangle(g, new Rectangle(OFFSET_2PIXELS, OFFSET_2PIXELS, Size.Width - doubleOffset, Size.Height - doubleOffset));
+                    }
+                }
+            }
         }
 
          protected override void OnHandleCreated(EventArgs e) {
@@ -2418,6 +2431,16 @@ namespace System.Windows.Forms.PropertyGridInternal {
                 InvalidateRow(selectedRow);
             }
             base.OnLostFocus(e);
+
+            // For empty GridView, clear the focus indicator that was painted in OnGotFocus()
+            if (totalProps <= 0 && AccessibilityImprovements.Level1) {
+                using (Graphics g = CreateGraphicsInternal()) {
+                    Rectangle clearRect = new Rectangle(1, 1, Size.Width - 2, Size.Height - 2);
+                    Debug.WriteLineIf(GridViewDebugPaint.TraceVerbose, "Filling empty gridview rect=" + clearRect.ToString());
+
+                    g.FillRectangle(backgroundBrush, clearRect);
+                }
+            }
         }
 
         private void OnEditChange(object sender, EventArgs e) {
@@ -5928,6 +5951,23 @@ namespace System.Windows.Forms.PropertyGridInternal {
                 mouseHook = new MouseHook(this, this, psheet);
             }
         
+            /// <summary>
+            /// Creates a new AccessibleObject for this GridViewEdit instance.
+            /// The AccessibleObject instance returned by this method overrides several UIA properties.
+            /// However the new object is only available in applications that are recompiled to target 
+            /// .NET Framework 4.7.2 or opt in into this feature using a compatibility switch. 
+            /// </summary>
+            /// <returns>
+            /// AccessibleObject for this GridViewEdit instance.
+            /// </returns>
+            protected override AccessibleObject CreateAccessibilityInstance() {
+                if (AccessibilityImprovements.Level2) {
+                    return new GridViewEditAccessibleObject(this);
+                }
+
+                return base.CreateAccessibilityInstance();
+            }
+
             protected override void DestroyHandle() {
                   mouseHook.HookMouseDown = false;
                   base.DestroyHandle();
@@ -6227,7 +6267,62 @@ namespace System.Windows.Forms.PropertyGridInternal {
                 return fInSetText;
             }
 
-          
+            [ComVisible(true)]
+            protected class GridViewEditAccessibleObject : ControlAccessibleObject {
+
+                private PropertyGridView propertyGridView;
+
+                public GridViewEditAccessibleObject(GridViewEdit owner) : base(owner) {
+                    this.propertyGridView = owner.psheet;
+                }
+
+                public override AccessibleStates State {
+                    get {
+                        AccessibleStates states = base.State;
+                        if (this.IsReadOnly) {
+                            states |= AccessibleStates.ReadOnly;
+                        }
+                        else {
+                            states &= ~AccessibleStates.ReadOnly;
+                        }
+                        return states;
+                    }
+                }
+
+                internal override bool IsIAccessibleExSupported() {
+                    return true;
+                }
+
+                internal override object GetPropertyValue(int propertyID) {
+                    if (propertyID == NativeMethods.UIA_IsEnabledPropertyId) {
+                        return !this.IsReadOnly;
+                    }
+                    else if (propertyID == NativeMethods.UIA_IsValuePatternAvailablePropertyId) {
+                        return IsPatternSupported(NativeMethods.UIA_ValuePatternId);
+                    }
+
+                    return base.GetPropertyValue(propertyID);
+                }
+
+                internal override bool IsPatternSupported(int patternId) {
+                    if (patternId == NativeMethods.UIA_ValuePatternId) {
+                        return true;
+                    }
+
+                    return base.IsPatternSupported(patternId);
+                }
+
+                #region IValueProvider
+
+                internal override bool IsReadOnly {
+                    get {
+                        PropertyDescriptorGridEntry propertyDescriptorGridEntry = this.propertyGridView.SelectedGridEntry as PropertyDescriptorGridEntry;
+                        return propertyDescriptorGridEntry == null || propertyDescriptorGridEntry.IsPropertyReadOnly;
+                    }
+                }
+
+                #endregion
+            }
         }
         
         internal interface IMouseHookClient {

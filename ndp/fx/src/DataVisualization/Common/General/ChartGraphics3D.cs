@@ -1080,10 +1080,10 @@ namespace System.Web.UI.DataVisualization.Charting
 
 		/// <summary>
 		/// Draw Graphics Path. This method is introduced because of 
-		/// 
-
-
-
+		/// bug in DrawPath method when Pen Width is bigger then 1.
+		/// </summary>
+		/// <param name="pen">Pen</param>
+		/// <param name="path">Graphics Path</param>
 		private void DrawGraphicsPath( Pen pen, GraphicsPath path )
 		{
 			// Normal case. Very fast Drawing.

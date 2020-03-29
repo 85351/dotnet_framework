@@ -24,7 +24,16 @@ namespace System {
                     }
                     if (version <= 40602) {
                         LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.DoNotLoadLatestRichEditControlSwitchName, true);
-                    }                   
+                    }
+                    if (version <= 40700) {
+                        LocalAppContext.DefineSwitchDefault(AccessibilityImprovements.UseLegacyAccessibilityFeaturesSwitchName, true);
+                    }
+                    if (version <= 40701) {
+                        LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.UseLegacyContextMenuStripSourceControlValueSwitchName, true);
+                        LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.DomainUpDownUseLegacyScrollingSwitchName, true);
+                        LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.AllowUpdateChildControlIndexForTabControlsSwitchName, true);
+                        LocalAppContext.DefineSwitchDefault(AccessibilityImprovements.UseLegacyAccessibilityFeatures2SwitchName, true);
+                    }
                     break;
                 }
             }

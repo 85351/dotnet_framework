@@ -917,8 +917,8 @@ namespace System.Windows.Input
 
                     Style fvs = fe.FocusVisualStyle;
 
-                    // WORKAROUND: (
-
+                    // WORKAROUND: (Bug 1016350) If FocusVisualStyle is the "default" value
+                    // then we load the default FocusVisualStyle from ResourceDictionary.
                     if (fvs == FrameworkElement.DefaultFocusVisualStyle)
                     {
                         fvs = SystemResources.FindResourceInternal(SystemParameters.FocusVisualStyleKey) as Style;
@@ -944,8 +944,8 @@ namespace System.Windows.Input
                             {
                                 Style fvs = fce.FocusVisualStyle;
 
-                                // WORKAROUND: (
-
+                                // WORKAROUND: (Bug 1016350) If FocusVisualStyle is the "default" value
+                                // then we load the default FocusVisualStyle from ResourceDictionary.
                                 if (fvs == FrameworkElement.DefaultFocusVisualStyle)
                                 {
                                     fvs = SystemResources.FindResourceInternal(SystemParameters.FocusVisualStyleKey) as Style;
@@ -1500,7 +1500,7 @@ namespace System.Windows.Input
         // 2. visual is visible UIElement3D
         // 3. visual is IContentHost but not UIElementIsland
         // Note: UIElementIsland is a special element that has only one child and should be excluded
-        private bool IsInNavigationTree(DependencyObject visual)
+        private static bool IsInNavigationTree(DependencyObject visual)
         {
             UIElement uiElement = visual as UIElement;
             if (uiElement != null && uiElement.IsVisible)
@@ -1817,7 +1817,7 @@ namespace System.Windows.Input
             return null;
         }
 
-        private DependencyObject GetParent(DependencyObject e)
+        internal static DependencyObject GetParent(DependencyObject e)
         {
             // For Visual - go up the visual parent chain until we find Visual, Visual3D or IContentHost
             if (e is Visual || e is Visual3D)
@@ -2742,9 +2742,9 @@ namespace System.Windows.Input
                             return true;
 
                         if (direction == FocusNavigationDirection.Right)
-                            return DoubleUtil.GreaterThan(targetRect.Left, sourceRect.Left) || (DoubleUtil.AreClose(targetRect.Left, sourceRect.Left) && IsAncestorOf(sourceElement, targetElement));
+                            return DoubleUtil.GreaterThan(targetRect.Left, sourceRect.Left) || (DoubleUtil.AreClose(targetRect.Left, sourceRect.Left) && IsAncestorOfEx(sourceElement, targetElement));
                         else
-                            return DoubleUtil.LessThan(targetRect.Right, sourceRect.Right) || (DoubleUtil.AreClose(targetRect.Right, sourceRect.Right) && IsAncestorOf(sourceElement, targetElement));
+                            return DoubleUtil.LessThan(targetRect.Right, sourceRect.Right) || (DoubleUtil.AreClose(targetRect.Right, sourceRect.Right) && IsAncestorOfEx(sourceElement, targetElement));
 
                     }
                     break;
@@ -2764,9 +2764,9 @@ namespace System.Windows.Input
                             return true;
 
                         if (direction == FocusNavigationDirection.Down)
-                            return DoubleUtil.GreaterThan(targetRect.Top, sourceRect.Top) || (DoubleUtil.AreClose (targetRect.Top, sourceRect.Top) && IsAncestorOf(sourceElement, targetElement));
+                            return DoubleUtil.GreaterThan(targetRect.Top, sourceRect.Top) || (DoubleUtil.AreClose (targetRect.Top, sourceRect.Top) && IsAncestorOfEx(sourceElement, targetElement));
                         else
-                            return DoubleUtil.LessThan(targetRect.Bottom, sourceRect.Bottom) || (DoubleUtil.AreClose(targetRect.Bottom, sourceRect.Bottom) && IsAncestorOf(sourceElement, targetElement));
+                            return DoubleUtil.LessThan(targetRect.Bottom, sourceRect.Bottom) || (DoubleUtil.AreClose(targetRect.Bottom, sourceRect.Bottom) && IsAncestorOfEx(sourceElement, targetElement));
                     }
                     break;
 
@@ -3353,10 +3353,10 @@ namespace System.Windows.Input
                     return false;
                 }
 
-                // 
-
-
-
+                // Bug 940610: no way to get PresentationSource of event in PostProcessInput
+                // WORKAROUND: For now I will try to get the source of the event with
+                //             PresentationSource.FromVisual.  If that fails, try to get the
+                //             source of the active window.
                 PresentationSource source = null;
 
                 if (eventSource != null)
@@ -3449,31 +3449,31 @@ namespace System.Windows.Input
         // List of WeakReferences to delegates to be invoked when EnterMenuMode happens
         private WeakReferenceList _weakEnterMenuModeHandlers;
 
-        // Fix for 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        // Fix for bug 936302: (JevanSa)
+        //     The DefaultWindowProcWorker (windows/core/ntuser/kernel/dwp.c)
+        //     listens for ALT down followed by ALT up with nothing in between.
+        //     When ALT goes down they set QF_FMENUSTATUS.  When ALT up happens,
+        //     if QF_FMENUSTATUS is still set, they open the system menu (or
+        //     menu for the window if there is one).  If any keystrokes happen
+        //     in between, they clear QF_FMENUSTATUS.
+        //
+        //     Consider the following sequence:
+        //       1) KeyDown(Alt) - neither Win32 nor Avalon respond
+        //       2) KeyUp(Alt) - Avalon handles the event, Win32 is skipped
+        //       3) KeyDown(Alt) - Avalon handles the event, Win32 is skipped
+        //       4) KeyUp(Alt) - Avalon does not respond, Win32 handles the message
+        //                       (and enters "Invisible" MenuMode)
+        //
+        //     Here, from the point of view of the DWP, there was just ALT down
+        //     followed by ALT up.  We must fool the DWP somehow so that they
+        //     clear clear the QF_FMENUSTATUS bit before #4.
+        //
+        //     Currently the best way Microsoft and I have come up with is to
+        //     mark the event has handled in case #4 so that the DWP
+        //     never sees the ALT up in #4.  We set this bit when #2 happens.
+        //     If we see an unhandled ALT-up and this bit is set, we mark the
+        //     event as handled.  If we see any unhandled key down or mouse up/down
+        //     we can clear this bit.
         private bool _win32MenuModeWorkAround;
 
         #endregion

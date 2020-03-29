@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Security;
 using System.Security.Permissions;
 using System.Windows.Controls;
+using System.Windows.Diagnostics;
 using System.Windows.Media;
 using System.Windows.Markup;
 
@@ -306,7 +307,7 @@ namespace System.Windows
             }
 
             // Logical Parent must first be dropped before you are attached to a newParent
-            // This mitigates illegal tree state caused by logical child stealing as illustrated in 
+            // This mitigates illegal tree state caused by logical child stealing as illustrated in bug 970706
             if (_parent != null && newParent != null && _parent != newParent)
             {
                 throw new System.InvalidOperationException(SR.Get(SRID.HasLogicalParent));
@@ -317,6 +318,9 @@ namespace System.Windows
             {
                 throw new System.InvalidOperationException(SR.Get(SRID.CannotBeSelfParent));
             }
+
+            // invalid during a VisualTreeChanged event
+            VisualDiagnostics.VerifyVisualTreeChange(this);
 
             // Logical Parent implies no InheritanceContext
             if (newParent != null)

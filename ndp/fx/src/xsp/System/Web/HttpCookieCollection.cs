@@ -99,9 +99,9 @@ namespace System.Web {
             }
         }
 
-        // VSO 
-
-
+        // VSO bug #289778: when copying cookie from Response to Request, there is side effect
+        // which changes Added property and causes dup cookie in response header
+        // This method is meant to append cookie from one collection without changing cookie object
         internal void Append(HttpCookieCollection cookies) {
             for (int i = 0; i < cookies.Count; ++i) {
                 //BaseGet method doesn't trigger validation, while Get method does

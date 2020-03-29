@@ -35,7 +35,7 @@ namespace System.Windows.Input
         ///     This data is not safe to expose as it holds refrence to IPimcTablet
         /// </SecurityNote>
         [SecurityCritical]
-        public SecurityCriticalDataClass<IPimcTablet> PimcTablet;
+        public SecurityCriticalDataClass<IPimcTablet2> PimcTablet;
         public int Id;
         public string Name;
         public string PlugAndPlayId;
@@ -45,6 +45,14 @@ namespace System.Windows.Input
         public ReadOnlyCollection<StylusPointProperty> StylusPointProperties;
         public int PressureIndex;
         public StylusDeviceInfo[] StylusDevicesInfo;
+
+        /// <summary>
+        /// The GIT key for a WISP tablet COM object.
+        /// </summary>
+        /// <SecurityNote>
+        /// Critical:   This data can be used to manipulate COM objects in the GIT.
+        /// </SecurityNote>
+        public UInt32 WispTabletKey { [SecurityCritical] get; [SecurityCritical] set; }
     }    
 }
 

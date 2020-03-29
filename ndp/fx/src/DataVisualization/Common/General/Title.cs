@@ -1518,9 +1518,9 @@ namespace System.Web.UI.DataVisualization.Charting
 				}
 
 				// NOTE: This approach for text selection can not be used with
-				// Flash animations because of the 
-
-
+				// Flash animations because of the bug in Flash viewer. When the 
+				// button shape is placed in the last frame the Alpha value of the
+				// color is ignored.
 
 				// NOTE: Feature tested again with Flash Player 7 and it seems to be 
 				// working fine. Code below is commented to enable selection in flash
@@ -1637,7 +1637,7 @@ namespace System.Web.UI.DataVisualization.Charting
                     if (this.GetTextOrientation() == TextOrientation.Rotated270)
                     {
                         // IMPORTANT !
-                        // Right to Left flag has to be used because of 
+                        // Right to Left flag has to be used because of bug with .net with multi line vertical text. As soon as .net bug is fixed this flag HAS TO be removed. Bug number 1870.
                         format.FormatFlags |= StringFormatFlags.DirectionVertical | StringFormatFlags.DirectionRightToLeft;
 
                         // Save old graphics transformation
@@ -1657,7 +1657,7 @@ namespace System.Web.UI.DataVisualization.Charting
                     else if (this.GetTextOrientation() == TextOrientation.Rotated90)
                     {
                         // IMPORTANT !
-                        // Right to Left flag has to be used because of 
+                        // Right to Left flag has to be used because of bug with .net with multi line vertical text. As soon as .net bug is fixed this flag HAS TO be removed. Bug number 1870.
                         format.FormatFlags |= StringFormatFlags.DirectionVertical | StringFormatFlags.DirectionRightToLeft;
                     }
                 }

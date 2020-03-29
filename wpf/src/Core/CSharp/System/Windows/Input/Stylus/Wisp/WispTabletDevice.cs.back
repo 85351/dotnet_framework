@@ -29,13 +29,20 @@ namespace System.Windows.Input
 
         /////////////////////////////////////////////////////////////////////
         /// <SecurityNote>
-        ///     Critical:  creates security critical data (IpimcTablet)
+        ///     Critical:  creates security critical data (IPimcTablet2)
         /// </SecurityNote>
         [SecurityCritical]
         internal WispTabletDevice(TabletDeviceInfo tabletInfo, PenThread penThread)
             : base(tabletInfo)
         {
             _penThread = penThread;
+
+            // DDVSO:514949
+            // Constructing a WispTabletDevice means we will actually use this tablet for input purposes.
+            // Lock the tablet and underlying WISP tablet at this point.
+            // This is balanced in DisposeOrDeferDisposal.
+            _penThread.WorkerAcquireTabletLocks(tabletInfo.PimcTablet.Value, tabletInfo.WispTabletKey);
+
             int count = tabletInfo.StylusDevicesInfo.Length;
 
             WispStylusDevice[] styluses = new WispStylusDevice[count];
@@ -129,7 +136,6 @@ namespace System.Windows.Input
             return null;  // Nothing to add
         }
 
-
         /////////////////////////////////////////////////////////////////////
         /// <summary>
         ///     Returns the element that input from this device is sent to.
@@ -220,7 +226,7 @@ namespace System.Windows.Input
                                         hwnd, contexts,
                                         supportInRange, isIntegrated, result.ContextId,
                                         result.CommHandle != null ? result.CommHandle.Value : IntPtr.Zero,
-                                        Id);
+                                        Id, result.WispContextKey);
             return penContext;
         }
 
@@ -378,11 +384,15 @@ namespace System.Windows.Input
                 // DDVSO:174153
                 // Force tablets to clean up as soon as they are disposed.  This helps to reduce
                 // COM references that might be waiting for RCWs to finalize.
-                IPimcTablet tablet = _tabletInfo.PimcTablet?.Value;
+                IPimcTablet2 tablet = _tabletInfo.PimcTablet?.Value;
                 _tabletInfo.PimcTablet = null;
 
                 if (tablet != null)
                 {
+                    // DDVSO:514949
+                    // Balance calls in PenThreadWorker.GetTabletInfoHelper and CPimcTablet::Init.
+                    PenThread.WorkerReleaseTabletLocks(tablet, _tabletInfo.WispTabletKey);
+                    
                     Marshal.ReleaseComObject(tablet);
                 }
 
@@ -445,6 +455,18 @@ namespace System.Windows.Input
             set
             {
                 _queuedEventCount = value;
+            }
+        }
+
+        /// <summary>
+        /// The GIT key for the WISP tablet COM object.
+        /// </summary>
+        internal UInt32 WispTabletKey
+        {
+            [SecurityCritical]
+            get
+            {
+                return _tabletInfo.WispTabletKey;
             }
         }
 

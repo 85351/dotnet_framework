@@ -97,7 +97,7 @@ namespace System.Windows.Forms.VisualStyles {
             return IsCombinationDefined(element.ClassName, element.Part);
         }
 
-        private static bool IsCombinationDefined(string className, int part) {
+        internal static bool IsCombinationDefined(string className, int part) {
             bool returnVal = false;
 
             if (!IsSupported) {
@@ -408,7 +408,7 @@ namespace System.Windows.Forms.VisualStyles {
             }
 
             // VSWhidbey #282742: DrawThemeIcon currently seems to do nothing, but still return S_OK. As a workaround,
-            // we call DrawImage on the graphics object itself for now. A 
+            // we call DrawImage on the graphics object itself for now. A bug has been opened in Windows OS Bugs on this.
 
             //int returnVal = NativeMethods.S_FALSE;
             //using( WindowsGraphicsWrapper wgr = new WindowsGraphicsWrapper( dc, AllGraphicsProperties ) ) {

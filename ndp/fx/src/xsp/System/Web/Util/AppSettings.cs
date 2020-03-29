@@ -133,6 +133,12 @@ namespace System.Web.Util {
                             if (settings == null || !int.TryParse(settings["aspnet:RequestQueueLimitPerSession"], out _requestQueueLimitPerSession) || _requestQueueLimitPerSession < 0)
                                 _requestQueueLimitPerSession = BinaryCompatibility.Current.TargetsAtLeastFramework463 ? DefaultRequestQueueLimitPerSession : UnlimitedRequestsPerSession;
 
+                            if (settings == null || !Boolean.TryParse(settings["aspnet:LogMembershipPasswordFormatWarning"], out _logMembershipPasswordFormatWarning))
+                                _logMembershipPasswordFormatWarning = true;
+
+                            if (settings == null || !Boolean.TryParse(settings["aspnet:AvoidDuplicatedSetCookie"], out _avoidDuplicatedSetCookie))
+                                _avoidDuplicatedSetCookie = false;
+
                             _settingsInitialized = true;
                         }
                     }
@@ -504,6 +510,26 @@ namespace System.Web.Util {
             get {
                 EnsureSettingsLoaded();
                 return _requestQueueLimitPerSession;
+            }
+        }
+
+        // true [default] to log warning if password format is not secure
+        // false -- Not to log warning if password format is not secure
+        private static bool _logMembershipPasswordFormatWarning;
+        internal static bool LogMembershipPasswordFormatWarning {
+            get {
+                EnsureSettingsLoaded();
+                return _logMembershipPasswordFormatWarning;
+            }
+        }
+
+        // false [default] 
+        // true - adopt new behavior to fix duplicated cookie issue.
+        private static bool _avoidDuplicatedSetCookie;
+        internal static bool AvoidDuplicatedSetCookie {
+            get {
+                EnsureSettingsLoaded();
+                return _avoidDuplicatedSetCookie;
             }
         }
     }

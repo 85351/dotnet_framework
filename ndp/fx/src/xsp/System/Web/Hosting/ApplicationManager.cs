@@ -61,6 +61,7 @@ namespace System.Web.Hosting {
 
         private const string _clrQuirkAppSettingsAppContextPrefix = "AppContext.SetSwitch:";
         private const string _regexMatchTimeoutKey = "REGEX_DEFAULT_MATCH_TIMEOUT";
+        private const string _configBuildersIgnoreLoadFailuresSwitch = "ConfigurationBuilders.IgnoreLoadFailure";   // Keep in sync with System.Configuration
         private static readonly StrongName _mwiV1StrongName = GetMicrosoftWebInfrastructureV1StrongName();
 
         private static Object _applicationManagerStaticLock = new Object();
@@ -933,13 +934,15 @@ namespace System.Web.Hosting {
                     inClientBuildManager = true;
                     // The default hosting policy in VS has changed (from MultiDomainHost to MultiDomain), 
                     // so we need to specify explicitly to allow generated assemblies 
-                    // to be unloaded subsequently. (Dev10 
+                    // to be unloaded subsequently. (Dev10 bug)
                     setup.LoaderOptimization = LoaderOptimization.MultiDomainHost;
                 }
             }
             try {
                 bool requireHostExecutionContextManager = false;
                 bool requireHostSecurityManager = false;
+
+                AppDomain.CurrentDomain.SetData(_configBuildersIgnoreLoadFailuresSwitch, true);
 
                 uncTokenConfig = appHost.GetConfigToken();
                 if (uncTokenConfig != IntPtr.Zero) {

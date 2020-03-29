@@ -235,6 +235,10 @@ namespace System.Data.SqlClient {
         // useful when talking to downlevel/uplevel server.
         private bool _serverSupportsColumnEncryption = false;
 
+        // now data length is 1 byte
+        // First bit is 1 indicating client support failover partner with readonly intent
+        private static readonly byte[]  s_FeatureExtDataAzureSQLSupportFeatureRequest = { 0x01 };
+
         /// <summary>
         /// Get or set if column encryption is supported by the server.
         /// </summary>
@@ -246,6 +250,16 @@ namespace System.Data.SqlClient {
                 _serverSupportsColumnEncryption = value;
             }
         }
+
+        /// <summary>
+        /// TCE version supported by the server
+        /// </summary>
+        internal byte TceVersionSupported { get; set; }
+
+        /// <summary>
+        /// Type of enclave being used by the server
+        /// </summary>
+        internal string EnclaveType { get; set; }
 
         internal TdsParser(bool MARS, bool fAsynchronous) {
             _fMARS = MARS; // may change during Connect to pre Yukon servers
@@ -387,7 +401,9 @@ namespace System.Data.SqlClient {
                               bool withFailover,
                               bool isFirstTransparentAttempt,
                               SqlAuthenticationMethod authType,
-                              bool disableTnir) {
+                              bool disableTnir,
+                              SqlAuthenticationProviderManager sqlAuthProviderManager
+                              ) {
             if (_state != TdsParserState.Closed) {
                 Debug.Assert(false, "TdsParser.Connect called on non-closed connection!");
                 return;
@@ -421,6 +437,9 @@ namespace System.Data.SqlClient {
                 }
                 else if (authType == SqlAuthenticationMethod.SqlPassword) {
                     Bid.Trace("<sc.TdsParser.Connect|SEC> SQL Password authentication\n");
+                }
+                else if (authType == SqlAuthenticationMethod.ActiveDirectoryInteractive) {
+                    Bid.Trace("<sc.TdsParser.Connect|SEC> Active Directory Interactive authentication\n");
                 }
                 else{
                     Bid.Trace("<sc.TdsParser.Connect|SEC> SQL authentication\n");
@@ -541,10 +560,12 @@ namespace System.Data.SqlClient {
 
             if (authType == SqlAuthenticationMethod.ActiveDirectoryPassword || (authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _connHandler._fedAuthRequired)) {
                 Debug.Assert(!integratedSecurity, "The legacy Integrated Security connection string option cannot be true when using Active Directory Authentication Library for SQL Server Based workflows.");
-
-                LoadADALLibrary();
-                if (Bid.AdvancedOn) {
-                    Bid.Trace("<sc.TdsParser.Connect|SEC> Active directory authentication.Loaded Active Directory Authentication Library for SQL Server\n");
+                var authProvider = sqlAuthProviderManager.GetProvider(authType);
+                if (authProvider != null && authProvider.GetType() == typeof(ActiveDirectoryNativeAuthenticationProvider)) {
+                    LoadADALLibrary();
+                    if (Bid.AdvancedOn) {
+                        Bid.Trace("<sc.TdsParser.Connect|SEC> Active directory authentication.Loaded Active Directory Authentication Library for SQL Server\n");
+                    }
                 }
             }
 
@@ -562,7 +583,7 @@ namespace System.Data.SqlClient {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
-            // create a new packet encryption changes the internal packet size 
+            // create a new packet encryption changes the internal packet size Bug# 228403
             try {}   // EmptyTry/Finally to avoid FXCop violation
             finally {
                 _physicalStateObj.ClearAllWritePackets();
@@ -856,8 +877,6 @@ namespace System.Data.SqlClient {
 
             bool isYukonOrLater = false;
 
-            // 
-
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = _physicalStateObj.TryReadNetworkPacket();
             if (!result) { throw SQL.SynchronousCallMayNotPend(); }
@@ -869,8 +888,12 @@ namespace System.Data.SqlClient {
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
 
-            // SEC 
-            byte[] payload = new byte[_physicalStateObj._inBytesRead - _physicalStateObj._inBytesUsed - _physicalStateObj._inputHeaderLen];
+            if (!_physicalStateObj.TryProcessHeader()) { throw SQL.SynchronousCallMayNotPend(); }
+
+            if (_physicalStateObj._inBytesPacket > TdsEnums.MAX_PACKET_SIZE || _physicalStateObj._inBytesPacket <= 0) {
+                throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+            }
+            byte[] payload = new byte[_physicalStateObj._inBytesPacket];
 
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             result = _physicalStateObj.TryReadByteArray(payload, 0, payload.Length);
@@ -992,7 +1015,7 @@ namespace System.Data.SqlClient {
                                 ThrowExceptionAndWarning(_physicalStateObj);
                             }
 
-                            // create a new packet encryption changes the internal packet size 
+                            // create a new packet encryption changes the internal packet size Bug# 228403
                             try {} // EmptyTry/Finally to avoid FXCop violation
                             finally {
                                 _physicalStateObj.ClearAllWritePackets();
@@ -1229,10 +1252,10 @@ namespace System.Data.SqlClient {
             breakConnection &= (TdsParserState.Closed != _state);
             if (breakConnection) {
                 if ((_state == TdsParserState.OpenNotLoggedIn) && (_connHandler.ConnectionOptions.TransparentNetworkIPResolution || _connHandler.ConnectionOptions.MultiSubnetFailover || _loginWithFailover) && (temp.Count == 1) && ((temp[0].Number == TdsEnums.TIMEOUT_EXPIRED) || (temp[0].Number == TdsEnums.SNI_WAIT_TIMEOUT))) {
-                    // DevDiv2 
-
-
-
+                    // DevDiv2 Bug 459546: With "MultiSubnetFailover=yes" in the Connection String, SQLClient incorrectly throws a Timeout using shorter time slice (3-4 seconds), not honoring the actual 'Connect Timeout'
+                    // http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/459546
+                    // For Multisubnet Failover we slice the timeout to make reconnecting faster (with the assumption that the server will not failover instantaneously)
+                    // However, when timeout occurs we need to not doom the internal connection and also to mark the TdsParser as closed such that the login will be will retried
                     breakConnection = false;
                     Disconnect();
                 }
@@ -1379,10 +1402,10 @@ namespace System.Data.SqlClient {
                     len-=iColon;
                     /*
                         The error message should come back in the following format: "TCP Provider: MESSAGE TEXT"
-                        Fix 
-
-
-*/
+                        Fix Bug 370686, if the message is recieved on a Win9x OS, the error message will not contain MESSAGE TEXT 
+                        per Bug: 269574.  If we get a errormessage with no message text, just return the entire message otherwise 
+                        return just the message text.
+                    */
                     if (len > 0) { 
                         errorMessage = errorMessage.Substring(iColon, len); 
                     }
@@ -1909,8 +1932,8 @@ namespace System.Data.SqlClient {
                                 // anyways so we need to consume all errors.  This is not the case
                                 // if we have already given out a reader.  If we have already given out
                                 // a reader we need to throw the error but not halt further processing.  We used to
-                                // halt processing and that was a 
-
+                                // halt processing and that was a bug preventing the user from
+                                // processing subsequent results.
 
                                 if (null != dataStream) { // Webdata 104560
                                     if (!dataStream.IsInitialized) {
@@ -2870,9 +2893,25 @@ namespace System.Data.SqlClient {
                 }
             } while (featureId != TdsEnums.FEATUREEXT_TERMINATOR);
 
-            // Check if column encryption was on and feature wasn't acknowledged.
-            if (_connHandler.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled && !IsColumnEncryptionSupported) {
+            // Check if column encryption was on and feature wasn't acknowledged and we aren't going to be routed to another server.
+            if (this.Connection.RoutingInfo == null
+                && _connHandler.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled
+                && !IsColumnEncryptionSupported) {
                 throw SQL.TceNotSupported ();
+            }
+
+            // Check if enclave attestation url was specified and server does not support enclave computations and we aren't going to be routed to another server.
+            if (this.Connection.RoutingInfo == null
+                && (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl))
+                && (TceVersionSupported < TdsEnums.MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT))  {
+                throw SQL.EnclaveComputationsNotSupported ();
+            }
+
+            // Check if enclave attestation url was specified and server does not return an enclave type and we aren't going to be routed to another server.
+            if (this.Connection.RoutingInfo == null
+                && (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl))
+                && string.IsNullOrWhiteSpace(EnclaveType) )  {
+                throw SQL.EnclaveTypeNotReturned ();
             }
 
             return true;
@@ -3245,8 +3284,8 @@ namespace System.Data.SqlClient {
 
             string server;
 
-            // MDAC 
-
+            // MDAC bug #49307 - server sometimes does not send over server field! In those cases
+            // we will use our locally cached value.
             if (byteLen == 0) {
                 server = _server;
             }
@@ -4835,8 +4874,8 @@ namespace System.Data.SqlClient {
                     break;
 
                 case SqlDbType.Timestamp:
-                    // Dev10 
-
+                    // Dev10 Bug #479607 - this should have been the same as SqlDbType.Binary, but it's a rejected breaking change
+                    // Dev10 Bug #752790 - don't assert when it does happen
                     break;
 
                 default:
@@ -6994,6 +7033,9 @@ namespace System.Data.SqlClient {
                             case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
                                 workflow = TdsEnums.ADALWORKFLOW_ACTIVEDIRECTORYINTEGRATED;
                                 break;
+                            case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                                workflow = TdsEnums.ADALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE;
+                                break;
                             default:
                                 Debug.Assert(false, "Unrecognized Authentication type for fedauth ADAL request");
                                 break;
@@ -7037,6 +7079,24 @@ namespace System.Data.SqlClient {
 
             return len;
         }
+
+        internal int WriteAzureSQLSupportFeatureRequest(bool write /* if false just calculates the length */) {
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = featureData
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_AZURESQLSUPPORT);
+
+                // Feature Data length
+                WriteInt(s_FeatureExtDataAzureSQLSupportFeatureRequest.Length, _physicalStateObj);
+
+                _physicalStateObj.WriteByteArray(s_FeatureExtDataAzureSQLSupportFeatureRequest, s_FeatureExtDataAzureSQLSupportFeatureRequest.Length, 0);
+            }
+
+            return len;
+        }
+
 
         internal void TdsLogin(SqlLogin rec,
                                TdsEnums.FeatureExtension requestedFeatures,
@@ -7169,6 +7229,9 @@ namespace System.Data.SqlClient {
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0) {
                         length += WriteGlobalTransactionsFeatureRequest(false);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLSupport) != 0) {
+                        length += WriteAzureSQLSupportFeatureRequest(false);
                     }
                     length++; // for terminator
                 }
@@ -7404,6 +7467,9 @@ namespace System.Data.SqlClient {
                     if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0) {
                         WriteGlobalTransactionsFeatureRequest(true);
                     };
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLSupport) != 0) {
+                        WriteAzureSQLSupportFeatureRequest(true);
+                    }
                     _physicalStateObj.WriteByte(0xFF); // terminator
                 }
             } // try
@@ -7842,8 +7908,8 @@ namespace System.Data.SqlClient {
 
                 bool originalThreadHasParserLock = _connHandler.ThreadHasParserLockForClose;
                 try {
-                    // Dev11 
-
+                    // Dev11 Bug 385286 : ExecuteNonQueryAsync hangs when trying to write a parameter which generates ArgumentException and while handling that exception the server disconnects the connection
+                    // Need to set this to true such that if we have an error sending\processing the attention, we won't deadlock ourselves
                     _connHandler.ThreadHasParserLockForClose = true;
 
                     // If _outputPacketNumber prior to ResetBuffer was not equal to 1, a packet was already
@@ -7860,7 +7926,7 @@ namespace System.Data.SqlClient {
             Bid.Trace("<sc.TdsParser.FailureCleanup|ERR> Exception rethrown. \n");
         }
 
-        internal Task TdsExecuteSQLBatch(string text, int timeout, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false) {
+        internal Task TdsExecuteSQLBatch(string text, int timeout, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false, byte[] enclavePackage = null) {
             if (TdsParserState.Broken == State || TdsParserState.Closed == State) {
                 return null;
             }
@@ -7917,6 +7983,8 @@ namespace System.Data.SqlClient {
                 }
 
                 stateObj._outputMessageType = TdsEnums.MT_SQL;
+
+                WriteEnclaveInfo(stateObj, enclavePackage);
 
                 WriteString(text, text.Length, 0, stateObj);
 
@@ -8048,6 +8116,9 @@ namespace System.Data.SqlClient {
                           WriteShort((short)rpcext.options, stateObj);
                       }
 
+                      byte[] enclavePackage = cmd.enclavePackage != null ? cmd.enclavePackage.EnclavePackageBytes : null;
+                      WriteEnclaveInfo(stateObj, enclavePackage);
+
                       // Stream out parameters
                       SqlParameter[] parameters = rpcext.parameters;
 
@@ -8138,7 +8209,7 @@ namespace System.Data.SqlClient {
                                   throw SQL.PrecisionValueOutOfRange(precision);
                               }
 
-                              // 
+                              // bug 49512, make sure the value matches the scale the user enters
                               if (!isNull) {
                                   if (isSqlVal) {
                                       value = AdjustSqlDecimalScale((SqlDecimal)value, scale);
@@ -8555,8 +8626,23 @@ namespace System.Data.SqlClient {
               }
           }
       }
-        
-      private void FinalizeExecuteRPC(TdsParserStateObject stateObj) {
+
+        private void WriteEnclaveInfo(TdsParserStateObject stateObj, byte[] enclavePackage) {
+            //If the server supports enclave computations, write enclave info.
+            if (TceVersionSupported >= TdsEnums.MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT) {
+                if (enclavePackage != null) {
+                    //EnclavePackage Length
+                    WriteShort((short) enclavePackage.Length, stateObj);
+                    stateObj.WriteByteArray(enclavePackage, enclavePackage.Length, 0);
+                }
+                else {
+                    //EnclavePackage Length
+                    WriteShort((short) 0, stateObj);
+                }
+            }
+        }
+
+        private void FinalizeExecuteRPC(TdsParserStateObject stateObj) {
           stateObj.SniContext = SniContext.Snix_Read;
           _asyncWrite = false;
       }

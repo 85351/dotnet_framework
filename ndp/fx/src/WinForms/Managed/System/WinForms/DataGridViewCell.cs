@@ -1168,8 +1168,8 @@ namespace System.Windows.Forms
         /// <include file='doc\DataGridViewCell.uex' path='docs/doc[@for="DataGridViewCell.Clone"]/*' />
         public virtual object Clone()
         {
-            // SECREVIEW : Late-binding does not represent a security thread, see 
-
+            // SECREVIEW : Late-binding does not represent a security thread, see bug#411899 for more info..
+            //
             DataGridViewCell dataGridViewCell = (DataGridViewCell) System.Activator.CreateInstance(this.GetType());
             CloneInternal(dataGridViewCell);
             return dataGridViewCell;
@@ -3351,8 +3351,8 @@ namespace System.Windows.Forms
                     OnCellErrorAreaMouseLeaveInternal();
                     break;
                 case DATAGRIDVIEWCELL_flagAreaNotSet:
-                    // Microsoft: there seems to be a 
-
+                    // Microsoft: there seems to be a bug in setting the HorizontalOffset when scrolling
+                    // Debug.Assert(false, "if we leave the cell we should already have set the CurrentMouseLocation to Data Area or Error Area");
                     break;
                 default:
                     Debug.Assert(false, "there are only three possible choices for the CurrentMouseLocation");
@@ -4705,6 +4705,8 @@ namespace System.Windows.Forms
         ]
         protected class DataGridViewCellAccessibleObject : AccessibleObject
         {
+            private int[] runtimeId = null; // Used by UIAutomation
+
             DataGridViewCell owner;
 
             /// <include file='doc\DataGridViewCell.uex' path='docs/doc[@for="DataGridViewCellAccessibleObject.DataGridViewCellAccessibleObject1"]/*' />
@@ -4752,6 +4754,11 @@ namespace System.Windows.Forms
             {
                 get
                 {
+                    if (AccessibilityImprovements.Level2)
+                    {
+                        return null;
+                    }
+
                     return this.owner.GetType().Name + "(" + owner.GetType().BaseType.Name + ")";
                 }
             }
@@ -4850,6 +4857,11 @@ namespace System.Windows.Forms
                     if (this.owner.Selected)
                     {
                         state |= AccessibleStates.Selected;
+                    }
+
+                    if (AccessibilityImprovements.Level1 && this.owner.ReadOnly)
+                    {
+                        state |= AccessibleStates.ReadOnly;
                     }
 
                     Rectangle cellBounds;
@@ -5341,6 +5353,107 @@ namespace System.Windows.Forms
                     (flags & (AccessibleSelection.AddSelection | AccessibleSelection.TakeSelection)) == 0)
                 {
                     this.owner.Selected = false;
+                }
+            }
+
+            internal override int[] RuntimeId
+            {
+                get
+                {
+                    if (runtimeId == null)
+                    {
+                        runtimeId = new int[2];
+                        runtimeId[0] = 0x2a; // first item is static - 0x2a
+                        runtimeId[1] = this.GetHashCode();
+                    }
+
+                    return runtimeId;
+                }
+            }
+
+            internal override bool IsIAccessibleExSupported()
+            {
+                if (AccessibilityImprovements.Level2)
+                {
+                    return true;
+                }
+
+                return base.IsIAccessibleExSupported();
+            }
+
+            internal override object GetPropertyValue(int propertyID)
+            {
+                if (propertyID == NativeMethods.UIA_IsTableItemPatternAvailablePropertyId)
+                {
+                    return IsPatternSupported(NativeMethods.UIA_TableItemPatternId);
+                }
+                else if (propertyID == NativeMethods.UIA_IsGridItemPatternAvailablePropertyId)
+                {
+                    return IsPatternSupported(NativeMethods.UIA_GridItemPatternId);
+                }
+
+                return base.GetPropertyValue(propertyID);
+            }
+
+            internal override bool IsPatternSupported(int patternId)
+            {
+                if ((patternId == NativeMethods.UIA_TableItemPatternId ||
+                    patternId == NativeMethods.UIA_GridItemPatternId) && 
+                    // We don't want to implement patterns for header cells
+                    this.owner.ColumnIndex != -1 && this.owner.RowIndex != -1)
+                {
+                    return true;
+                }
+
+                return base.IsPatternSupported(patternId);
+            }
+
+            [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            internal override UnsafeNativeMethods.IRawElementProviderSimple[] GetRowHeaderItems()
+            {
+                if (this.owner.DataGridView.RowHeadersVisible && this.owner.OwningRow.HasHeaderCell)
+                {
+                    return new UnsafeNativeMethods.IRawElementProviderSimple[1] { this.owner.OwningRow.HeaderCell.AccessibilityObject };
+                }
+
+                return null;
+            }
+
+            [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+            internal override UnsafeNativeMethods.IRawElementProviderSimple[] GetColumnHeaderItems()
+            {
+                if (this.owner.DataGridView.ColumnHeadersVisible && this.owner.OwningColumn.HasHeaderCell)
+                {
+                    return new UnsafeNativeMethods.IRawElementProviderSimple[1] { this.owner.OwningColumn.HeaderCell.AccessibilityObject };
+                }
+
+                return null;
+            }
+
+            internal override int Row
+            {
+                [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                get
+                {
+                    return this.owner.OwningRow != null ? this.owner.OwningRow.Index : -1;
+                }
+            }
+
+            internal override int Column
+            {
+                [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                get
+                {
+                    return this.owner.OwningColumn != null ? this.owner.OwningColumn.Index : -1;
+                }
+            }
+
+            internal override UnsafeNativeMethods.IRawElementProviderSimple ContainingGrid
+            {
+                [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+                get
+                {
+                    return this.owner.DataGridView.AccessibilityObject;
                 }
             }
         }

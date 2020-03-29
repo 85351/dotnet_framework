@@ -117,9 +117,37 @@ namespace System.Windows.Input
         ///             (via HwndSource.InputFilterMessage).
         /// </SecurityNote>
         [SecurityCritical]
-        internal PenContextInfo WorkerCreateContext(IntPtr hwnd, IPimcTablet pimcTablet)
+        internal PenContextInfo WorkerCreateContext(IntPtr hwnd, IPimcTablet2 pimcTablet)
         {
             return _penThreadWorker.WorkerCreateContext(hwnd, pimcTablet);
+        }
+
+        /// <summary>
+        /// Acquires a WISP/PenIMC tablet object's external lock on the PenThread.
+        /// </summary>
+        /// <param name="gitKey">The GIT key for the object.</param>
+        /// <returns>True if successful, false otherwise.</returns>
+        /// <SecurityNote>
+        ///     Critical - Calls PenThreadWorker.WorkerAcquireTabletLocks.
+        /// </SecurityNote>
+        [SecurityCritical]
+        internal bool WorkerAcquireTabletLocks(IPimcTablet2 tablet, UInt32 wispTabletKey)
+        {
+            return _penThreadWorker.WorkerAcquireTabletLocks(tablet, wispTabletKey);
+        }
+
+        /// <summary>
+        /// Releases a WISP/PenIMC tablet object's external lock on the PenThread.
+        /// </summary>
+        /// <param name="gitKey">The GIT key for the object.</param>
+        /// <returns>True if successful, false otherwise.</returns>
+        /// <SecurityNote>
+        ///     Critical - Calls PenThreadWorker.WorkerReleaseTabletLocks.
+        /// </SecurityNote>
+        [SecurityCritical]
+        internal bool WorkerReleaseTabletLocks(IPimcTablet2 tablet, UInt32 wispTabletKey)
+        {
+            return _penThreadWorker.WorkerReleaseTabletLocks(tablet, wispTabletKey);
         }
 
         /// <SecurityNote>
@@ -127,7 +155,7 @@ namespace System.Windows.Input
         ///             Called by PenThreadPool.WorkerRefreshCursorInfo.
         /// </SecurityNote>
         [SecurityCritical]
-        internal StylusDeviceInfo[] WorkerRefreshCursorInfo(IPimcTablet pimcTablet)
+        internal StylusDeviceInfo[] WorkerRefreshCursorInfo(IPimcTablet2 pimcTablet)
         {
             return _penThreadWorker.WorkerRefreshCursorInfo(pimcTablet);
         }
@@ -147,7 +175,7 @@ namespace System.Windows.Input
         ///             Called by PenThreadPool.WorkerGetUpdatedTabletRect.
         /// </SecurityNote>
         [SecurityCritical]
-        internal TabletDeviceSizeInfo WorkerGetUpdatedSizes(IPimcTablet pimcTablet)
+        internal TabletDeviceSizeInfo WorkerGetUpdatedSizes(IPimcTablet2 pimcTablet)
         {
             return _penThreadWorker.WorkerGetUpdatedSizes(pimcTablet);
         }

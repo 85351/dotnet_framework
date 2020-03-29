@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{47084ad4-dbb3-4e64-81f4-702858855515}</ProjectGuid>
+    <ProjectGuid>{8a86370d-469c-49f1-9d5f-83783f3d625e}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>WsatUI</AssemblyName>
@@ -20,31 +20,31 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\clr\src\bcl\mscorlib.csproj">
-      <Project>{b2eee131-63ac-43b5-a843-e555ae346910}</Project>
+      <Project>{74ef8966-be63-49d5-84bc-6c2cb0724069}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\..\fx\src\System.csproj">
-      <Project>{511d1c68-d48e-465d-bae9-4448a54d9531}</Project>
+      <Project>{df88a904-fb7a-40a0-8bc0-4e757ca35923}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\..\fx\src\data\System.Data.csproj">
-      <Project>{0a776382-2e17-48c6-9a71-4cd18671fbd6}</Project>
+      <Project>{d2315572-b0d2-417a-ab3b-42ec44092138}</Project>
       <Name>System.Data</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\..\fx\src\System.Drawing.csproj">
-      <Project>{ce1925d0-c475-4233-9cca-bb74a2c8ce3a}</Project>
+      <Project>{8f0fc5b8-9479-461b-b086-05f16b8f04e8}</Project>
       <Name>System.Drawing</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\..\fx\src\wmi\managed\System\Management\System.Management.csproj">
-      <Project>{cd7f4978-e8f5-4d16-be58-4efb62b89218}</Project>
+      <Project>{18468492-7573-41d9-9dfb-884ba49cd0ef}</Project>
       <Name>System.Management</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\..\clr\src\managedlibraries\security\System.Security.csproj">
-      <Project>{8eb6db73-d251-4cfa-b544-c30357e416ce}</Project>
+      <Project>{e3e69a14-5289-49a3-beb3-1504d2c91c9d}</Project>
       <Name>System.Security</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\..\fx\src\System.Windows.Forms.csproj">
-      <Project>{6d6783ab-9f81-48ed-bd4d-eb9a460b3285}</Project>
+      <Project>{905341f3-9c88-47fe-a436-538dfa86661e}</Project>
       <Name>System.Windows.Forms</Name>
     </ProjectReference>
   </ItemGroup>
@@ -56,15 +56,12 @@
     <Compile Include="Configuration\CertificateManager.cs" />
     <Compile Include="Configuration\ClusterRegistryConfigurationProvider.cs" />
     <Compile Include="Configuration\ClusterSafeNativeMethods.cs" />
-    <Compile Include="Configuration\CommandLineOption.cs" />
-    <Compile Include="Configuration\ConfigurationProvider.cs" />
     <Compile Include="Configuration\ETWSafeNativeMethods.cs" />
     <Compile Include="Configuration\ETWWsatTraceSession.cs" />
     <Compile Include="Configuration\FirewallWrapper.cs" />
     <Compile Include="Configuration\HttpWrapper.cs" />
     <Compile Include="Configuration\MsdtcClusterUtils.cs" />
     <Compile Include="Configuration\MsdtcWrapper.cs" />
-    <Compile Include="Configuration\NetFwTypeLib.cs" />
     <Compile Include="Configuration\QfeChecker.cs" />
     <Compile Include="Configuration\RegistryConfigurationProvider.cs" />
     <Compile Include="Configuration\RegistryExceptionHelper.cs" />
@@ -74,14 +71,11 @@
     <Compile Include="Configuration\SafeCertificateStore.cs" />
     <Compile Include="Configuration\SafeIUnknown.cs" />
     <Compile Include="Configuration\SafeLocalAllocation.cs" />
-    <Compile Include="Configuration\SafeNativeMethods.cs" />
     <Compile Include="Configuration\SafeRegistryKey.cs" />
     <Compile Include="Configuration\StdRegProviderWrapper.cs" />
     <Compile Include="Configuration\Utilities.cs" />
-    <Compile Include="Configuration\WsatAdminErrorCode.cs" />
     <Compile Include="Configuration\WsatAdminException.cs" />
     <Compile Include="Configuration\WsatConfiguration.cs" />
-    <Compile Include="Configuration\WsatKeys.cs" />
     <Compile Include="Configuration\WsatServiceAddress.cs" />
     <Compile Include="Configuration\WsatServiceCertificate.cs" />
     <Compile Include="MMCUI\AcceptedCertificatesForm.cs" />

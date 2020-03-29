@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{c0f04905-894e-45d8-a661-18e1cdbaac87}</ProjectGuid>
+    <ProjectGuid>{25b8b92b-eac2-487b-93ae-3ad9a231ea20}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>System.AddIn</AssemblyName>
@@ -20,19 +20,19 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\clr\src\bcl\mscorlib.csproj">
-      <Project>{b2eee131-63ac-43b5-a843-e555ae346910}</Project>
+      <Project>{74ef8966-be63-49d5-84bc-6c2cb0724069}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\System.csproj">
-      <Project>{511d1c68-d48e-465d-bae9-4448a54d9531}</Project>
+      <Project>{df88a904-fb7a-40a0-8bc0-4e757ca35923}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\Contract\System.AddIn.Contract.csproj">
-      <Project>{981967df-a0a6-4680-b683-3a1d7a666492}</Project>
+      <Project>{ce78e361-29a3-4c30-90e5-7e58c5108f89}</Project>
       <Name>System.AddIn.Contract</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\clr\src\managedlibraries\remoting\System.Runtime.Remoting.csproj">
-      <Project>{35a1f566-8715-419d-a62d-bc81a4352bb6}</Project>
+      <Project>{734d8ac1-a571-481a-a25e-7876f6fdbe96}</Project>
       <Name>System.Runtime.Remoting</Name>
     </ProjectReference>
   </ItemGroup>

@@ -24,6 +24,8 @@ namespace MS.Win32 {
     using MS.Internal.PresentationCore;
 #elif PRESENTATIONFRAMEWORK
     using MS.Internal.PresentationFramework;
+#elif UIAUTOMATIONTYPES
+    using MS.Internal.UIAutomationTypes;
 #elif DRT
     using MS.Internal.Drt;
 #else
@@ -277,7 +279,7 @@ namespace MS.Win32 {
                 // Note: ADVF_ONLYONCE and ADVF_PRIMEFIRST values now conform with objidl.dll but are backwards from
                 // Platform SDK documentation as of 07/21/2003.
         // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/htm/oen_a2z_8jxi.asp.
-        // See VSWhidbey 
+        // See VSWhidbey bug#96162.
 
         public const int BCM_GETIDEALSIZE = 0x1601;
 #endif
@@ -1859,7 +1861,7 @@ namespace MS.Win32 {
         TTM_POP = (0x0400 + 28),
         TTM_ADJUSTRECT = (0x400 + 31),
         TTM_SETDELAYTIME = (0x0400+3),
-#if !DRT
+#if !DRT && !UIAUTOMATIONTYPES
         TTM_SETTITLEA           =((int)WindowMessage.WM_USER + 32),  // wParam = TTI_*, lParam = char* szTitle
         TTM_SETTITLEW           =((int)WindowMessage.WM_USER + 33), // wParam = TTI_*, lParam = wchar* szTitle
 #endif
@@ -2112,7 +2114,7 @@ namespace MS.Win32 {
         WA_CLICKACTIVE = 2;
 
         public const int WHEEL_DELTA = 120,
-#if !DRT
+#if !DRT && !UIAUTOMATIONTYPES
         WM_REFLECT = (int)WindowMessage.WM_USER + 0x1C00,
         WM_CHOOSEFONT_GETLOGFONT = (int)WindowMessage.WM_USER +1,
 #endif
@@ -3296,7 +3298,7 @@ namespace MS.Win32 {
         }
 #endif
 
-#if FRAMEWORK_NATIVEMETHODS || CORE_NATIVEMETHODS || BASE_NATIVEMETHODS || DRT_SEE_NATIVEMETHODS
+#if FRAMEWORK_NATIVEMETHODS || CORE_NATIVEMETHODS || BASE_NATIVEMETHODS || DRT_SEE_NATIVEMETHODS || UIAUTOMATIONTYPES
 
         [StructLayout(LayoutKind.Sequential)]
         public class SIZE {
@@ -3938,7 +3940,7 @@ namespace MS.Win32 {
         public const int CDN_SHAREVIOLATION = (CDN_FIRST - 0x0003);
         public const int CDN_FILEOK         = (CDN_FIRST - 0x0005);
 
-#if !DRT
+#if !DRT && !UIAUTOMATIONTYPES
         public const int CDM_FIRST          = (int)WindowMessage.WM_USER + 100;
 
         public const int CDM_GETSPEC        = (CDM_FIRST + 0x0000);
@@ -7060,6 +7062,246 @@ namespace MS.Win32 {
         public const int ULW_COLORKEY = 0x00000001;
         public const int ULW_ALPHA    = 0x00000002;
         public const int ULW_OPAQUE   = 0x00000004;
+
+        /// <summary>
+        /// Contains values that indicate the type of session information to retrieve 
+        /// in a call to the WTSQuerySessionInformation function.
+        /// </summary>
+        public enum WTS_INFO_CLASS
+        {
+            /// <summary>
+            /// A null-terminated string that contains the name of the initial program that Remote Desktop Services runs when the user logs on.
+            /// </summary>
+            WTSInitialProgram = 0,
+            /// <summary>
+            /// A null-terminated string that contains the published name of the application that the session is running.
+            /// </summary>
+            /// <remarks>
+            /// Windows Server 2008 R2, Windows 7, Windows Server 2008 and Windows Vista:  This value is not supported
+            /// </remarks>
+            WTSApplicationName = 1,
+            /// <summary>
+            /// A null-terminated string that contains the default directory used when launching the initial program.
+            /// </summary>
+            WTSWorkingDirectory = 2,
+            /// <summary>
+            /// This value is not used.
+            /// </summary>
+            WTSOEMId = 3,
+            /// <summary>
+            /// A ULONG value that contains the session identifier.
+            /// </summary>
+            WTSSessionId = 4,
+            /// <summary>
+            /// A null-terminated string that contains the name of the user associated with the session.
+            /// </summary>
+            WTSUserName = 5,
+            /// <summary>
+            /// A null-terminated string that contains the name of the Remote Desktop Services session.
+            /// </summary>
+            /// <remarks>
+            /// Despite its name, specifying this type does not return the window station name. Rather, it returns 
+            /// the name of the Remote Desktop Services session. Each Remote Desktop Services session is associated 
+            /// with an interactive window station. Because the only supported window station name for an interactive 
+            /// window station is "WinSta0", each session is associated with its own "WinSta0" window station. For more 
+            /// information, <see cref="https://msdn.microsoft.com/en-us/library/ms687096(v=vs.85).aspx">Window Stations</see>
+            /// </remarks>
+            WTSWinStationName = 6,
+            /// <summary>
+            /// A null-terminated string that contains the name of the domain to which the logged-on user belongs.
+            /// </summary>
+            WTSDomainName = 7,
+            /// <summary>
+            /// The session's current connection state. For more information, <see cref="WTS_CONNECTSTATE_CLASS"/> 
+            /// </summary>
+            WTSConnectState = 8,
+            /// <summary>
+            /// A ULONG value that contains the build number of the client.
+            /// </summary>
+            WTSClientBuildNumber = 9,
+            /// <summary>
+            /// A null-terminated string that contains the name of the client.
+            /// </summary>
+            WTSClientName = 10,
+            /// <summary>
+            /// A null-terminated string that contains the directory in which the client 
+            /// is installed.
+            /// </summary>
+            WTSClientDirectory = 11,
+            /// <summary>
+            /// A USHORT client-specific product identifier.
+            /// </summary>
+            WTSClientProductId = 12,
+            /// <summary>
+            /// A ULONG value that contains a client-specific hardware identifier. This option 
+            /// is reserved 
+            /// for future use. 
+            /// WTSQuerySessionInformation will always return a value of 0.
+            /// </summary>
+            WTSClientHardwareId = 13,
+            /// <summary>
+            /// The network type and network address of the client. For more information, 
+            /// see WTS_CLIENT_ADDRESS.
+            /// The IP address is offset by two bytes from the start of the Address member of the 
+            /// WTS_CLIENT_ADDRESS structure.
+            /// </summary>
+            WTSClientAddress = 14,
+            /// <summary>
+            /// Information about the display resolution of the client. For more information, 
+            /// see WTS_CLIENT_DISPLAY.
+            /// </summary>
+            WTSClientDisplay = 15,
+            /// <summary>
+            /// A USHORT value that specifies information about the protocol type for the session. 
+            /// This is one of the following values:
+            /// 0 : The console session.
+            /// 1 : This value is retained for legacy purposes.
+            /// 2 : The RDP protocol.
+            /// </summary>
+            WTSClientProtocolType = 16,
+            /// <summary>
+            /// This value returns FALSE. If you call GetLastError to get extended error information, 
+            /// GetLastError returns ERROR_NOT_SUPPORTED.
+            /// </summary>
+            /// <remarks>Windows Server 2008 and Windows Vista:  This value is not used.</remarks>
+            WTSIdleTime = 17,
+            /// <summary>
+            /// This value returns FALSE. If you call GetLastError to get extended error information, 
+            /// GetLastError returns ERROR_NOT_SUPPORTED.
+            /// </summary>
+            /// <remarks>Windows Server 2008 and Windows Vista:  This value is not used.</remarks>
+            WTSLogonTime = 18,
+            /// <summary>
+            /// This value returns FALSE. If you call GetLastError to get extended error information, 
+            /// GetLastError returns ERROR_NOT_SUPPORTED.
+            /// </summary>
+            /// <remarks>Windows Server 2008 and Windows Vista:  This value is not used.</remarks>
+            WTSIncomingBytes = 19,
+            /// <summary>
+            /// This value returns FALSE. If you call GetLastError to get extended error information, 
+            /// GetLastError returns ERROR_NOT_SUPPORTED.
+            /// </summary>
+            /// <remarks>Windows Server 2008 and Windows Vista:  This value is not used.</remarks>
+            WTSOutgoingBytes = 20,
+            /// <summary>
+            /// This value returns FALSE. If you call GetLastError to get extended error information, 
+            /// GetLastError returns ERROR_NOT_SUPPORTED.
+            /// </summary>
+            /// <remarks>Windows Server 2008 and Windows Vista:  This value is not used.</remarks>
+            WTSIncomingFrames = 21,
+            /// <summary>
+            /// This value returns FALSE. If you call GetLastError to get extended error information, 
+            /// GetLastError returns ERROR_NOT_SUPPORTED.
+            /// </summary>
+            /// <remarks>Windows Server 2008 and Windows Vista:  This value is not used.</remarks>
+            WTSOutgoingFrames = 22,
+            /// <summary>
+            /// Information about a Remote Desktop Connection (RDC) client. For more information, 
+            /// see WTSCLIENT.
+            /// </summary>
+            WTSClientInfo = 23,
+            /// <summary>
+            /// Information about a client session on a RD Session Host server. For more information, 
+            /// see WTSINFO.
+            /// </summary>
+            WTSSessionInfo = 24,
+            /// <summary>
+            /// Extended information about a session on a RD Session Host server. For more information, 
+            /// see WTSINFOEX.
+            /// </summary>
+            /// <remarks>Windows Server 2008 and Windows Vista:  This value is not supported.</remarks>
+            WTSSessionInfoEx = 25,
+            /// <summary>
+            /// A WTSCONFIGINFO structure that contains information about the configuration of a RD 
+            /// Session Host server.
+            /// </summary>
+            /// <remarks>Windows Server 2008 and Windows Vista:  This value is not supported.</remarks>
+            WTSConfigInfo = 26,
+            /// <summary>
+            /// This value is not supported.
+            /// </summary>
+            WTSValidationInfo = 27,
+            /// <summary>
+            /// A WTS_SESSION_ADDRESS structure that contains the IPv4 address assigned to the session. 
+            /// If the session does not have a virtual IP address, the WTSQuerySessionInformation function 
+            /// returns ERROR_NOT_SUPPORTED.
+            /// </summary>
+            /// <remarks>Windows Server 2008 and Windows Vista:  This value is not supported.</remarks>
+            WTSSessionAddressV4 = 28,
+            /// <summary>
+            /// Determines whether the current session is a remote session. The WTSQuerySessionInformation 
+            /// function returns a value of TRUE to indicate that the current session is a remote session, 
+            /// and FALSE to indicate that the current session is a local session. This value can only be 
+            /// used for the local machine, so the hServer parameter of the WTSQuerySessionInformation 
+            /// function must contain WTS_CURRENT_SERVER_HANDLE.
+            /// </summary>
+            /// <remarks>Windows Server 2008 and Windows Vista:  This value is not supported.</remarks>
+            WTSIsRemoteSession = 29
+        }
+
+        /// <summary>
+        /// Specifies the connection state of a Remote Desktop Services session.
+        /// </summary>;
+        /// <remarks>
+        /// Only WTSActive represents a fully connected user session. All other
+        /// states represent a disconnected user session.
+        /// </remarks>
+        public enum WTS_CONNECTSTATE_CLASS
+        {
+            /// <summary>
+            /// A user is logged on to the WinStation.
+            /// </summary>
+            WTSActive = 0,
+            /// <summary>
+            /// The WinStation is connected to the client.
+            /// </summary>
+            WTSConnected = 1,
+            /// <summary>
+            /// The WinStation is in the process of connecting to the client.
+            /// </summary>
+            WTSConnectQuery = 2,
+            /// <summary>
+            /// The WinStation is shadowing another WinStation.
+            /// </summary>
+            WTSShadow = 3,
+            /// <summary>
+            /// The WinStation is active but the client is disconnected.
+            /// </summary>
+            WTSDisconnected = 4,
+            /// <summary>
+            /// The WinStation is waiting for a client to connect.
+            /// </summary>
+            WTSIdle = 5,
+            /// <summary>
+            /// The WinStation is listening for a connection. A listener session waits for requests for 
+            /// new client connections. 
+            /// No user is logged on a listener session. A listener session cannot be reset, shadowed, or 
+            /// changed to a regular client session.
+            /// </summary>
+            WTSListen = 6,
+            /// <summary>
+            /// The WinStation is being reset.
+            /// </summary>
+            WTSReset = 7,
+            /// <summary>
+            /// The WinStation is down due to an error.
+            /// </summary>
+            WTSDown = 8,
+            /// <summary>
+            /// The WinStation is initializing.
+            /// </summary>
+            WTSInit = 9
+        }
+
+        /// <summary>
+        /// Specifies the current server
+        /// </summary>
+        public static readonly IntPtr WTS_CURRENT_SERVER_HANDLE = IntPtr.Zero;
+
+        /// <summary>
+        /// Specifies the current session (SessionId)
+        /// </summary>
+        public const int WTS_CURRENT_SESSION = -1;
     }
 }
 

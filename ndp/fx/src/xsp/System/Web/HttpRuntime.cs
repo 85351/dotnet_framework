@@ -401,11 +401,11 @@ namespace System.Web {
                     // Monitor renames to directories we are watching, and notifications on the bin directory
                     //
                     // Note that this must be the first monitoring that we do of the application directory.
-                    // There is a 
-
-
-
-
+                    // There is a bug in Windows 2000 Server where notifications on UNC shares do not
+                    // happen correctly if:
+                    //      1. the directory is monitored for regular notifications
+                    //      2. the directory is then monitored for directory renames
+                    //      3. the directory is monitored again for regular notifications
                     StartMonitoringDirectoryRenamesAndBinDirectory();
 
                     // Initialize ObjectCacheHost before config is read, since config relies on the cache
@@ -1897,7 +1897,7 @@ namespace System.Web {
                 catch (Exception e) {
                     Debug.Trace("AppDomainFactory", "AppDomain.Unload exception: " + e + "; Id=" + _appDomainAppId);
                     if (!BuildManagerHost.InClientBuildManager) {
-                        // Avoid calling Exception.ToString if we are in the ClientBuildManager (Dev10 
+                        // Avoid calling Exception.ToString if we are in the ClientBuildManager (Dev10 bug 824659)
                         AddAppDomainTraceMessage("Unload Exception: " + e);
                     }
                     throw;
@@ -2276,7 +2276,7 @@ namespace System.Web {
                         + ", ShutdownMessage=" + _theRuntime._shutDownMessage);
 
             if (String.IsNullOrEmpty(stackTrace) && !BuildManagerHost.InClientBuildManager) {
-                // Avoid calling Environment.StackTrace if we are in the ClientBuildManager (Dev10 
+                // Avoid calling Environment.StackTrace if we are in the ClientBuildManager (Dev10 bug 824659)
 
                 // Instrument to be able to see what's causing a shutdown
                 new EnvironmentPermission(PermissionState.Unrestricted).Assert();
@@ -3372,6 +3372,33 @@ namespace System.Web {
                     Debug.Trace("RestrictIISFolders", "Cannot restrict folder access for '" + AppDomainAppId + "'.");
                 }
             }
+        }
+
+        /// <devdoc>
+        ///     <para>Get/Set an IServiceProvider instance which will be responsible for
+        ///           service instance creation, e.g. moudle/handler/page/user control/custom control
+        ///     </para>
+        /// </devdoc>
+        public static IServiceProvider WebObjectActivator { get; set; }
+
+        internal static Object CreateNonPublicInstanceByWebObjectActivator(Type type) {
+            var activator = WebObjectActivator;
+
+            if (activator != null) {
+                return activator.GetService(type);
+            }
+
+            return CreateNonPublicInstance(type, null);
+        }
+
+        internal static Object CreatePublicInstanceByWebObjectActivator(Type type) {
+            var activator = WebObjectActivator;
+
+            if (activator != null) {
+                return activator.GetService(type);
+            }
+
+            return CreatePublicInstance(type);
         }
 
         //

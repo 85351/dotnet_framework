@@ -1429,8 +1429,8 @@ namespace System.Windows.Markup
                     {
                         // For unknown extensions, no more work should be done.  
                         // In pass1, we don't yet have the context to make sense of the nested properties, 
-                        // so recursing into them would lead to spurious parse errors (
-
+                        // so recursing into them would lead to spurious parse errors (Bug 1160665).  
+                        // In pass2 an unknown extension would have errored out before getting here.
                         return;
                     }
 
@@ -1450,7 +1450,7 @@ namespace System.Windows.Markup
                         }
                         else
                         {
-                            // 
+                            // Bug: Need to check validity of property by calling GetAttributeContext here?
                             CompileAttribute(xamlNodes, nestedAttrData);
                         }
                     }

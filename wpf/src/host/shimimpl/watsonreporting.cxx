@@ -39,8 +39,8 @@ HRESULT CheckRegistryAccess()
         return S_OK;
     }
 
-    // Dev10 
-
+    // Dev10 bug 707086 - HKCU\SOFTWARE\Classes may not exist on clean XP installations.
+    //                    ClickOnce will create it, so don't bother about it here.
     if (error == ERROR_FILE_NOT_FOUND)
     {
         return S_OK;

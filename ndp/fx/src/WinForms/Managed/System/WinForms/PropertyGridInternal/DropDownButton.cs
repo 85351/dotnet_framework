@@ -21,16 +21,17 @@ namespace System.Windows.Forms.PropertyGridInternal {
         private bool useComboBoxTheme = false;
 
         private bool ignoreMouse;
-    
+
         public DropDownButton() {
             SetStyle(ControlStyles.Selectable, true);
-            this.AccessibleName = SR.GetString(SR.PropertyGridDropDownButtonAccessibleName);
+            SetAccessibleName();
         }
 
 
         // VSWhidbey 375220 - when the holder is open, we don't fire clicks
         //
-        public bool IgnoreMouse {
+        public bool IgnoreMouse {
+
             get {
                 return ignoreMouse;
             }
@@ -43,6 +44,9 @@ namespace System.Windows.Forms.PropertyGridInternal {
             set {
                 if (useComboBoxTheme != value) {
                     useComboBoxTheme = value;
+                    if (AccessibilityImprovements.Level1) {
+                        SetAccessibleName();
+                    }
                     Invalidate();
                 }
             }
@@ -85,9 +89,28 @@ namespace System.Windows.Forms.PropertyGridInternal {
                     pevent.Graphics.FillRectangle(SystemBrushes.Window, dropDownButtonRect);
                 }
                 ComboBoxRenderer.DrawDropDownButton(pevent.Graphics, dropDownButtonRect, cbState);
+
+                if (AccessibilityImprovements.Level1) {
+                    // Redraw focus cues
+                    // For consistency with other PropertyGrid buttons, i.e. those opening system dialogs ("..."), that always show visual cues when focused,
+                    // we need to do the same for this custom button, painted as ComboBox control part (drop-down).
+                    if (Focused) {
+                        dropDownButtonRect.Inflate(-1, -1);
+                        ControlPaint.DrawFocusRectangle(pevent.Graphics, dropDownButtonRect, ForeColor, BackColor);
+                    }
+                }
             }
         }
-        
+
+        private void SetAccessibleName() {
+            if (AccessibilityImprovements.Level1 && useComboBoxTheme) {
+                this.AccessibleName = SR.GetString(SR.PropertyGridDropDownButtonComboBoxAccessibleName);
+            }
+            else {
+                this.AccessibleName = SR.GetString(SR.PropertyGridDropDownButtonAccessibleName);
+            }
+        }
+
         internal override ButtonBaseAdapter CreateStandardAdapter() {
             return new DropDownButtonAdapter(this);
         }        

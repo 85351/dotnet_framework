@@ -86,6 +86,16 @@ namespace System.Windows.Interop
         [SecurityCritical]
         private static WindowMessage s_needsRePresentOnWake;
 
+        /// <summary>
+        /// wpfgfx will raise this message whenever a new display-set is enumerated.
+        /// wParam: 1 if valid displays are available, 0 otherwise
+        /// lParam: Not used
+        /// </summary>
+        /// <securitynote>
+        /// critical: gets to the unmanaged layer
+        /// </securitynote>
+        [SecurityCritical]
+        private static WindowMessage s_DisplayDevicesAvailabilityChanged;
 
         private MatrixTransform _worldTransform;
         private double _devicePixelsPerInchX;
@@ -145,6 +155,48 @@ namespace System.Windows.Interop
         // Any failure after that until another sleep state event occurs will not trigger an invalidate.
         private bool _hasRePresentedSinceWake = false;
 
+        /// <summary>
+        /// True if wpfgfx indicates that valid displays 
+        /// are available. This is communiated by use of the 
+        /// window message <see cref="s_DisplayDevicesAvailabilityChanged"/>
+        /// </summary>
+        /// <remarks>
+        /// Normally, we'd want to initialize this to true when we are running in a
+        /// Window Station in interactive mode (WinSta0), which is typical for desktop applications. 
+        /// On the other hand, we'd want to initialize this to false when running in a 
+        /// non-interactive Window Station (for e.g., typical SCM services). This can be 
+        /// identified by <see cref="Environment.UserInteractive"/>. 
+        /// 
+        /// Instead of initializing it this way directly, we instead initialize <see cref="_displayDevicesAvailable"/> 
+        /// using <see cref="MediaContext.ShouldRenderEvenWhenNoDisplayDevicesAreAvailable"/>, which in turn factors in (a) 
+        /// <see cref="Environment.UserInteractive"/>, and (b) a registry override that requests
+        /// that WPF's renderer act as if interactive displays are always present 
+        /// even when displays aren't - either because the process is running in an
+        /// non-interactive Window Station, or because the session is in a 
+        /// <see cref="NativeMethods.WTS_CONNECTSTATE_CLASS.WTSDisconnected"/> state, and (c) an compat
+        /// override that can be set in the application configuration file (app.config)
+        /// </remarks>
+        private bool _displayDevicesAvailable = MediaContext.ShouldRenderEvenWhenNoDisplayDevicesAreAvailable;
+
+        /// <summary>
+        /// True if WM_PAINT processing was deferred due to 
+        /// <see cref="_displayDevicesAvailable"/> being false.
+        /// 
+        /// We will use this flag to determine whether we need to 
+        /// invalidate the entire window when display devices become 
+        /// available
+        /// </summary>
+        private bool _wasWmPaintProcessingDeferred = false; 
+
+        /// <summary>
+        /// Session ID of this process
+        /// </summary>
+        /// <remarks>
+        /// If the query for the session ID using WTS API's fails, 
+        /// then this value will remain null
+        /// </remarks>
+        private int? _sessionId = null;
+
         // The time of the last wake or unlock message we received. When we receive a lock/sleep message,
         // we set this value to DateTime.MinValue
         private DateTime _lastWakeOrUnlockEvent;
@@ -169,6 +221,8 @@ namespace System.Windows.Interop
         {
             s_updateWindowSettings = UnsafeNativeMethods.RegisterWindowMessage("UpdateWindowSettings");
             s_needsRePresentOnWake = UnsafeNativeMethods.RegisterWindowMessage("NeedsRePresentOnWake");
+            s_DisplayDevicesAvailabilityChanged = 
+                UnsafeNativeMethods.RegisterWindowMessage("DisplayDevicesAvailabilityChanged");
         }
 
         /// <summary>
@@ -191,6 +245,13 @@ namespace System.Windows.Interop
         public HwndTarget(IntPtr hwnd)
         {
             bool exceptionThrown = true;
+
+            _sessionId = SafeNativeMethods.GetCurrentSessionId();
+            _isSessionDisconnected = !SafeNativeMethods.IsCurrentSessionConnectStateWTSActive(_sessionId);
+            if (_isSessionDisconnected)
+            {
+                _needsRePresentOnWake = true;
+            }
 
             AttachToHwnd(hwnd);
 
@@ -855,6 +916,15 @@ namespace System.Windows.Interop
                 }
                 return result;
             }
+            else if (msg == s_DisplayDevicesAvailabilityChanged)
+            {
+                _displayDevicesAvailable = (wparam.ToInt32() != 0);
+                if (_displayDevicesAvailable && _wasWmPaintProcessingDeferred)
+                {
+                    UnsafeNativeMethods.InvalidateRect(_hWnd.MakeHandleRef(this), IntPtr.Zero, true);
+                    DoPaint();
+                }
+            }
             else if (msg == s_updateWindowSettings)
             {
                 // Make sure we enable the render target if the window is visible.
@@ -882,7 +952,15 @@ namespace System.Windows.Interop
                 TimeSpan delta = DateTime.Now - _lastWakeOrUnlockEvent;
                 bool fWithinPresentRetryWindow = delta.TotalSeconds < _allowedPresentFailureDelay;
 
-                if (_isSessionDisconnected || _isSuspended || (_hasRePresentedSinceWake && !fWithinPresentRetryWindow))
+                // Either display devices are available, or we are in a 'don't-care' state - ie.., 
+                // running under a non-interactive Window Station.
+                // Note that running under a non-interactive Window Station is not supported by WPF, 
+                // but we try to keep things working anyway. 
+                bool displayDevicesAvailable = _displayDevicesAvailable || MediaContext.ShouldRenderEvenWhenNoDisplayDevicesAreAvailable;
+
+                if (_isSessionDisconnected || _isSuspended || 
+                    (_hasRePresentedSinceWake && !fWithinPresentRetryWindow) || 
+                    !displayDevicesAvailable)
                 {
                     _needsRePresentOnWake = true;
                 }
@@ -912,8 +990,25 @@ namespace System.Windows.Interop
                     break;
 
                 case WindowMessage.WM_PAINT:
-                    DoPaint();
-                    result = handled;
+                    // If the current Window Station is non-interactive (i.e., NOT WinSta0)
+                    // then we will never find usable display devices. Normally, 
+                    // WPF is not supported when running in a non-interactive Window
+                    // Station, for e.g., a typical SCM service calling into WPF UI 
+                    // oriented API's is unsupported, and has never been tested. Some 
+                    // applications nevertheless do this. When we notice that we are running 
+                    // in a non-interactive Window Station, we will try to keep on rendering as best 
+                    // as we can, ignoring the fact that actual display devices aren't 
+                    // available in this configuration. 
+                    if (_displayDevicesAvailable || MediaContext.ShouldRenderEvenWhenNoDisplayDevicesAreAvailable)
+                    {
+                        _wasWmPaintProcessingDeferred = false;
+                        DoPaint();
+                        result = handled;
+                    }
+                    else
+                    {
+                        _wasWmPaintProcessingDeferred = true;
+                    }
                     break;
 
                 case WindowMessage.WM_SIZE:
@@ -933,11 +1028,11 @@ namespace System.Windows.Interop
                     // pollute the measure data based on the Minized window size.
                     if (NativeMethods.IntPtrToInt32(wparam) != NativeMethods.SIZE_MINIMIZED)
                     {
-                        // Dev10 
-
-
-
-
+                        // Dev10 bug #796388 is caused by a race condition in Windows 7 (and possibly
+                        // Windows Vista, though we haven't observed the effect there).
+                        // Sometimes when we restore from minimized, when we present into the newly
+                        // resized window, the present silently fails, and we end up with garbage in
+                        // our window buffer. This work around queues another invalidate to occur after 100ms.
                         if (_isMinimized)
                         {
                             _restoreDT.Start();
@@ -1072,6 +1167,11 @@ namespace System.Windows.Interop
                 //      we're switched out and will render on coming back.
                 //
                 case WindowMessage.WM_WTSSESSION_CHANGE:
+                    // If this message did not originate in our workstation session, then ignore it. 
+                    if (_sessionId.HasValue && (_sessionId.Value != lparam.ToInt32()))
+                    {
+                        break;
+                    }
                     switch (NativeMethods.IntPtrToInt32(wparam))
                     {
                         // Session is disconnected. Due to:
@@ -1093,7 +1193,7 @@ namespace System.Windows.Interop
                         case NativeMethods.WTS_REMOTE_CONNECT:
                         case NativeMethods.WTS_SESSION_UNLOCK:
                             _isSessionDisconnected = false;
-                            if (_needsRePresentOnWake)
+                            if (_needsRePresentOnWake || _wasWmPaintProcessingDeferred)
                             {
                                 UnsafeNativeMethods.InvalidateRect(_hWnd.MakeHandleRef(this), IntPtr.Zero , true);
                                 _needsRePresentOnWake = false;
@@ -1248,7 +1348,7 @@ namespace System.Windows.Interop
                 && !_isMinimized
                 && (!_isSuspended || (UnsafeNativeMethods.GetSystemMetrics(SM.REMOTESESSION) != 0))) // BUG 868586: Checking if we are in a remote session works around the fact that power
                                                                                                      // notifications for the server monitor are being broad-casted when the
-                                                                                                     // machine is in a non-local TS session. See Dev10 
+                                                                                                     // machine is in a non-local TS session. See Dev10 bug for more details.
             {
                 rcPaint = new NativeMethods.RECT(
                           0,

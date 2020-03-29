@@ -250,7 +250,7 @@ using System.Web.UI.DataVisualization.Charting;
 				{
 					yValue = (ser.Points[pointIndex].YValues[0] / _totalPerPoint[pointIndex]) * 100.0;
                     
-                    // Fix of 
+                    // Fix of bug #677411 - Dev10 3D stacked area throws an exception when casting NaN to decimal
                     if (double.IsNaN(yValue) && _totalPerPoint[pointIndex] == 0)
                     {
                         yValue = 100.0 / GetSeriesCount(common, area);

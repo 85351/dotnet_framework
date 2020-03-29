@@ -769,8 +769,16 @@ namespace System.Web {
                     storedResponseCookies = Response.GetCookiesNoCreate();
                 }
 
-                if (storedResponseCookies != null) {
-                    cookieCollection.Append(storedResponseCookies);
+                if (storedResponseCookies != null && storedResponseCookies.Count > 0) {
+                    if(AppSettings.AvoidDuplicatedSetCookie) {
+                        cookieCollection.Append(storedResponseCookies);
+                    }
+                    else {
+                        HttpCookie[] responseCookieArray = new HttpCookie[storedResponseCookies.Count];
+                        storedResponseCookies.CopyTo(responseCookieArray, 0);
+                        for (int iCookie = 0; iCookie < responseCookieArray.Length; iCookie++)
+                            cookieCollection.AddCookie(responseCookieArray[iCookie], append: true);
+                    }
                 }
 
                 // release any stored reference to the response cookie collection
@@ -3023,8 +3031,8 @@ namespace System.Web {
             _url = null;
             Unvalidated.InvalidateUrl();
 
-            // DevDiv 
-
+            // DevDiv Bug 164390: calling the worker request's RawUrl method here
+            // to ensure we cache the original request Url in Url Mapping scenarios.
             string temp = RawUrl;
 
             // remember the new path
@@ -3063,8 +3071,8 @@ namespace System.Web {
             _url = null;
             Unvalidated.InvalidateUrl();
 
-            // DevDiv 
-
+            // DevDiv Bug 164390: calling the worker request's RawUrl method here
+            // to ensure we cache the original request Url in Url Mapping scenarios.
             string temp = RawUrl;
 
             if (newPathInfo == null) {

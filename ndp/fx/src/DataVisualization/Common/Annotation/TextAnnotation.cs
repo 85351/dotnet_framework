@@ -726,8 +726,8 @@ namespace System.Web.UI.DataVisualization.Charting
 					TextBox tempControl = null;
 					try
 					{
-						// NOTE: Workaround .Net 
-
+						// NOTE: Workaround .Net bug. Issue with appplication closing if
+						// active control is removed.
 						Form parentForm = this.Chart.FindForm();
 						if(parentForm != null)
 						{

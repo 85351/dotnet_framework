@@ -1821,7 +1821,7 @@ example usage
 
                 // CLR4.0 or later, comctl32.dll needs to be loaded explicitly.
                 if (UnsafeNativeMethods.GetModuleHandle(ExternDll.Comctl32) == IntPtr.Zero) {
-                    if (UnsafeNativeMethods.LoadLibrary(ExternDll.Comctl32) == IntPtr.Zero) {
+                    if (UnsafeNativeMethods.LoadLibraryFromSystemPathIfAvailable(ExternDll.Comctl32) == IntPtr.Zero) {
                         int lastWin32Error = Marshal.GetLastWin32Error();
                         throw new Win32Exception(lastWin32Error, SR.GetString(SR.LoadDLLError, ExternDll.Comctl32));
                     }
@@ -3043,7 +3043,7 @@ example usage
         ///
         ///     There are five functions on a control that are safe to call from any
         ///     thread:  GetInvokeRequired, Invoke, BeginInvoke, EndInvoke and
-        ///     CreateGraphics.  For all other metohd calls, you should use one of the
+        ///     CreateGraphics.  For all other method calls, you should use one of the
         ///     invoke methods.
         /// </devdoc>
         [
@@ -4174,9 +4174,9 @@ example usage
 
                 if ((uiCuesState & UISTATE_KEYBOARD_CUES_MASK) == 0) {
 
-                        // VSWhidbey 362408 -- if we get in here that means this is the windows 
-
-
+                        // VSWhidbey 362408 -- if we get in here that means this is the windows bug where the first top
+                        // level window doesn't get notified with WM_UPDATEUISTATE
+                        //
                         
                         if (SystemInformation.MenuAccessKeysUnderlined) {
                             uiCuesState |= UISTATE_KEYBOARD_CUES_SHOW;
@@ -4184,7 +4184,8 @@ example usage
                         else {
                             // if we're in the hidden state, we need to manufacture an update message so everyone knows it.
                             //
-                            int actionMask = (NativeMethods.UISF_HIDEACCEL | NativeMethods.UISF_HIDEFOCUS) << 16;
+                            int actionMask = (NativeMethods.UISF_HIDEACCEL | 
+                                (AccessibilityImprovements.Level1 ? 0 : NativeMethods.UISF_HIDEFOCUS)) << 16;
                             uiCuesState |= UISTATE_KEYBOARD_CUES_HIDDEN;
 
                             // The side effect of this initial state is that adding new controls may clear the accelerator
@@ -4217,9 +4218,9 @@ example usage
                 // See "How this all works" in ShowKeyboardCues
                 
                 if ((uiCuesState & UISTATE_FOCUS_CUES_MASK) == 0) {
-                    // VSWhidbey 362408 -- if we get in here that means this is the windows 
-
-
+                    // VSWhidbey 362408 -- if we get in here that means this is the windows bug where the first top
+                    // level window doesn't get notified with WM_UPDATEUISTATE
+                    //
                     if (SystemInformation.MenuAccessKeysUnderlined) {
                         uiCuesState |= UISTATE_FOCUS_CUES_SHOW;
                     }
@@ -4398,9 +4399,9 @@ example usage
                     throw new InvalidAsynchronousStateException(SR.GetString(SR.ThreadNoLongerValid));
                 }
 
-                //Dev10 
-
-
+                //Dev10 Bug 600316, 905126: Because Control.Invoke() is not fully thread safe, so it is possible that
+                //a ThreadMethodEntry can be sent to a control after it is disposed. In this case, we need to check
+                //if there is any ThreadMethodEntry in the queue. If so, we need "complete" them.
                 if (IsDisposed && threadCallbackList != null && threadCallbackList.Count > 0) {
                     lock (threadCallbackList) {
                         Exception ex = new System.ObjectDisposedException(GetType().Name);
@@ -5540,7 +5541,7 @@ example usage
         ///
         ///     There are five functions on a control that are safe to call from any
         ///     thread:  GetInvokeRequired, Invoke, BeginInvoke, EndInvoke and CreateGraphics.
-        ///     For all other metohd calls, you should use one of the invoke methods to marshal
+        ///     For all other method calls, you should use one of the invoke methods to marshal
         ///     the call to the control's thread.
         /// </devdoc>
         [EditorBrowsable(EditorBrowsableState.Advanced)]
@@ -5562,7 +5563,7 @@ example usage
         ///
         ///     There are five functions on a control that are safe to call from any
         ///     thread:  GetInvokeRequired, Invoke, BeginInvoke, EndInvoke and CreateGraphics.
-        ///     For all other metohd calls, you should use one of the invoke methods to marshal
+        ///     For all other method calls, you should use one of the invoke methods to marshal
         ///     the call to the control's thread.
         /// </devdoc>
         [EditorBrowsable(EditorBrowsableState.Advanced)]        
@@ -7323,7 +7324,7 @@ example usage
         ///
         ///     There are five functions on a control that are safe to call from any
         ///     thread:  GetInvokeRequired, Invoke, BeginInvoke, EndInvoke and CreateGraphics.
-        ///     For all other metohd calls, you should use one of the invoke methods to marshal
+        ///     For all other method calls, you should use one of the invoke methods to marshal
         ///     the call to the control's thread.
         /// </devdoc>
         public Object Invoke(Delegate method) {
@@ -7342,7 +7343,7 @@ example usage
         ///
         ///     There are five functions on a control that are safe to call from any
         ///     thread:  GetInvokeRequired, Invoke, BeginInvoke, EndInvoke and CreateGraphics.
-        ///     For all other metohd calls, you should use one of the invoke methods to marshal
+        ///     For all other method calls, you should use one of the invoke methods to marshal
         ///     the call to the control's thread.
         /// </devdoc>
         public Object Invoke(Delegate method, params Object[] args) {
@@ -9240,6 +9241,7 @@ example usage
         /// Raises the <see cref='System.Windows.Forms.Control.DpiChangedBeforeParent'/> event.
         /// Occurs when the form is moved to a monitor with a different resolution (number of dots per inch),
         /// or when scaling level is changed in the windows setting by the user.
+        /// This message is not sent to the top level windows.
         /// </para>
         /// </devdoc>
         [
@@ -9257,6 +9259,7 @@ example usage
         /// Raises the <see cref='System.Windows.Forms.Control.DpiChangedAfterParent'/> event.
         /// Occurs when the form is moved to a monitor with a different resolution (number of dots per inch),
         /// or when scaling level is changed in windows setting by the user.
+        /// This message is not sent to the top level windows.
         /// </para>
         /// </devdoc>
         [
@@ -9530,10 +9533,9 @@ example usage
 
         /// <include file='doc\Control.uex' path='docs/doc[@for="Control.RescaleConstantsForDpi"]/*' />
         /// <devdoc>
-        /// Raises the <see cref='System.Windows.Forms.Control.RescaleConstantsForDpi'/> event.
-        /// Is invoked when the form is moved to a monitor with a different resolution (number of dots per inch),
-        /// or when scaling level is changed in windows setting by the user. This is the chance for control
-        /// to re-calculate any constant sizes before the layout pass.
+        /// Is invoked when the control handle is created or right before the top level parent receives WM_DPICHANGED message.
+        /// This method is an opportunity to rescale any constant sizes, glyphs or bitmaps before re-painting.
+        /// The derived class can choose to not call the base class implementation.
         /// </devdoc>
         [
             Browsable(true), 
@@ -9868,7 +9870,7 @@ example usage
                 // VSWhidbey 464817 - we need to be careful
                 // about which LayoutEventArgs are used in
                 // SuspendLayout, PerformLayout, ResumeLayout() sequences.
-                // See 
+                // See bug for more info.
                 SetState2(STATE2_CLEARLAYOUTARGS, false);
             }
             else {
@@ -11143,7 +11145,7 @@ example usage
             // VSWhidbey 464817 - we need to be careful
             // about which LayoutEventArgs are used in
             // SuspendLayout, PerformLayout, ResumeLayout() sequences.
-            // See 
+            // See bug for more info.
             if (!performedLayout) {
                 SetState2(STATE2_CLEARLAYOUTARGS, true);
             }
@@ -11893,7 +11895,7 @@ example usage
 
                     if (recreate) {
                         // We will recreate later, when the MdiChild's visibility
-                        // is set to true (see 
+                        // is set to true (see bug 124232)
                         Form f = this as Form;
                         if (f != null) {
                             if (!f.CanRecreateHandle()) {
@@ -12544,6 +12546,15 @@ example usage
         ///     reflect it's index.
         /// </devdoc>
         private void UpdateChildControlIndex(Control ctl) {
+            // VSO 411856
+            // Don't reorder the child control array for tab controls. Implemented as a special case
+            // in order to keep the method private.
+            if (!LocalAppContextSwitches.AllowUpdateChildControlIndexForTabControls) {
+                if (this.GetType().IsAssignableFrom(typeof(TabControl))) {
+                    return;
+                }
+            }
+
             int newIndex = 0;
             int curIndex = this.Controls.GetChildIndex(ctl);
             IntPtr hWnd = ctl.InternalHandle;
@@ -19107,6 +19118,7 @@ example usage
 
             private IntPtr handle = IntPtr.Zero; // Associated window handle (if any)
             private Control ownerControl = null; // The associated Control for this AccessibleChild (if any)
+            private int[] runtimeId = null; // Used by UIAutomation
 
             // constructors
 
@@ -19287,6 +19299,19 @@ example usage
                 }
             }
 
+            // This is used only if control supports IAccessibleEx
+            internal override int[] RuntimeId {
+                get {
+                    if (runtimeId == null) {
+                        runtimeId = new int[2];
+                        runtimeId[0] = 0x2a;
+                        runtimeId[1] = (int)(long)this.Handle;
+                    }
+
+                    return runtimeId;
+                }
+            }
+
             /// <include file='doc\Control.uex' path='docs/doc[@for="Control.ControlAccessibleObject.Description"]/*' />
             /// <devdoc>
             ///    <para>[To be supplied.]</para>
@@ -19327,7 +19352,7 @@ example usage
                         bool freeLib = false;
 
                         if (oleAccAvailable == NativeMethods.InvalidIntPtr) {
-                            oleAccAvailable = UnsafeNativeMethods.LoadLibrary("oleacc.dll");
+                            oleAccAvailable = UnsafeNativeMethods.LoadLibraryFromSystemPathIfAvailable("oleacc.dll");
                             freeLib = (oleAccAvailable != IntPtr.Zero);
                         }
 

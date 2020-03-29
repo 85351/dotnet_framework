@@ -285,8 +285,8 @@ namespace System.Windows.Forms
             }
             else
             {
-                // SECREVIEW : Late-binding does not represent a security thread, see 
-
+                // SECREVIEW : Late-binding does not represent a security thread, see bug#411899 for more info..
+                //
                 dataGridViewCell = (DataGridViewImageCell)System.Activator.CreateInstance(thisType);
             }
             base.CloneInternal(dataGridViewCell);
@@ -876,8 +876,8 @@ namespace System.Windows.Forms
                                 {
                                     if (img != null)
                                     {
-                                        // 
-
+                                        // bug 21949: Graphics.DrawImage does not treat well scaled images
+                                        // we have to pass an ImageAttribute
                                         ImageAttributes attr = new ImageAttributes();
 
                                         attr.SetWrapMode(WrapMode.TileFlipXY);
@@ -1045,6 +1045,26 @@ namespace System.Windows.Forms
             public override int GetChildCount()
             {
                 return 0;
+            }
+
+            internal override bool IsIAccessibleExSupported()
+            {
+                if (AccessibilityImprovements.Level2)
+                {
+                    return true;
+                }
+
+                return base.IsIAccessibleExSupported();
+            }
+
+            internal override object GetPropertyValue(int propertyID)
+            {
+                if (propertyID == NativeMethods.UIA_ControlTypePropertyId)
+                {
+                    return NativeMethods.UIA_ImageControlTypeId;
+                }
+
+                return base.GetPropertyValue(propertyID);
             }
         }
     }

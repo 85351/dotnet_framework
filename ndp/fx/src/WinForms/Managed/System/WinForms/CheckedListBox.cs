@@ -594,6 +594,11 @@ namespace System.Windows.Forms {
                 //
                 CheckedItems.SetCheckedState(index, itemCheckEvent.NewValue);
 
+                // Send accessibility notifications for state change
+                if (AccessibilityImprovements.Level1) {
+                    AccessibilityNotifyClients(AccessibleEvents.StateChange, index);
+                    AccessibilityNotifyClients(AccessibleEvents.NameChange, index);
+                }
             }
 
             lastSelected = index;
@@ -773,7 +778,7 @@ namespace System.Windows.Forms {
                             for (int i = 1; i < tabStops.Length; i++)
                                 tabStops[i] = tabDistance;
 
-                            //(
+                            //(bug 111825)
                             if (Math.Abs(tabOffset) < tabDistance) {
                                 tabStops[0] =  tabDistance +tabOffset;
                             }

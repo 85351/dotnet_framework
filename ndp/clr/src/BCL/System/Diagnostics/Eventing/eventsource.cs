@@ -1079,7 +1079,12 @@ namespace System.Diagnostics.Tracing
             /// Address where the one argument lives (if this points to managed memory you must ensure the
             /// managed object is pinned.
             /// </summary>
-            public IntPtr DataPointer { get { return (IntPtr)m_Ptr; } set { m_Ptr = unchecked((long)value); } }
+            public unsafe IntPtr DataPointer
+            {
+                [SecuritySafeCritical]
+                get { return (IntPtr)(void*)m_Ptr; }
+                set { m_Ptr = unchecked((ulong)(void*)value); }
+            }
             /// <summary>
             /// Size of the argument referenced by DataPointer
             /// </summary>
@@ -1096,14 +1101,14 @@ namespace System.Diagnostics.Tracing
             [SecurityCritical]
             internal unsafe void SetMetadata(byte* pointer, int size, int reserved)
             {
-                this.m_Ptr = (long)(ulong)(UIntPtr)pointer;
+                this.m_Ptr = (ulong)pointer;
                 this.m_Size = size;
                 this.m_Reserved = reserved; // Mark this descriptor as containing tracelogging-compatible metadata.
             }
 
             //Important, we pass this structure directly to the Win32 EventWrite API, so this structure must be layed out exactly
             // the way EventWrite wants it.  
-            internal long m_Ptr;
+            internal ulong m_Ptr;
             internal int m_Size;
 #pragma warning disable 0649
             internal int m_Reserved;       // Used to pad the size to match the Win32 API
@@ -3354,12 +3359,12 @@ namespace System.Diagnostics.Tracing
                         // Get the EventDescriptor (from the Custom attributes)
                         EventAttribute eventAttribute = (EventAttribute)GetCustomAttributeHelper(method, typeof(EventAttribute), flags);
                         
-                        // Visual Studio online 
-
-
-
-
-
+                        // Visual Studio online bug #222067 - we can't add a dependency in System.Web on EventSource features that 
+                        // didn't exist in 4.5. We have to manually set the disable flag here since the ActivityOptions 
+                        // falls in to that category.
+                        // 
+                        // The check for <= 3 is to only disable Activity tracking for the RequestStarted and RequestCompleted
+                        // events. 
                         if (eventAttribute != null
                             && source != null
                             && eventAttribute.EventId <= 3
@@ -4450,7 +4455,7 @@ namespace System.Diagnostics.Tracing
         // to throw a COMPLUS_BOOT_EXCEPTION.   The guideline we give is that you must unregister
         // such callbacks on process shutdown or appdomain so that unmanaged code will never 
         // do this.  This is what this callback is for.  
-        // See 
+        // See bug 724140 for more
         private static void DisposeOnShutdown(object sender, EventArgs e)
         {
             lock(EventListenersLock)

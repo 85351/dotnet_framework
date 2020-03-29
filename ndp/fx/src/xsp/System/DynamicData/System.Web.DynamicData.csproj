@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{903abc80-201b-4e94-b3b6-04579227514e}</ProjectGuid>
+    <ProjectGuid>{87fa26e7-703e-4641-b9b1-0e7be7029d0e}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>System.Web.DynamicData</AssemblyName>
@@ -20,75 +20,75 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\clr\src\bcl\mscorlib.csproj">
-      <Project>{b2eee131-63ac-43b5-a843-e555ae346910}</Project>
+      <Project>{74ef8966-be63-49d5-84bc-6c2cb0724069}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\System.csproj">
-      <Project>{511d1c68-d48e-465d-bae9-4448a54d9531}</Project>
+      <Project>{df88a904-fb7a-40a0-8bc0-4e757ca35923}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\DataAnnotations\System.ComponentModel.DataAnnotations.csproj">
-      <Project>{c2a6f1f7-73a8-4a39-844e-74a4de1ffce9}</Project>
+      <Project>{199bd8cd-0dc9-4a44-a460-cfb98b6113d2}</Project>
       <Name>System.ComponentModel.DataAnnotations</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Configuration\System.Configuration.csproj">
-      <Project>{be3abd4b-c69a-488f-8ddd-2b19956a2584}</Project>
+      <Project>{563c9efb-3f3c-4866-a6b0-325e40057312}</Project>
       <Name>System.Configuration</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Core\System.Core.csproj">
-      <Project>{caacfa4b-c342-483e-9cfe-6a553daed945}</Project>
+      <Project>{a7837c2f-d859-47c5-9575-cda85eb40aee}</Project>
       <Name>System.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\data\System.Data.csproj">
-      <Project>{0a776382-2e17-48c6-9a71-4cd18671fbd6}</Project>
+      <Project>{d2315572-b0d2-417a-ab3b-42ec44092138}</Project>
       <Name>System.Data</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\DataEntity\System.Data.Entity.csproj">
-      <Project>{f8577d20-ec5f-482a-8101-848ca6311699}</Project>
+      <Project>{db80e57c-c5c2-4c87-bd92-31f87d8e5f9c}</Project>
       <Name>System.Data.Entity</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\DLinq\Dlinq\System.Data.Linq.csproj">
-      <Project>{0a8889a7-5326-4527-a5fe-c423f4f9c1da}</Project>
+      <Project>{a18a7e3f-e084-4669-bc6d-dce09fcc759b}</Project>
       <Name>System.Data.Linq</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\DataWeb\System.Data.Services.Client.csproj">
-      <Project>{3fb278d3-4019-47ad-b047-b1ec65223b9c}</Project>
+    <ProjectReference Include="..\..\..\DataWeb\Client\System.Data.Services.Client.csproj">
+      <Project>{a7e454cc-17b3-48cb-90b5-772fce5b43c1}</Project>
       <Name>System.Data.Services.Client</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\DataWeb\Design\System.Data.Services.Design.csproj">
-      <Project>{76e0509b-f115-444c-bbcb-c8589c386f42}</Project>
+      <Project>{e6fbe69f-a653-4dd9-a628-6baa112a3abf}</Project>
       <Name>System.Data.Services.Design</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\System.Drawing.csproj">
-      <Project>{ce1925d0-c475-4233-9cca-bb74a2c8ce3a}</Project>
+      <Project>{8f0fc5b8-9479-461b-b086-05f16b8f04e8}</Project>
       <Name>System.Drawing</Name>
     </ProjectReference>
     <ProjectReference Include="..\Web\System.Web.csproj">
-      <Project>{346408a9-5c03-43a1-8be9-47e4a1c45cab}</Project>
+      <Project>{0a6d8928-8522-4575-a7c8-3e1294a78956}</Project>
       <Name>System.Web</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\DataWebControls\System.Web.Entity.csproj">
-      <Project>{3300e9a8-bed3-4605-9654-6e1a39331017}</Project>
+      <Project>{f5b8758d-bf1b-44da-a758-78f2b40e7e34}</Project>
       <Name>System.Web.Entity</Name>
     </ProjectReference>
     <ProjectReference Include="..\Extensions\System.Web.Extensions.csproj">
-      <Project>{bc72a304-8d79-4bb4-9253-44a20cf56b00}</Project>
+      <Project>{41403077-62ad-40d6-ab2c-beda4067908d}</Project>
       <Name>System.Web.Extensions</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\..\cdf\src\NetFx20\System.Web.Services\System.Web.Services.csproj">
-      <Project>{8c783bb7-8427-4d89-8da2-38fdbfe1d891}</Project>
+      <Project>{64b83cc4-5945-4d75-a033-3dbc31d68316}</Project>
       <Name>System.Web.Services</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\System.Windows.Forms.csproj">
-      <Project>{6d6783ab-9f81-48ed-bd4d-eb9a460b3285}</Project>
+      <Project>{905341f3-9c88-47fe-a436-538dfa86661e}</Project>
       <Name>System.Windows.Forms</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Xml\System.Xml.csproj">
-      <Project>{653cd7dd-5b36-428d-8d35-c00dcd1e209e}</Project>
+      <Project>{44ffba6a-a240-4b9c-a1ef-f44bd42f8b8f}</Project>
       <Name>System.Xml</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\XLinq\System.Xml.Linq.csproj">
-      <Project>{a01a23fd-abce-4b24-9042-c9f12b801a4b}</Project>
+      <Project>{0f0b0c1c-845b-4fee-b8f4-94796fe4dacb}</Project>
       <Name>System.Xml.Linq</Name>
     </ProjectReference>
   </ItemGroup>

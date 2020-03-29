@@ -821,17 +821,17 @@ namespace System.IO {
                 // might be well within the MAX_PATH restriction. For ex,
                 // "c:\SomeReallyLongDirName(thinkGreaterThan_MAXPATH)\..\foo.txt" which actually requires a
                 // buffer well with in the MAX_PATH as the normalized path is just "c:\foo.txt"
-                // This buffer requirement seems wrong, it could be a 
-
-
+                // This buffer requirement seems wrong, it could be a bug or a perf optimization  
+                // like returning required buffer length quickly or avoid stratch buffer etc. 
+                // Either way we need to workaround it here...
                 
                 // Ideally we would get the required buffer length first by calling GetFullPathName
                 // once without the buffer and use that in the later call but this doesn't always work
-                // due to Win32 GetFullPathName 
-
-
-
-
+                // due to Win32 GetFullPathName bug. For instance, in Win2k, when the path we are trying to
+                // fully qualify is a single letter name (such as "a", "1", ",") GetFullPathName
+                // fails to return the right buffer size (i.e, resulting in insufficient buffer). 
+                // To workaround this bug we will start with MAX_PATH buffer and grow it once if the 
+                // return value is > MAX_PATH. 
 
                 result = newBuffer.GetFullPathName();
 
@@ -1284,13 +1284,14 @@ namespace System.IO {
             return StringBuilderCache.GetStringAndRelease(finalPath);
         }
 
-        private static String CombineNoChecks(String path1, String path2) {
+        internal static string CombineNoChecks(string path1, string path2)
+        {
             if (path2.Length == 0)
                 return path1;
 
             if (path1.Length == 0)
                 return path2;
-                
+
             if (IsPathRooted(path2))
                 return path2;
 

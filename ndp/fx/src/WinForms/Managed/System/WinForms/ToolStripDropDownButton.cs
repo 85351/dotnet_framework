@@ -53,6 +53,15 @@ namespace System.Windows.Forms {
         public ToolStripDropDownButton(string text, Image image, params ToolStripItem[] dropDownItems):base(text,image,dropDownItems) {
             Initialize();            
         }
+
+        protected override AccessibleObject CreateAccessibilityInstance() {
+            if (AccessibilityImprovements.Level1) {
+                return new ToolStripDropDownButtonAccessibleObject(this);
+            }
+            else {
+                return base.CreateAccessibilityInstance();
+            }            
+        }
  
         [DefaultValue(true)]
         public new bool AutoToolTip {
@@ -170,7 +179,13 @@ namespace System.Windows.Forms {
                     ToolStripDropDownButton.ToolStripDropDownButtonInternalLayout layout = InternalLayout as ToolStripDropDownButtonInternalLayout;
                     Rectangle dropDownArrowRect = (layout != null) ? layout.DropDownArrowRect :Rectangle.Empty;
 
-                    Color arrowColor =  Enabled ? SystemColors.ControlText : SystemColors.ControlDark;
+                    Color arrowColor;
+                    if (Selected && !Pressed && AccessibilityImprovements.Level2 && SystemInformation.HighContrast) {
+                        arrowColor = Enabled ? SystemColors.HighlightText : SystemColors.ControlDark;
+                    }
+                    else {
+                        arrowColor =  Enabled ? SystemColors.ControlText : SystemColors.ControlDark;
+                    }
                     renderer.DrawArrow(new ToolStripArrowRenderEventArgs(g, this,dropDownArrowRect, arrowColor, ArrowDirection.Down)); 
                 }
             }
@@ -191,6 +206,27 @@ namespace System.Windows.Forms {
              return false;
          }
 
+        /// <devdoc>
+        /// An implementation of Accessibleobject for use with ToolStripDropDownButton        
+        /// </devdoc>
+        [System.Runtime.InteropServices.ComVisible(true)]
+        internal class ToolStripDropDownButtonAccessibleObject : ToolStripDropDownItemAccessibleObject {
+            private ToolStripDropDownButton ownerItem = null;
+
+            public ToolStripDropDownButtonAccessibleObject(ToolStripDropDownButton ownerItem)
+                : base(ownerItem) {
+                this.ownerItem = ownerItem;
+            }
+
+            internal override object GetPropertyValue(int propertyID) {
+                if (propertyID == NativeMethods.UIA_ControlTypePropertyId) {
+                    return NativeMethods.UIA_ButtonControlTypeId;
+                }
+                else {
+                    return base.GetPropertyValue(propertyID);
+                }
+            }
+        }
 
         internal class ToolStripDropDownButtonInternalLayout : ToolStripItemInternalLayout {
             private ToolStripDropDownButton    ownerItem;

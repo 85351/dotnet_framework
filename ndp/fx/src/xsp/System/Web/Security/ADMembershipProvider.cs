@@ -4033,8 +4033,8 @@ namespace System.Web.Security
                 }
                 catch (DirectoryOperationException)
                 {
-                    // Dev10 
-
+                    // Dev10 Bug# 623663:
+                    // concurrent bind is not supported when a client certificate is specified, (continue without it and don't try to set it next time)
 
                     this.concurrentBindSupported = false;
                 }

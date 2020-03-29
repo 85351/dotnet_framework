@@ -111,7 +111,7 @@ namespace System.Web.Caching {
 
             // Prevent a conflict between using SQL9 outputcache and an explicit 
             // SQL9 SqlCacheDependency at the same time.  See VSWhidey 396429 and
-            // the attached email in the 
+            // the attached email in the bug.
             if (context != null && context.SqlDependencyCookie != null &&  // That means We have already setup SQL9 dependency for output cache
                 sqlCmd.NotificationAutoEnlist) {    // This command will auto-enlist in that output cache dependency
                 throw new HttpException(SR.GetString(SR.SqlCacheDependency_OutputCache_Conflict));

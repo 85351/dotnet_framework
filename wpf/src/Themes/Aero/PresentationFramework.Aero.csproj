@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{aa945297-a9c6-401d-88ca-130ef0fbadda}</ProjectGuid>
+    <ProjectGuid>{69f3b1fb-5647-4d05-bcf1-2ce27d1c2db6}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>PresentationFramework.Aero</AssemblyName>
@@ -20,23 +20,23 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\ndp\clr\src\bcl\mscorlib.csproj">
-      <Project>{b2eee131-63ac-43b5-a843-e555ae346910}</Project>
+      <Project>{74ef8966-be63-49d5-84bc-6c2cb0724069}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\PresentationCore.csproj">
-      <Project>{78f69e57-7e0f-4722-92c5-33b0102dd425}</Project>
+      <Project>{01c1478d-0ee1-41d9-b3fe-3955676c722e}</Project>
       <Name>PresentationCore</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\PresentationFramework.csproj">
-      <Project>{858e2494-2caa-44fe-ab0e-4e1d4bc0f721}</Project>
+      <Project>{0dcdc11f-4e79-435b-b0fa-162de3818ebe}</Project>
       <Name>PresentationFramework</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\ndp\fx\src\System.csproj">
-      <Project>{511d1c68-d48e-465d-bae9-4448a54d9531}</Project>
+      <Project>{df88a904-fb7a-40a0-8bc0-4e757ca35923}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\WindowsBase.csproj">
-      <Project>{4ee8ffb5-03d6-4fac-a798-2eecc987739c}</Project>
+      <Project>{307099a0-3bb6-4090-ab2d-156908693081}</Project>
       <Name>WindowsBase</Name>
     </ProjectReference>
   </ItemGroup>
@@ -48,7 +48,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\..\Test\Common\FxCop\Suppression\Aero\Security.cs" />
-    <Compile Include="..\..\Shared\RefAssemblyAttrs.cs" />
     <Compile Include="..\Shared\AssemblyAttributes.cs" />
     <Compile Include="..\Shared\Microsoft\Windows\Themes\DataGridHeaderBorder.cs" />
     <Compile Include="..\Shared\Microsoft\Windows\Themes\KnownTypeHelper.cs" />

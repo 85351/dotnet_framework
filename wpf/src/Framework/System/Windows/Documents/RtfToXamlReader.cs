@@ -3388,7 +3388,7 @@ namespace System.Windows.Documents
                     return -1;    // -1 means use ansicpg
                 case 77: // Mac
                     return 10000;
-                case 78:  // Shift JIS - 
+                case 78:  // Shift JIS - bug in MacWord98J
                 case 128: // Shift JIS
                     return 932;
                 case 129: // Hangul

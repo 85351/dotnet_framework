@@ -948,8 +948,8 @@ namespace System.Web {
                     }
                     
                     if (!omitVaryStar) {
-                        // Dev10 
-
+                        // Dev10 Bug 425047 - OutputCache Location="ServerAndClient" (HttpCacheability.ServerAndPrivate) should 
+                        // not use "Vary: *" so the response can be cached on the client
                         if (_varyByCustom != null || (_varyByParams.IsModified() && !_varyByParams.IgnoreParams)) {
                             varyByHeaders = "*";
                         }

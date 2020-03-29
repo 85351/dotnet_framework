@@ -550,8 +550,8 @@ namespace System.Data.SqlTypes
             if (pathTooLong)
             {
                 // SQLBUVSTS bugs 192677 and 203422: currently, FileIOPermission does not support path longer than MAX_PATH (260)
-                // so we cannot demand permissions for long files. We are going to open 
-
+                // so we cannot demand permissions for long files. We are going to open bug for FileIOPermission to
+                // support this.
 
                 // In the meanwhile, we agreed to have try-catch block on the permission demand instead of checking the path length.
                 // This way, if/when the 260-chars limitation is fixed in FileIOPermission, we will not need to change our code

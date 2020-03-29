@@ -99,9 +99,9 @@ namespace System.Net {
             try {
                 if (errorCode == UnsafeNclNativeMethods.ErrorCodes.ERROR_MORE_DATA)
                {
-                    //There is a 
-
-
+                    //There is a bug that has existed in http.sys since w2k3.  Bytesreceived will only
+                    //return the size of the inital cert structure.  To get the full size,
+                    //we need to add the certificate encoding size as well.
 
                     UnsafeNclNativeMethods.HttpApi.HTTP_SSL_CLIENT_CERT_INFO* pClientCertInfo = asyncResult.RequestBlob;
                     asyncResult.Reset(numBytes + pClientCertInfo->CertEncodedSize);

@@ -976,8 +976,8 @@ namespace System.Windows.Forms {
             proposedConstraints -= bordersAndPadding;
 
             // Fit the text to the remaining space
-            // Fix for Dev10 
-
+            // Fix for Dev10 bug 590621: 
+            // in text box, we don't interpret ampersand (&) as a directive to underscore the character that follows.
             TextFormatFlags format = TextFormatFlags.NoPrefix;
             if(!Multiline) {
                 format |= TextFormatFlags.SingleLine;

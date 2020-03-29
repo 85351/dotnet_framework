@@ -31,6 +31,16 @@ namespace System.Windows.Forms {
     public class AccessibleObject : StandardOleMarshalObject,
                                     IReflect,
                                     IAccessible,
+                                    UnsafeNativeMethods.IAccessibleEx,
+                                    UnsafeNativeMethods.IServiceProvider,
+                                    UnsafeNativeMethods.IRawElementProviderSimple,
+                                    UnsafeNativeMethods.IValueProvider,
+                                    UnsafeNativeMethods.IExpandCollapseProvider,
+                                    UnsafeNativeMethods.IToggleProvider,
+                                    UnsafeNativeMethods.ITableProvider,
+                                    UnsafeNativeMethods.ITableItemProvider,
+                                    UnsafeNativeMethods.IGridProvider,
+                                    UnsafeNativeMethods.IGridItemProvider,
                                     UnsafeNativeMethods.IEnumVariant,
                                     UnsafeNativeMethods.IOleWindow {
 
@@ -494,6 +504,373 @@ namespace System.Windows.Forms {
             }
             
             return null;
+        }
+
+        //
+        // UIAutomation support helpers
+        //
+
+        internal virtual bool IsIAccessibleExSupported() {
+            // Override this, in your derived class, to enable IAccessibleEx support
+            return false;
+        }
+
+        internal virtual bool IsPatternSupported(int patternId) {
+            // Override this, in your derived class, if you implement UIAutomation patterns 
+            return false;
+        }
+
+        //
+        // Overridable methods for IRawElementProviderSimple interface
+        //
+
+        internal virtual int[] RuntimeId {
+            get {
+                return null;
+            }
+        }
+
+        internal virtual int ProviderOptions {
+            get {
+                return (int)(UnsafeNativeMethods.ProviderOptions.ServerSideProvider | UnsafeNativeMethods.ProviderOptions.UseComThreading);
+            }
+        }
+
+        internal virtual object GetPropertyValue(int propertyID) {
+            return null;
+        }
+
+        //
+        // Overridable methods for IExpandCollapseProvider pattern interface
+        //
+
+        internal virtual void Expand() {
+        }
+
+        internal virtual void Collapse() {
+        }
+
+        internal virtual UnsafeNativeMethods.ExpandCollapseState ExpandCollapseState {
+            get {
+                return UnsafeNativeMethods.ExpandCollapseState.Collapsed;
+            }
+        }
+
+        //
+        // Overridable methods for IToggleProvider pattern interface
+        //
+
+        internal virtual void Toggle() {
+        }
+
+        internal virtual UnsafeNativeMethods.ToggleState ToggleState {
+            get {
+                return UnsafeNativeMethods.ToggleState.ToggleState_Indeterminate;
+            }
+        }
+
+        //
+        // Overridable methods for ITableProvider pattern interface
+        //
+
+        internal virtual UnsafeNativeMethods.IRawElementProviderSimple[] GetRowHeaders() {
+            return null;
+        }
+
+        internal virtual UnsafeNativeMethods.IRawElementProviderSimple[] GetColumnHeaders() {
+            return null;
+        }
+
+        internal virtual UnsafeNativeMethods.RowOrColumnMajor RowOrColumnMajor {
+            get {
+                return UnsafeNativeMethods.RowOrColumnMajor.RowOrColumnMajor_RowMajor;
+            }
+        }
+
+        //
+        // Overridable methods for ITableItemProvider pattern interface
+        //
+
+        internal virtual UnsafeNativeMethods.IRawElementProviderSimple[] GetRowHeaderItems() {
+            return null;
+        }
+
+        internal virtual UnsafeNativeMethods.IRawElementProviderSimple[] GetColumnHeaderItems() {
+            return null;
+        }
+
+        //
+        // Overridable methods for IGridProvider pattern interface
+        //
+
+        internal virtual UnsafeNativeMethods.IRawElementProviderSimple GetItem(int row, int column) {
+            return null;
+        }
+
+        internal virtual int RowCount {
+            get {
+                return -1;
+            }
+        }
+
+        internal virtual int ColumnCount {
+            get {
+                return -1;
+            }
+        }
+
+        //
+        // Overridable methods for IGridItemProvider pattern interface
+        //
+        
+        internal virtual int Row {
+            get {
+                return -1;
+            }
+        }
+
+        internal virtual int Column {
+            get {
+                return -1;
+            }
+        }
+
+        internal virtual int RowSpan {
+            get {
+                return 1;
+            }
+        }
+
+        internal virtual int ColumnSpan {
+            get {
+                return 1;
+            }
+        }
+
+        internal virtual UnsafeNativeMethods.IRawElementProviderSimple ContainingGrid {
+            get {
+                return null;
+            }
+        }
+
+        // Overridable methods for IValueProvider pattern interface
+
+        internal virtual bool IsReadOnly {
+            get {
+                return false;
+            }
+        }
+
+        internal virtual void SetValue(string newValue) {
+            this.Value = newValue;
+        }
+
+        int UnsafeNativeMethods.IServiceProvider.QueryService(ref Guid service, ref Guid riid, out IntPtr ppvObject) {
+
+            int hr = NativeMethods.E_NOINTERFACE;
+            ppvObject = IntPtr.Zero;
+
+            if (IsIAccessibleExSupported()) {
+                if (service.Equals(UnsafeNativeMethods.guid_IAccessibleEx) &&
+                    riid.Equals(UnsafeNativeMethods.guid_IAccessibleEx)) {
+                    // We want to return the internal, secure, object, which we don't have access here
+                    // Return non-null, which will be interpreted in internal method, to mean returning casted object to IAccessibleEx
+
+                    ppvObject = Marshal.GetComInterfaceForObject(this, typeof(UnsafeNativeMethods.IAccessibleEx));
+                    hr = NativeMethods.S_OK;
+                }
+            }
+
+            return hr;
+        }
+
+        object UnsafeNativeMethods.IAccessibleEx.GetObjectForChild(int idChild) {
+            // No need to implement this for patterns and properties
+            return null;
+        }
+
+        // This method is never called
+        int UnsafeNativeMethods.IAccessibleEx.GetIAccessiblePair(out object ppAcc, out int pidChild) {
+
+            // No need to implement this for patterns and properties
+            ppAcc = null;
+            pidChild = 0;
+            return NativeMethods.E_POINTER;
+        }
+
+        int[] UnsafeNativeMethods.IAccessibleEx.GetRuntimeId() {
+            return RuntimeId;
+        }
+
+        int UnsafeNativeMethods.IAccessibleEx.ConvertReturnedElement(object pIn, out object ppRetValOut) {
+
+            // No need to implement this for patterns and properties
+            ppRetValOut = null;
+            return NativeMethods.E_NOTIMPL;
+        }
+
+        //
+        // IRawElementProviderSimple interface
+        //
+
+        UnsafeNativeMethods.ProviderOptions UnsafeNativeMethods.IRawElementProviderSimple.ProviderOptions {
+            get {
+                return (UnsafeNativeMethods.ProviderOptions) ProviderOptions;
+            }
+        }
+
+        UnsafeNativeMethods.IRawElementProviderSimple UnsafeNativeMethods.IRawElementProviderSimple.HostRawElementProvider {
+            get {
+                return null;
+            }
+        }
+
+        object UnsafeNativeMethods.IRawElementProviderSimple.GetPatternProvider(int patternId) {
+            if (IsPatternSupported(patternId)) {
+                return this;
+            }
+            else {
+                return null;
+            }
+        }
+
+        object UnsafeNativeMethods.IRawElementProviderSimple.GetPropertyValue(int propertyID) {
+            return GetPropertyValue(propertyID);
+        }
+
+        //
+        // IExpandCollapseProvider interface
+        //
+
+        void UnsafeNativeMethods.IExpandCollapseProvider.Expand() {
+            Expand();
+        }
+        void UnsafeNativeMethods.IExpandCollapseProvider.Collapse() {
+            Collapse();
+        }
+
+        UnsafeNativeMethods.ExpandCollapseState UnsafeNativeMethods.IExpandCollapseProvider.ExpandCollapseState {
+            get {
+                return ExpandCollapseState;
+            }
+        }
+
+        //
+        // IValueProvider interface
+        //
+
+        bool UnsafeNativeMethods.IValueProvider.IsReadOnly {
+            get {
+                return IsReadOnly;
+            }
+        }
+
+        string UnsafeNativeMethods.IValueProvider.Value {
+            get {
+                return Value;
+            }
+        }
+
+        void UnsafeNativeMethods.IValueProvider.SetValue(string newValue) {
+            SetValue(newValue);
+        }
+
+        //
+        // IToggleProvider implementation
+        //
+
+        void UnsafeNativeMethods.IToggleProvider.Toggle() {
+            Toggle();
+        }
+
+        UnsafeNativeMethods.ToggleState UnsafeNativeMethods.IToggleProvider.ToggleState {
+            get {
+                return ToggleState;
+            }
+        }
+
+        //
+        // ITableProvider implementation
+        //
+
+        object[] UnsafeNativeMethods.ITableProvider.GetRowHeaders() {
+            return GetRowHeaders();
+        }
+
+        object[] UnsafeNativeMethods.ITableProvider.GetColumnHeaders() {
+            return GetColumnHeaders();
+        }
+
+        UnsafeNativeMethods.RowOrColumnMajor UnsafeNativeMethods.ITableProvider.RowOrColumnMajor {
+            get {
+                return RowOrColumnMajor;
+            }
+        }
+
+        //
+        // ITableItemProvider implementation
+        //
+
+        object[] UnsafeNativeMethods.ITableItemProvider.GetRowHeaderItems() {
+            return GetRowHeaderItems();
+        }
+
+        object[] UnsafeNativeMethods.ITableItemProvider.GetColumnHeaderItems() {
+            return GetColumnHeaderItems();
+        }
+
+        //
+        // IGridProvider implementation
+        //
+
+        object UnsafeNativeMethods.IGridProvider.GetItem(int row, int column) {
+            return GetItem(row, column);
+        }
+
+        int UnsafeNativeMethods.IGridProvider.RowCount {
+            get {
+                return RowCount;
+            }
+        }
+
+        int UnsafeNativeMethods.IGridProvider.ColumnCount {
+            get {
+                return ColumnCount;
+            }
+        }
+
+        //
+        // IGridItemProvider implementation
+        //
+        
+        int UnsafeNativeMethods.IGridItemProvider.Row {
+            get {
+                return Row;
+            }
+        }
+
+        int UnsafeNativeMethods.IGridItemProvider.Column {
+            get {
+                return Column;
+            }
+        }
+
+        int UnsafeNativeMethods.IGridItemProvider.RowSpan {
+            get {
+                return RowSpan;
+            }
+        }
+
+        int UnsafeNativeMethods.IGridItemProvider.ColumnSpan {
+            get {
+                return ColumnSpan;
+            }
+        }
+
+        object UnsafeNativeMethods.IGridItemProvider.ContainingGrid {
+            get {
+                return ContainingGrid;
+            }
         }
 
         /// <include file='doc\AccessibleObject.uex' path='docs/doc[@for="AccessibleObject.IAccessible.accDoDefaultAction"]/*' />
@@ -2090,6 +2467,16 @@ namespace System.Windows.Forms {
     internal sealed class InternalAccessibleObject : StandardOleMarshalObject, 
                                     UnsafeNativeMethods.IAccessibleInternal,
                                     System.Reflection.IReflect,
+                                    UnsafeNativeMethods.IServiceProvider,
+                                    UnsafeNativeMethods.IAccessibleEx,
+                                    UnsafeNativeMethods.IRawElementProviderSimple,
+                                    UnsafeNativeMethods.IValueProvider,
+                                    UnsafeNativeMethods.IExpandCollapseProvider,
+                                    UnsafeNativeMethods.IToggleProvider,
+                                    UnsafeNativeMethods.ITableProvider,
+                                    UnsafeNativeMethods.ITableItemProvider,
+                                    UnsafeNativeMethods.IGridProvider,
+                                    UnsafeNativeMethods.IGridItemProvider,
                                     UnsafeNativeMethods.IEnumVariant,
                                     UnsafeNativeMethods.IOleWindow {
 
@@ -2097,6 +2484,19 @@ namespace System.Windows.Forms {
         private UnsafeNativeMethods.IEnumVariant publicIEnumVariant; // AccessibleObject as IEnumVariant
         private UnsafeNativeMethods.IOleWindow publicIOleWindow;     // AccessibleObject as IOleWindow
         private IReflect publicIReflect;                             // AccessibleObject as IReflect
+
+        private UnsafeNativeMethods.IServiceProvider publicIServiceProvider;             // AccessibleObject as IServiceProvider
+        private UnsafeNativeMethods.IAccessibleEx publicIAccessibleEx;                   // AccessibleObject as IAccessibleEx
+
+        // UIAutomation
+        private UnsafeNativeMethods.IRawElementProviderSimple publicIRawElementProviderSimple;    // AccessibleObject as IRawElementProviderSimple
+        private UnsafeNativeMethods.IValueProvider publicIValueProvider;                          // AccessibleObject as IValueProvider
+        private UnsafeNativeMethods.IExpandCollapseProvider publicIExpandCollapseProvider;        // AccessibleObject as IExpandCollapseProvider
+        private UnsafeNativeMethods.IToggleProvider publicIToggleProvider;                        // AccessibleObject as IToggleProvider
+        private UnsafeNativeMethods.ITableProvider publicITableProvider;                          // AccessibleObject as ITableProvider
+        private UnsafeNativeMethods.ITableItemProvider publicITableItemProvider;                  // AccessibleObject as ITableItemProvider
+        private UnsafeNativeMethods.IGridProvider publicIGridProvider;                            // AccessibleObject as IGridProvider
+        private UnsafeNativeMethods.IGridItemProvider publicIGridItemProvider;                    // AccessibleObject as IGridItemProvider
 
         /// <summary>
         ///     Create a new wrapper. Protect this with UnmanagedCode Permission
@@ -2110,6 +2510,16 @@ namespace System.Windows.Forms {
             publicIEnumVariant = (UnsafeNativeMethods.IEnumVariant) accessibleImplemention;
             publicIOleWindow = (UnsafeNativeMethods.IOleWindow) accessibleImplemention;
             publicIReflect = (IReflect) accessibleImplemention;
+            publicIServiceProvider = (UnsafeNativeMethods.IServiceProvider) accessibleImplemention;
+            publicIAccessibleEx = (UnsafeNativeMethods.IAccessibleEx) accessibleImplemention;
+            publicIRawElementProviderSimple = (UnsafeNativeMethods.IRawElementProviderSimple) accessibleImplemention;
+            publicIValueProvider = (UnsafeNativeMethods.IValueProvider) accessibleImplemention;
+            publicIExpandCollapseProvider = (UnsafeNativeMethods.IExpandCollapseProvider) accessibleImplemention;
+            publicIToggleProvider = (UnsafeNativeMethods.IToggleProvider)accessibleImplemention;
+            publicITableProvider = (UnsafeNativeMethods.ITableProvider)accessibleImplemention;
+            publicITableItemProvider = (UnsafeNativeMethods.ITableItemProvider)accessibleImplemention;
+            publicIGridProvider = (UnsafeNativeMethods.IGridProvider)accessibleImplemention;
+            publicIGridItemProvider = (UnsafeNativeMethods.IGridItemProvider)accessibleImplemention;
             // Note: Deliberately not holding onto AccessibleObject to enforce all access through the interfaces
         }
 
@@ -2124,6 +2534,18 @@ namespace System.Windows.Forms {
             else {
                 return accObject;
             }
+        }
+
+        /// <summary>
+        ///     Wraps AccessibleObject elements of a given array into InternalAccessibleObjects
+        /// </summary>
+        private object[] AsArrayOfNativeAccessibles(object[] accObjectArray) {
+            if (accObjectArray != null && accObjectArray.Length > 0) {
+                for (int i = 0; i < accObjectArray.Length; i++) {
+                    accObjectArray[i] = AsNativeAccessible(accObjectArray[i]);
+                }
+            }
+            return accObjectArray;
         }
 
         //
@@ -2326,6 +2748,272 @@ namespace System.Windows.Forms {
             get {
                 IReflect r = publicIReflect;
                 return publicIReflect.UnderlyingSystemType;
+            }
+        }
+
+        //
+        // IServiceProvider implementation
+        //
+
+        int UnsafeNativeMethods.IServiceProvider.QueryService(ref Guid service, ref Guid riid, out IntPtr ppvObject) {
+            IntSecurity.UnmanagedCode.Assert();
+
+            ppvObject = IntPtr.Zero;
+            int hr = publicIServiceProvider.QueryService(ref service, ref riid, out ppvObject);
+            if (hr >= NativeMethods.S_OK) {
+                // we always want to return the internal accessible object
+                ppvObject = Marshal.GetComInterfaceForObject(this, typeof(UnsafeNativeMethods.IAccessibleEx));
+            }
+
+            return hr;
+        }
+
+        //
+        // IAccessibleEx implementation
+        //
+
+        object UnsafeNativeMethods.IAccessibleEx.GetObjectForChild(int idChild) {
+            IntSecurity.UnmanagedCode.Assert();
+            return publicIAccessibleEx.GetObjectForChild(idChild);
+        }
+
+        int UnsafeNativeMethods.IAccessibleEx.GetIAccessiblePair(out object ppAcc, out int pidChild) {
+
+            IntSecurity.UnmanagedCode.Assert();
+
+            // We always want to return the internal accessible object
+            ppAcc = this;
+            pidChild = NativeMethods.CHILDID_SELF;
+            return NativeMethods.S_OK;
+        }
+
+        int[] UnsafeNativeMethods.IAccessibleEx.GetRuntimeId() {
+
+            IntSecurity.UnmanagedCode.Assert();
+            return publicIAccessibleEx.GetRuntimeId();
+        }
+
+        int UnsafeNativeMethods.IAccessibleEx.ConvertReturnedElement(object pIn, out object ppRetValOut) {
+
+            IntSecurity.UnmanagedCode.Assert();
+            return publicIAccessibleEx.ConvertReturnedElement(pIn, out ppRetValOut);
+        }
+
+        //
+        // IRawElementProviderSimple implementation
+        //
+
+        UnsafeNativeMethods.ProviderOptions UnsafeNativeMethods.IRawElementProviderSimple.ProviderOptions {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIRawElementProviderSimple.ProviderOptions;
+            }
+        }
+
+        UnsafeNativeMethods.IRawElementProviderSimple UnsafeNativeMethods.IRawElementProviderSimple.HostRawElementProvider {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIRawElementProviderSimple.HostRawElementProvider;
+            }
+        }
+
+        object UnsafeNativeMethods.IRawElementProviderSimple.GetPatternProvider(int patternId) {
+            IntSecurity.UnmanagedCode.Assert();
+
+            object obj = publicIRawElementProviderSimple.GetPatternProvider(patternId);
+            if (obj != null) {
+
+                // we always want to return the internal accessible object
+
+                if (patternId == NativeMethods.UIA_ExpandCollapsePatternId) {
+                    return (UnsafeNativeMethods.IExpandCollapseProvider)this;
+                }
+                else if (patternId == NativeMethods.UIA_ValuePatternId) {
+                    return (UnsafeNativeMethods.IValueProvider)this;
+                }
+                else if (patternId == NativeMethods.UIA_TogglePatternId) {
+                    return (UnsafeNativeMethods.IToggleProvider)this;
+                }
+                else if (patternId == NativeMethods.UIA_TablePatternId) {
+                    return (UnsafeNativeMethods.ITableProvider)this;
+                }
+                else if (patternId == NativeMethods.UIA_TableItemPatternId) {
+                    return (UnsafeNativeMethods.ITableItemProvider)this;
+                }
+                else if (patternId == NativeMethods.UIA_GridPatternId) {
+                    return (UnsafeNativeMethods.IGridProvider)this;
+                }
+                else if (patternId == NativeMethods.UIA_GridItemPatternId) {
+                    return (UnsafeNativeMethods.IGridItemProvider)this;
+                }
+                else {
+                    return null;
+                }
+            }
+            else {
+                return null;
+            }
+        }
+
+        object UnsafeNativeMethods.IRawElementProviderSimple.GetPropertyValue(int propertyID) {
+            IntSecurity.UnmanagedCode.Assert();
+            return publicIRawElementProviderSimple.GetPropertyValue(propertyID);
+        }
+
+        //
+        // IValueProvider implementation
+        //
+
+        bool UnsafeNativeMethods.IValueProvider.IsReadOnly {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIValueProvider.IsReadOnly;
+            }
+        }
+
+        string UnsafeNativeMethods.IValueProvider.Value {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIValueProvider.Value;
+            }
+        }
+
+        void UnsafeNativeMethods.IValueProvider.SetValue(string newValue) {
+            IntSecurity.UnmanagedCode.Assert();
+            publicIValueProvider.SetValue(newValue);
+        }
+
+        //
+        // IExpandCollapseProvider implementation
+        //
+
+        void UnsafeNativeMethods.IExpandCollapseProvider.Expand() {
+            IntSecurity.UnmanagedCode.Assert();
+            publicIExpandCollapseProvider.Expand();
+        }
+
+        void UnsafeNativeMethods.IExpandCollapseProvider.Collapse() {
+            IntSecurity.UnmanagedCode.Assert();
+            publicIExpandCollapseProvider.Collapse();
+        }
+
+        UnsafeNativeMethods.ExpandCollapseState UnsafeNativeMethods.IExpandCollapseProvider.ExpandCollapseState {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIExpandCollapseProvider.ExpandCollapseState;
+            }
+        }
+
+        //
+        // IToggleProvider implementation
+        //
+
+        void UnsafeNativeMethods.IToggleProvider.Toggle() {
+            IntSecurity.UnmanagedCode.Assert();
+            publicIToggleProvider.Toggle();
+        }
+
+        UnsafeNativeMethods.ToggleState UnsafeNativeMethods.IToggleProvider.ToggleState {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIToggleProvider.ToggleState;
+            }
+        }
+
+        //
+        // ITableProvider implementation
+        //
+
+        object[] UnsafeNativeMethods.ITableProvider.GetRowHeaders() {
+            IntSecurity.UnmanagedCode.Assert();
+            return AsArrayOfNativeAccessibles(publicITableProvider.GetRowHeaders());
+        }
+
+        object[] UnsafeNativeMethods.ITableProvider.GetColumnHeaders() {
+            IntSecurity.UnmanagedCode.Assert();
+            return AsArrayOfNativeAccessibles(publicITableProvider.GetColumnHeaders());
+        }
+
+        UnsafeNativeMethods.RowOrColumnMajor UnsafeNativeMethods.ITableProvider.RowOrColumnMajor {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicITableProvider.RowOrColumnMajor;
+            }
+        }
+
+        //
+        // ITableItemProvider implementation
+        //
+
+        object[] UnsafeNativeMethods.ITableItemProvider.GetRowHeaderItems() {
+            IntSecurity.UnmanagedCode.Assert();
+            return AsArrayOfNativeAccessibles(publicITableItemProvider.GetRowHeaderItems());
+        }
+
+        object[] UnsafeNativeMethods.ITableItemProvider.GetColumnHeaderItems() {
+            IntSecurity.UnmanagedCode.Assert();
+            return AsArrayOfNativeAccessibles(publicITableItemProvider.GetColumnHeaderItems());
+        }
+
+        //
+        // IGridProvider implementation
+        //
+
+        object UnsafeNativeMethods.IGridProvider.GetItem(int row, int column) {
+            IntSecurity.UnmanagedCode.Assert();
+            return AsNativeAccessible(publicIGridProvider.GetItem(row, column));
+        }
+
+        int UnsafeNativeMethods.IGridProvider.RowCount {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIGridProvider.RowCount;
+            }
+        }
+
+        int UnsafeNativeMethods.IGridProvider.ColumnCount {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIGridProvider.ColumnCount;
+            }
+        }
+
+        //
+        // IGridItemProvider implementation
+        //
+                
+        int UnsafeNativeMethods.IGridItemProvider.Row {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIGridItemProvider.Row;
+            }
+        }
+
+        int UnsafeNativeMethods.IGridItemProvider.Column {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIGridItemProvider.Column;
+            }
+        }
+
+        int UnsafeNativeMethods.IGridItemProvider.RowSpan {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIGridItemProvider.RowSpan;
+            }
+        }
+
+        int UnsafeNativeMethods.IGridItemProvider.ColumnSpan {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return publicIGridItemProvider.ColumnSpan;
+            }
+        }
+
+        object UnsafeNativeMethods.IGridItemProvider.ContainingGrid {
+            get {
+                IntSecurity.UnmanagedCode.Assert();
+                return AsNativeAccessible(publicIGridItemProvider.ContainingGrid);
             }
         }
 
