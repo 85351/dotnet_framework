@@ -363,11 +363,25 @@ namespace MS.Internal.Data
                 ReplaceDependencySources();
             }
 
-            // if there's a revised value (i.e. not during initialization
-            // and shutdown), transfer it.
-            if (!initialValue && Status != BindingStatusInternal.AsyncRequestPending)
+            if (Status != BindingStatusInternal.AsyncRequestPending)
             {
-                parent.ScheduleTransfer(isASubPropertyChange);
+                // if there's a revised value (i.e. not during initialization
+                // and shutdown), transfer it.
+                if (!initialValue)
+                {
+                    parent.ScheduleTransfer(isASubPropertyChange);
+                }
+                else
+                {
+                    // "initialValue" should really be called "suppressTransfer".
+                    // It's true when we don't want to transfer the new value:
+                    //  a) initial activation
+                    //  b) shutdown
+                    //  c) DataContext={DisconnectedItem}
+                    // Even in these cases, at least clear the pending flag,
+                    // so that future source changes aren't ignored (DDVSO 850536)
+                    SetTransferIsPending(false);
+                }
             }
         }
 

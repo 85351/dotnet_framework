@@ -269,6 +269,24 @@ namespace System.Windows.Automation.Peers
         }
 
         /// <summary>
+        /// Provides a value for UIAutomation's PositionInSet property
+        /// Reads <see cref="AutomationProperties.PositionInSetProperty"/> and returns the value
+        /// </summary>
+        override protected int GetPositionInSetCore()
+        {
+            return AutomationProperties.GetPositionInSet(_owner);
+        }
+
+        /// <summary>
+        /// Provides a value for UIAutomation's SizeOfSet property
+        /// Reads <see cref="AutomationProperties.SizeOfSetProperty"/> and returns the value
+        /// </summary>
+        override protected int GetSizeOfSetCore()
+        {
+            return AutomationProperties.GetSizeOfSet(_owner);
+        }
+
+        /// <summary>
         /// <see cref="AutomationPeer.GetClickablePointCore"/>
         /// </summary>
         override protected Point GetClickablePointCore()

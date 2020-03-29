@@ -180,6 +180,22 @@ namespace System.Windows.Forms {
             }
         }
 
+        internal override int DeviceDpi {
+            get {
+                return base.DeviceDpi;
+            }
+
+            // This gets called via ToolStripItem.RescaleConstantsForDpi.
+            // It's practically calling Initialize on DpiChanging with the new Dpi value.
+            // ToolStripItem.RescaleConstantsForDpi is already behind quirks.
+            set {
+                if (base.DeviceDpi != value) {
+                    base.DeviceDpi = value;
+                    standardButtonWidth = DpiHelper.LogicalToDeviceUnits(STANDARD_BUTTON_WIDTH, DeviceDpi);
+                }
+            }
+        }
+
         /// <include file='doc\ToolStripButton.uex' path='docs/doc[@for="ToolStripButton.CreateAccessibilityInstance"]/*' />
         /// <devdoc>
         /// constructs the new instance of the accessibility object for this ToolStripItem. Subclasses
@@ -268,6 +284,17 @@ namespace System.Windows.Forms {
                 this.ownerItem = ownerItem;
             }
 
+            internal override object GetPropertyValue(int propertyID) {
+                if (AccessibilityImprovements.Level3) {
+                    switch (propertyID) {
+                        case NativeMethods.UIA_ControlTypePropertyId:
+                            return NativeMethods.UIA_ButtonControlTypeId;
+                    }
+                }
+
+                return base.GetPropertyValue(propertyID);
+            }
+
             public override AccessibleRole Role {
                 get {
                     if (ownerItem.CheckOnClick && AccessibilityImprovements.Level1) {
@@ -295,7 +322,7 @@ namespace System.Windows.Forms {
                     return base.State;
                }
             }
-            
+
         }
     }
 }

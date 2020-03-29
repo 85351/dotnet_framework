@@ -26,6 +26,7 @@ namespace System.Security.Cryptography.Xml
 {
     using System;
     using System.Collections;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Runtime.InteropServices;
     using System.Security;
@@ -1435,6 +1436,7 @@ namespace System.Security.Cryptography.Xml
                 throw new CryptographicException(SecurityResources.GetResourceString("Cryptography_Xml_UnknownTransform"));
         }
 
+        [SuppressMessage("Microsoft.Security.Xml", "CA3058:DoNotUseSetInnerXml", Justification="Operates on inputs which were already parsed by XmlDocument with valid settings and already would have produced errors (DTD or external resolution)")]
         public override void LoadInput (object obj) {
             // Check if the Context property is set before this transform is invoked.
             if (Context == null)

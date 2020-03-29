@@ -961,7 +961,7 @@ public sealed class MultiBindingExpression: BindingExpressionBase, IDataBindEngi
         for (int i = 0; i < count; ++i)
         {
             object value = MutableBindingExpressions[i].GetValue(null, null); // could pass (null, null)
-            if (Object.Equals(value, newValue))
+            if (ItemsControl.EqualsEx(value, newValue))
                 return MutableBindingExpressions[i].GetSourceItem(newValue);
         }
 
@@ -1335,7 +1335,7 @@ public sealed class MultiBindingExpression: BindingExpressionBase, IDataBindEngi
 
         // if this is a re-transfer after a source update and the value
         // hasn't changed, don't do any more work.
-        bool realTransfer = !(IsInUpdate && Object.Equals(value, Value));
+        bool realTransfer = !(IsInUpdate && ItemsControl.EqualsEx(value, Value));
 
         if (realTransfer)
         {
@@ -1393,6 +1393,19 @@ public sealed class MultiBindingExpression: BindingExpressionBase, IDataBindEngi
                 BindingExpression.OnSourceUpdated(target, TargetProperty);
             }
         }
+    }
+
+    internal override bool ShouldReactToDirtyOverride()
+    {
+        // react only if all the child bindings should react
+        foreach (BindingExpressionBase beb in MutableBindingExpressions)
+        {
+            if (!beb.ShouldReactToDirtyOverride())
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     // transfer a value from the target to the source

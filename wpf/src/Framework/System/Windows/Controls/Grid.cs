@@ -1874,22 +1874,29 @@ namespace System.Windows.Controls
                             takenSize += def.MeasureSize;
                             break;
                         case (LayoutTimeSizeType.Star):
-                            double starWeight = StarWeight(def, scale);
-                            totalStarWeight += starWeight;
-
-                            if (def.MinSize > 0.0)
+                            if (def.MeasureSize < 0.0)
                             {
-                                // store ratio w/min in MeasureSize (for now)
-                                tempDefinitions[minCount++] = def;
-                                def.MeasureSize = starWeight / def.MinSize;
+                                takenSize += -def.MeasureSize;  // already resolved
                             }
-
-                            double effectiveMaxSize = Math.Max(def.MinSize, def.UserMaxSize);
-                            if (!Double.IsPositiveInfinity(effectiveMaxSize))
+                            else
                             {
-                                // store ratio w/max in SizeCache (for now)
-                                tempDefinitions[defCount + maxCount++] = def;
-                                def.SizeCache = starWeight / effectiveMaxSize;
+                                double starWeight = StarWeight(def, scale);
+                                totalStarWeight += starWeight;
+
+                                if (def.MinSize > 0.0)
+                                {
+                                    // store ratio w/min in MeasureSize (for now)
+                                    tempDefinitions[minCount++] = def;
+                                    def.MeasureSize = starWeight / def.MinSize;
+                                }
+
+                                double effectiveMaxSize = Math.Max(def.MinSize, def.UserMaxSize);
+                                if (!Double.IsPositiveInfinity(effectiveMaxSize))
+                                {
+                                    // store ratio w/max in SizeCache (for now)
+                                    tempDefinitions[defCount + maxCount++] = def;
+                                    def.SizeCache = starWeight / effectiveMaxSize;
+                                }
                             }
                             break;
                     }
@@ -1912,7 +1919,7 @@ namespace System.Windows.Controls
                     // the remaining definitions.   [This leads to quadratic behavior in really
                     // pathological cases - but they'd never arise in practice.]
                     const double starFactor = 1.0 / 256.0;      // lose more than 8 bits of precision -> recalculate
-                    if (totalStarWeight * starFactor < takenStarWeight)
+                    if (remainingStarWeight < totalStarWeight * starFactor)
                     {
                         takenStarWeight = 0.0;
                         totalStarWeight = 0.0;
@@ -2380,24 +2387,12 @@ namespace System.Windows.Controls
             bool columns)
         {
             int defCount = definitions.Length;
-            bool useLayoutRounding = this.UseLayoutRounding;
             int[] definitionIndices = DefinitionIndices;
-            double[] roundingErrors = null;
             int minCount = 0, maxCount = 0;
             double takenSize = 0.0;
             double totalStarWeight = 0.0;
             int starCount = 0;      // number of unresolved *-definitions
             double scale = 1.0;   // scale factor applied to each *-weight;  negative means "Infinity is present"
-
-            // If using layout rounding, check whether rounding needs to compensate for high DPI
-            double dpi = 1.0;
-
-            if (useLayoutRounding)
-            {
-                DpiScale dpiScale = GetDpi();
-                dpi = columns ? dpiScale.DpiScaleX : dpiScale.DpiScaleY;
-                roundingErrors = RoundingErrors;
-            }
 
             // Phase 1.  Determine the maximum *-weight and prepare to adjust *-weights
             double maxStar = 0.0;
@@ -2513,13 +2508,6 @@ namespace System.Windows.Controls
                         }
 
                         def.SizeCache = Math.Max(def.MinSizeForArrange, Math.Min(userSize, userMaxSize));
-                        if (useLayoutRounding)
-                        {
-                            double roundedSize = UIElement.RoundLayoutValue(def.SizeCache, dpi);
-                            roundingErrors[i] = (roundedSize - def.SizeCache);
-                            def.SizeCache = roundedSize;
-                        }
-
                         takenSize += def.SizeCache;
                     }
                 }
@@ -2544,7 +2532,7 @@ namespace System.Windows.Controls
                     // the remaining definitions.   [This leads to quadratic behavior in really
                     // pathological cases - but they'd never arise in practice.]
                     const double starFactor = 1.0 / 256.0;      // lose more than 8 bits of precision -> recalculate
-                    if (totalStarWeight * starFactor < takenStarWeight)
+                    if (remainingStarWeight < totalStarWeight * starFactor)
                     {
                         takenStarWeight = 0.0;
                         totalStarWeight = 0.0;
@@ -2552,7 +2540,7 @@ namespace System.Windows.Controls
                         for (int i = 0; i < defCount; ++i)
                         {
                             DefinitionBase def = definitions[i];
-                            if (def.SizeType == LayoutTimeSizeType.Star && def.MeasureSize > 0.0)
+                            if (def.UserSize.IsStar && def.MeasureSize > 0.0)
                             {
                                 totalStarWeight += StarWeight(def, scale);
                             }
@@ -2597,13 +2585,6 @@ namespace System.Windows.Controls
                     // resolve the chosen def, deduct its contributions from W and S.
                     // Defs resolved in phase 3 are marked by storing the negative of their resolved
                     // size in MeasureSize, to distinguish them from a pending def.
-                    if (useLayoutRounding)
-                    {
-                        double roundedSize = UIElement.RoundLayoutValue(resolvedSize, dpi);
-                        roundingErrors[resolvedIndex] = (roundedSize - resolvedSize);
-                        resolvedSize = roundedSize;
-                    }
-
                     takenSize += resolvedSize;
                     resolvedDef.MeasureSize = -resolvedSize;
                     takenStarWeight += StarWeight(resolvedDef, scale);
@@ -2697,7 +2678,6 @@ namespace System.Windows.Controls
                 }
             }
 
-            double roundedTakenSize = takenSize;
             if (starCount > 0)
             {
                 StarWeightIndexComparer starWeightIndexComparer = new StarWeightIndexComparer(definitions);
@@ -2727,24 +2707,33 @@ namespace System.Windows.Controls
                     // proportions are computed in the same terms as in phase 3;
                     // this avoids errors arising from min/max constraints.
                     takenSize += resolvedSize;
-
-                    // But also keep track of the actual (rounded) sizes;  we'll
-                    // fix those up later.
-                    if (useLayoutRounding)
-                    {
-                        double roundedSize = UIElement.RoundLayoutValue(resolvedSize, dpi);
-                        roundingErrors[definitionIndices[i]] = (roundedSize - resolvedSize);
-                        resolvedSize = roundedSize;
-                        roundedTakenSize += roundedSize;
-                    }
                     def.SizeCache = resolvedSize;
                 }
             }
 
-            // Phase 5.  The total allocation might differ from finalSize due to rounding
-            // effects.  Tweak the allocations accordingly.
-            if (useLayoutRounding)
+            // Phase 5.  Apply layout rounding.  We do this after fully allocating
+            // unrounded sizes, to avoid breaking assumptions in the previous phases
+            // (see DDVSO 619978 for an example).
+            if (UseLayoutRounding)
             {
+                DpiScale dpiScale = GetDpi();
+                double dpi = columns ? dpiScale.DpiScaleX : dpiScale.DpiScaleY;
+                double[] roundingErrors = RoundingErrors;
+                double roundedTakenSize = 0.0;
+
+                // round each of the allocated sizes, keeping track of the deltas
+                for (int i = 0; i < definitions.Length; ++i)
+                {
+                    DefinitionBase def = definitions[i];
+                    double roundedSize = UIElement.RoundLayoutValue(def.SizeCache, dpi);
+                    roundingErrors[i] = (roundedSize - def.SizeCache);
+                    def.SizeCache = roundedSize;
+                    roundedTakenSize += roundedSize;
+                }
+
+                // The total allocation might differ from finalSize due to rounding
+                // effects.  Tweak the allocations accordingly.
+
                 // Theoretical and historical note.  The problem at hand - allocating
                 // space to columns (or rows) with *-weights, min and max constraints,
                 // and layout rounding - has a long history.  Especially the special

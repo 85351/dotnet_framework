@@ -359,16 +359,37 @@ namespace System.Security.Policy
             switch (warningLevel)
             {
                 case TrustManagerWarningLevel.Green:
-                    bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerOKSm.bmp");
+                    if (!LocalAppContextSwitches.UseLegacyImages)
+                    {
+                        bitmap = QueryDPiMatchedSmallBitmap("TrustManagerOK.ico");
+                    }
+                    else
+                    {
+                        bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerOKSm.bmp");
+                    }
                     pictureBox.AccessibleDescription = string.Format(CultureInfo.CurrentCulture, SR.GetString(SR.TrustManager_WarningIconAccessibleDescription_LowRisk), pictureBox.AccessibleDescription);
                     break;
                 case TrustManagerWarningLevel.Yellow:
-                    bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerWarningSm.bmp");
+                    if (!LocalAppContextSwitches.UseLegacyImages)
+                    {
+                        bitmap = QueryDPiMatchedSmallBitmap("TrustManagerWarning.ico");
+                    }
+                    else
+                    {
+                        bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerWarningSm.bmp");
+                    }
                     pictureBox.AccessibleDescription = string.Format(CultureInfo.CurrentCulture, SR.GetString(SR.TrustManager_WarningIconAccessibleDescription_MediumRisk), pictureBox.AccessibleDescription);
                     break;
                 default:
                     Debug.Assert(warningLevel == TrustManagerWarningLevel.Red);
-                    bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerHighRiskSm.bmp");
+                    if (!LocalAppContextSwitches.UseLegacyImages)
+                    {
+                        bitmap = QueryDPiMatchedSmallBitmap("TrustManagerHighRisk.ico");
+                    }
+                    else
+                    {
+                        bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerHighRiskSm.bmp");
+                    }
                     pictureBox.AccessibleDescription = string.Format(CultureInfo.CurrentCulture, SR.GetString(SR.TrustManager_WarningIconAccessibleDescription_HighRisk), pictureBox.AccessibleDescription);
                     break;
             }
@@ -379,6 +400,21 @@ namespace System.Security.Policy
             }
         }
 
+        internal static Bitmap QueryDPiMatchedSmallBitmap(string iconName)
+        {
+            var icon = new Icon(typeof(System.Windows.Forms.Form), iconName);
+
+            // Querying 96 dpi icon. And smaller bit map is half that size.
+            icon = new Icon(icon, icon.Width / 2, icon.Height / 2);
+            
+            if(icon != null)
+            {
+                return icon.ToBitmap();
+            }
+
+            return null;
+        
+        }
 
         protected override void OnHandleCreated(EventArgs e)
         {

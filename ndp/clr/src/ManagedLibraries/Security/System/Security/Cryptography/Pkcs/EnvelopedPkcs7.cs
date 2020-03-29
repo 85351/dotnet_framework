@@ -64,21 +64,30 @@ namespace System.Security.Cryptography.Pkcs {
         // Constructors.
         //
 
+        private static AlgorithmIdentifier GetDefaultEncryptionAlgorithm()
+        {
+            string oidValue = LocalAppContextSwitches.EnvelopedCmsUseLegacyDefaultAlgorithm ?
+                CAPI.szOID_RSA_DES_EDE3_CBC :
+                CAPI.szOID_NIST_AES256_CBC;
+
+            return new AlgorithmIdentifier(Oid.FromOidValue(oidValue, OidGroup.EncryptionAlgorithm));
+        }
+
         public EnvelopedCms () : 
             this(SubjectIdentifierType.IssuerAndSerialNumber,
                  new ContentInfo(Oid.FromOidValue(CAPI.szOID_RSA_data, OidGroup.ExtensionOrAttribute), new byte[0]),
-                 new AlgorithmIdentifier(Oid.FromOidValue(CAPI.szOID_RSA_DES_EDE3_CBC, OidGroup.EncryptionAlgorithm))) {
+                 GetDefaultEncryptionAlgorithm()) {
         }
 
         public EnvelopedCms (ContentInfo contentInfo) : 
             this(SubjectIdentifierType.IssuerAndSerialNumber, contentInfo,
-                 new AlgorithmIdentifier(Oid.FromOidValue(CAPI.szOID_RSA_DES_EDE3_CBC, OidGroup.EncryptionAlgorithm))) {
+                 GetDefaultEncryptionAlgorithm()) {
         }
 
         public EnvelopedCms (SubjectIdentifierType recipientIdentifierType, ContentInfo contentInfo) : 
             this(recipientIdentifierType,
                  contentInfo,
-                 new AlgorithmIdentifier(Oid.FromOidValue(CAPI.szOID_RSA_DES_EDE3_CBC, OidGroup.EncryptionAlgorithm))) {
+                 GetDefaultEncryptionAlgorithm()) {
         }
 
         public EnvelopedCms (ContentInfo contentInfo, AlgorithmIdentifier encryptionAlgorithm) : 
@@ -551,6 +560,9 @@ namespace System.Security.Cryptography.Pkcs {
                 hr = CAPI.E_NOTIMPL;
                 break;
             }
+
+            // The store handle isn't needed now that CertFindCertificateInStore is done.
+            safeCertStoreHandle.Dispose();
 
             // Acquire CSP if the recipient's cert is found.
             if (safeCertContextHandle != null && !safeCertContextHandle.IsInvalid) {
@@ -1035,7 +1047,7 @@ namespace System.Security.Cryptography.Pkcs {
                 X509Store cuMy = new X509Store("MY", StoreLocation.CurrentUser);
                 cuMy.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly | OpenFlags.IncludeArchived);
                 recipientStore.AddRange(cuMy.Certificates);
-
+                cuMy.Close();
             }
             catch (SecurityException) {
                 // X509Store.Open() may not have permission. Ignore.
@@ -1044,21 +1056,23 @@ namespace System.Security.Cryptography.Pkcs {
                 X509Store lmMy = new X509Store("MY", StoreLocation.LocalMachine);
                 lmMy.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly | OpenFlags.IncludeArchived);
                 recipientStore.AddRange(lmMy.Certificates);
+                lmMy.Close();
             }
             catch (SecurityException) {
                 // Ignore. May be in extra store.
             }
 
-            // Finally, include extra store, if specified.
-            if (extraStore != null) {
-                recipientStore.AddRange(extraStore);
-            }
-
-            if (recipientStore.Count == 0)
+            if (recipientStore.Count == 0 && extraStore.Count == 0)
                 throw new CryptographicException(CAPI.CRYPT_E_RECIPIENT_NOT_FOUND);
 
-            // Return memory store handle.
-            return X509Utils.ExportToMemoryStore(recipientStore);
+            // Return memory store handle, including extraStore.
+            try {
+                return X509Utils.ExportToMemoryStore(recipientStore, extraStore);
+            } finally {
+                foreach (X509Certificate2 cert in recipientStore) {
+                    cert.Reset();
+                }
+            }
         }
 
         [SecurityCritical]
@@ -1071,7 +1085,7 @@ namespace System.Security.Cryptography.Pkcs {
                 X509Store cuMy = new X509Store("AddressBook", StoreLocation.CurrentUser);
                 cuMy.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly | OpenFlags.IncludeArchived);
                 originatorStore.AddRange(cuMy.Certificates);
-
+                cuMy.Close();
             }
             catch (SecurityException) {
                 // X509Store.Open() may not have permission. Ignore.
@@ -1080,24 +1094,38 @@ namespace System.Security.Cryptography.Pkcs {
                 X509Store lmMy = new X509Store("AddressBook", StoreLocation.LocalMachine);
                 lmMy.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly | OpenFlags.IncludeArchived);
                 originatorStore.AddRange(lmMy.Certificates);
+                lmMy.Close();
             }
             catch (SecurityException) {
                 // Ignore. May be in bag of certs or extra store.
             }
 
+            X509Certificate2Collection includedButNotDisposed;
+
             // Finally, include bag of certs and extra store, if specified.
-            if (bagOfCerts != null) {
-                originatorStore.AddRange(bagOfCerts);
-            }
-            if (extraStore != null) {
-                originatorStore.AddRange(extraStore);
+            if (bagOfCerts != null && extraStore != null) {
+                includedButNotDisposed = new X509Certificate2Collection();
+                includedButNotDisposed.AddRange(bagOfCerts);
+                includedButNotDisposed.AddRange(extraStore);
+            } else if (bagOfCerts != null) {
+                includedButNotDisposed = bagOfCerts;
+            } else if (extraStore != null) {
+                includedButNotDisposed = extraStore;
+            } else {
+                includedButNotDisposed = null;
             }
 
-            if (originatorStore.Count == 0)
+            if (originatorStore.Count == 0 && includedButNotDisposed.Count == 0)
                 throw new CryptographicException(CAPI.CRYPT_E_NOT_FOUND);
 
             // Return memory store handle.
-            return X509Utils.ExportToMemoryStore(originatorStore);
+            try {
+                return X509Utils.ExportToMemoryStore(originatorStore, includedButNotDisposed);
+            } finally {
+                foreach (X509Certificate2 cert in originatorStore) {
+                    cert.Reset();
+                }
+            }
         }
     }
 }

@@ -3372,7 +3372,7 @@ namespace System.Windows.Forms {
                         treeViewState[TREEVIEWSTATE_lastControlValidated] = false;
                         WmImeSetFocus();
                         DefWndProc(ref m);
-                        OnGotFocus(EventArgs.Empty);
+                        this.InvokeGotFocus(this, EventArgs.Empty);
                      }
                      else 
                      {

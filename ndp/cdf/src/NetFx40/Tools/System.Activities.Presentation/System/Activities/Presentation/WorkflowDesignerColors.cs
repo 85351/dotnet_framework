@@ -160,7 +160,7 @@ namespace System.Activities.Presentation
         // applications in generatel ( e.g. VS) unfortunately handle high contrast color scheme as well, so we are forced to do it
         // This is code is dervied from the way VS does this.
 
-        static bool IsHighContrastEnabled
+        internal static bool IsHighContrastEnabled
         {
             get
             {

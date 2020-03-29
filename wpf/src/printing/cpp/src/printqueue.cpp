@@ -4962,6 +4962,11 @@ DisposeSerializationManager(
     }
 }
 
+/// <SecurityNote>
+/// Safe: Does not expose any critical info
+/// Critical: Accepts/uses critical type PackageSerializationManager
+/// </SecurityNote>
+[SecuritySafeCritical]
 void
 PrintQueue::
 EnsureJobId(

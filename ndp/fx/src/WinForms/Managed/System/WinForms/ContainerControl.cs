@@ -709,6 +709,20 @@ namespace System.Windows.Forms {
             return LayoutEngine.GetPreferredSize(this, proposedSize - totalPadding) + totalPadding;
         }
 
+        internal override Rectangle GetToolNativeScreenRectangle() {
+            if (this.GetTopLevel()) {
+                // Get window's client rectangle (i.e. without chrome) expressed in screen coordinates
+                NativeMethods.RECT clientRectangle = new NativeMethods.RECT();
+                UnsafeNativeMethods.GetClientRect(new HandleRef(this, this.Handle), ref clientRectangle);
+                NativeMethods.POINT topLeftPoint = new NativeMethods.POINT(0, 0);
+                UnsafeNativeMethods.ClientToScreen(new HandleRef(this, this.Handle), topLeftPoint);
+                return new Rectangle(topLeftPoint.x, topLeftPoint.y, clientRectangle.right, clientRectangle.bottom);
+            }
+            else {
+                return base.GetToolNativeScreenRectangle();
+            }
+        }
+
         /// <devdoc>
         ///     This method calcuates the auto scale dimensions based on the
         ///     control's current font.
@@ -899,7 +913,7 @@ namespace System.Windows.Forms {
             SuspendAllLayout(this);
             SizeF factorSize = new SizeF(factor, factor);
             try {
-                ScaleChildControls(factorSize, factorSize, this);
+                ScaleChildControls(factorSize, factorSize, this, true);
             }
             finally {
                 ResumeAllLayout(this, false);
@@ -1877,7 +1891,7 @@ namespace System.Windows.Forms {
                     // Microsoft: Do not raise GotFocus event since the focus
                     //         is given to the visible ActiveControl
                     if (!ActiveControl.Visible) {
-                        OnGotFocus(EventArgs.Empty);
+                        this.InvokeGotFocus(this, EventArgs.Empty);
                     }
                     FocusActiveControlInternal();
                 }

@@ -898,7 +898,7 @@ namespace System.Security.Cryptography.Xml
                 // Compare both hashes
                 SignedXmlDebugLog.LogVerifyReferenceHash(this, digestedReference, calculatedHash, digestedReference.DigestValue);
 
-                if (!CryptographicEquals(calculatedHash, digestedReference.DigestValue)) {
+                if (!CryptographicEquals(calculatedHash, digestedReference.DigestValue, calculatedHash.Length)) {
                     return false;
                 }
             }
@@ -912,21 +912,27 @@ namespace System.Security.Cryptography.Xml
         // This method makes no attempt to disguise the length of either of its inputs. It is assumed the attacker has 
         // knowledge of the algorithms used, and thus the output length. Length is difficult to properly blind in modern CPUs.
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        private static bool CryptographicEquals(byte[] a, byte[] b) {
+        internal static bool CryptographicEquals(byte[] a, byte[] b, int count) {
             System.Diagnostics.Debug.Assert(a != null);
             System.Diagnostics.Debug.Assert(b != null);
+            System.Diagnostics.Debug.Assert(count > 0);
 
             int result = 0;
 
-            // Short cut if the lengths are not identical
-            if (a.Length != b.Length)
+            // Short cut if the lengths are not right
+            if (a.Length < count || b.Length < count)
                 return false;
 
             unchecked {
-                // Normally this caching doesn't matter, but with the optimizer off, this nets a non-trivial speedup.
-                int aLength = a.Length;
+                // This routine was changed to accept the count as an input, so the total length is already
+                // in a register.
+                //
+                // If this method is being copied to require an exact length match (a la
+                // CryptographicOperations.FixedTimeEquals(ReadOnlySpan, ReadOnlySpan) then
+                // one of the lengths should be saved to a local here, or the non-optimized call in the
+                // for loop is noticable.
 
-                for (int i = 0; i < aLength; i++)
+                for (int i = 0; i < count; i++)
                     // We use subtraction here instead of XOR because the XOR algorithm gets ever so
                     // slightly faster as more and more differences pile up.
                     // This cannot overflow more than once (and back to 0) because bytes are 1 byte

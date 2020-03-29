@@ -171,29 +171,38 @@ namespace System.Diagnostics
 
             IntPtr cacheKey = (inMemoryPdbAddress != IntPtr.Zero) ? inMemoryPdbAddress : loadedPeAddress;
 
+            // Bug 672340 - multiple threads could be trying to create a reader, we need to make sure we are
+            // hardened to this. This loop makes sure all threads end up using the same reader.
+            int loopCount = 0;
             MetadataReaderProvider provider;
-            if (_metadataCache.TryGetValue(cacheKey, out provider))
+            while (!_metadataCache.TryGetValue(cacheKey, out provider))
             {
-                if (provider == null)
-                {
-                    return null;
-                }
-                return provider.GetMetadataReader();
+                ++loopCount;
+                // We expect that either we win and use our provider (1 iteration) or
+                // we lose and lose the other thread's provider (2 iterations).
+                Debug.Assert(loopCount <= 2);
+
+                provider = (inMemoryPdbAddress != IntPtr.Zero) ?
+                            TryOpenReaderForInMemoryPdb(inMemoryPdbAddress, inMemoryPdbSize) :
+                            TryOpenReaderFromAssemblyFile(assemblyPath, loadedPeAddress, loadedPeSize);
+
+                // Try to add our provider to the cache, we could be racing
+                // with another thread
+                if (_metadataCache.TryAdd(cacheKey, provider))
+                     break;
+
+                // We lost the ----, so we dispose the provider just 
+                // created and return the provider already in the cache.
+                if (provider != null)
+                    provider.Dispose();
             }
-
-            provider = (inMemoryPdbAddress != IntPtr.Zero) ?
-                TryOpenReaderForInMemoryPdb(inMemoryPdbAddress, inMemoryPdbSize) :
-                TryOpenReaderFromAssemblyFile(assemblyPath, loadedPeAddress, loadedPeSize);
-
-            // This may fail as another thread might have beaten us to it, but it doesn't matter
-            _metadataCache.TryAdd(cacheKey, provider);
 
             if (provider == null)
             {
                 return null;
             }
 
-            // The reader has already been open, so this doesn't throw:
+            // The reader has already been open, so this doesn't throw.
             return provider.GetMetadataReader();
         }
 

@@ -616,12 +616,12 @@ HRESULT CHostShim::DetermineRequestedVersion()
 #ifdef DEBUG
     fSingleVersionShortcut = false;
 #else
-    if (ETW_ENABLED_CHECK(TRACE_LEVEL_INFORMATION))
+    if(ETW_ENABLED_CHECK(TRACE_LEVEL_INFORMATION))
     {
         DWORD dw;
         ::GetRegistryDWORD(HKEY_LOCAL_MACHINE, RegKey_WPF_Hosting, RegValue_DisableSingleVersionOptimization, /*out*/dw, 0);
         fSingleVersionShortcut = !dw;
-    }
+    }        
 #endif
 
     if (m_mimeType == MimeType_Application)
@@ -643,7 +643,7 @@ HRESULT CHostShim::DetermineRequestedVersion()
                     fRequestedVersionIdentified = !!SUCCEEDED(hr);
                 }
             }
-            else
+            else 
             {
                 CApplicationManifest applicationManifest(GetStartupUri(), deploymentManifest.GetApplicationManifestCodebase());
                 applicationManifest.AddRef(); // need to do this because msxml will addref and release, and we still need it
@@ -659,7 +659,7 @@ HRESULT CHostShim::DetermineRequestedVersion()
                     CVersion ver(applicationManifest.GetRequestedVersion());
                     CVersion verCLR(applicationManifest.GetRequestedClrVersion());
                     const CVersion *pLargerVersion = &ver;
-                    if (ver.CompareTo(&verCLR) < 0)
+                    if(ver.CompareTo(&verCLR) < 0)
                     {
                         pLargerVersion = &verCLR;
                     }
@@ -705,14 +705,14 @@ HRESULT CHostShim::DetermineRequestedVersion()
                 fRequestedVersionIdentified = !!SUCCEEDED(hr);
             }
         }
-        else
+        else 
         {
             CMarkupVersion markupVersion(GetLocalDeploymentManifestPath());
             markupVersion.AddRef(); // need to do this because msxml will addref and release, and we still need it
 
-                                    // We don't actually care what the HRESULT is since an error indicates that we are done parsing the XAML
-                                    // file and we should just go with whatever we have even if there was some other error.
-            (void)markupVersion.Read();
+            // We don't actually care what the HRESULT is since an error indicates that we are done parsing the XAML
+            // file and we should just go with whatever we have even if there was some other error.
+            (void) markupVersion.Read(); 
 
             // Get the highest version for the namespaces that we have (ignorable or not.)
             CVersion* pHighestVersion = NULL;

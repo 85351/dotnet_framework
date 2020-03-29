@@ -45,7 +45,7 @@ namespace MS.Internal.Drt
         static NativeMethodsSetLastError()
         {
             // load the installed version of native DLLs, so that P/Invokes call the right methods
-            PresentationNativeLoader.EnsureLoaded();
+            WpfLibraryLoader.EnsureLoaded(PresentationNativeDll);
         }
 
 #if WINDOWSFORMSINTEGRATION     // WinFormsIntegration
@@ -67,7 +67,7 @@ namespace MS.Internal.Drt
         [DllImport(PresentationNativeDll, EntryPoint="GlobalDeleteAtomWrapper", ExactSpelling = true, SetLastError = true)]
         public static extern short GlobalDeleteAtom(short atom);
 
-        #if UIAUTOMATIONCLIENT  // UIAutomationClient
+#if UIAUTOMATIONCLIENT  // UIAutomationClient
 
         [DllImport(PresentationNativeDll, EntryPoint="GetMenuBarInfoWrapper", SetLastError = true)]
         public static extern bool GetMenuBarInfo (IntPtr hwnd, int idObject, uint idItem, ref UnsafeNativeMethods.MENUBARINFO mbi);
@@ -81,7 +81,7 @@ namespace MS.Internal.Drt
         [DllImport(PresentationNativeDll, EntryPoint="MapWindowPointsWrapper", SetLastError = true, ExactSpelling=true, CharSet=CharSet.Auto)]
         public static extern int MapWindowPoints(NativeMethods.HWND hWndFrom, NativeMethods.HWND hWndTo, [In, Out] ref NativeMethods.POINT pt, int cPoints);
 
-        #elif UIAUTOMATIONCLIENTSIDEPROVIDERS   // UIAutomationClientSideProviders
+#elif UIAUTOMATIONCLIENTSIDEPROVIDERS   // UIAutomationClientSideProviders
 
         [DllImport(PresentationNativeDll, EntryPoint="GetAncestorWrapper", CharSet = CharSet.Auto)]
         public static extern IntPtr GetAncestor(IntPtr hwnd, int gaFlags);
@@ -110,10 +110,10 @@ namespace MS.Internal.Drt
         [DllImport(PresentationNativeDll, EntryPoint="SetScrollPosWrapper", SetLastError = true)]
         public static extern int SetScrollPos(IntPtr hWnd, int nBar, int nPos, bool bRedraw);
 
-        #endif
+#endif
 #else       // Base/Core/FW + DRT
 
-        [DllImport(PresentationNativeDll, EntryPoint="EnableWindowWrapper", SetLastError = true, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+    [DllImport(PresentationNativeDll, EntryPoint="EnableWindowWrapper", SetLastError = true, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         public static extern bool EnableWindow(HandleRef hWnd, bool enable);
 
         [DllImport(PresentationNativeDll, EntryPoint="GetAncestorWrapper", CharSet = CharSet.Auto)]

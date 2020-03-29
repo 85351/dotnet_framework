@@ -40,6 +40,23 @@ namespace System
         }
 
         //
+        //  Switch.System.Security.Cryptography.X509Certificates.ECDsaCertificateExtensions.UseLegacyPublicKeyBehavior
+        //
+        //    Preceding 4.8 GetECDsaPublicKey did not correctly handle brainpool curves
+        //    Setting this switch to true reinstates the old broken behavior.
+        // 
+        internal const string UseLegacyPublicKeyBehaviorStr = @"Switch.System.Security.Cryptography.X509Certificates.ECDsaCertificateExtensions.UseLegacyPublicKeyBehavior";
+        private static int _useLegacyPublicKeyBehavior;
+        public static bool UseLegacyPublicKeyBehavior
+        {
+             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+             get
+             {
+                 return LocalAppContext.GetCachedSwitchValue(UseLegacyPublicKeyBehaviorStr, ref _useLegacyPublicKeyBehavior);
+             }
+        }
+
+        //
         //  Switch.System.Security.Cryptography.AesCryptoServiceProvider.DontCorrectlyResetDecryptor
         //
         //    Affects the behavior of AesCryptoServiceProvider.CreateDecryptor().TransformBlock() after a TransformFinalBlock()
@@ -87,6 +104,28 @@ namespace System
                 return LocalAppContext.GetCachedSwitchValue(SymmetricCngAlwaysUseNCryptStr, ref _symmetricCngAlwaysUseNCryptName);
             }
         }
+
+        //
+        //  Switch.System.Security.Cryptography.UseLegacyFipsThrow
+        //
+        //    .NET Framework 2.0-4.7.2 threw in the constructors of managed implementations of algorithms as well as
+        //    the native-wrapper implementations of algorithms which were not FIPS Approved in 2005 (e.g. MD5).
+        //    
+        //    Now the algorithms which are not FIPS Approved are unrestricted, and the managed implementations of
+        //    algorithms provided by CAPI/CNG will defer to the native-wrapper implementation.
+        //
+        //    Setting this switch to "true" returns to throwing in the constructor.
+        //
+        internal static readonly string SwitchCryptographyUseLegacyFipsThrow = "Switch.System.Security.Cryptography.UseLegacyFipsThrow";
+        private static int _useLegacyFipsThrow;
+        public static bool UseLegacyFipsThrow
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(SwitchCryptographyUseLegacyFipsThrow, ref _useLegacyFipsThrow);
+            }
+        }
     }
 
     internal static partial class AppContextDefaultValues
@@ -108,6 +147,11 @@ namespace System
                     if (version <= 40601)
                     {
                         LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.AesCryptoServiceProviderDontCorrectlyResetDecryptorStr, true);
+                    }
+
+                    if (version <= 40702)
+                    {
+                        LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.SwitchCryptographyUseLegacyFipsThrow, true);
                     }
                     break;
                 }

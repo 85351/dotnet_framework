@@ -12820,7 +12820,8 @@ void CompilerProject::ProjectLevelImportsList::DeleteImport
 
     // Delete the import info
     //
-    for (ProjectLevelImportInfo *pCurrentImportInfo = m_pProjectLevelImportInfos;
+	ProjectLevelImportInfo *pCurrentImportInfo;
+    for (pCurrentImportInfo = m_pProjectLevelImportInfos;
          pCurrentImportInfo;
          pCurrentImportInfo = pCurrentImportInfo->m_Next)
     {

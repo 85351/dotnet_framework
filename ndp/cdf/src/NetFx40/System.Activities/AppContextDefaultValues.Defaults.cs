@@ -18,7 +18,14 @@ namespace System
                         {
                             LocalAppContext.DefineSwitchDefault("Switch.System.Activities.UseMD5ForWFDebugger", true);
                         }
-                        
+
+                        if (version <= 40702)
+                        {
+                            LocalAppContext.DefineSwitchDefault("Switch.System.Activities.UseSHA1HashForDebuggerSymbols", true);
+                        }
+
+                        // Switch.System.Activities.TerminateOnUnhandledExceptionDuringCancel is an opt-in quirk,
+                        // so the default value is FALSE for all versions.
                         break;
                     }
             }

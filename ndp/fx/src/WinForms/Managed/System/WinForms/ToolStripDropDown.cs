@@ -161,7 +161,7 @@ namespace System.Windows.Forms {
                     state[stateLayered] = state[stateAllowTransparency];
 
                     UpdateStyles();
-
+                    
                     if (!value) {
                         if (Properties.ContainsObject(PropOpacity)) {
                             Properties.SetObject(PropOpacity, (object)1.0f);
@@ -831,7 +831,7 @@ namespace System.Windows.Forms {
             get {
                 if (ownerItem != null) {
                     ToolStrip owner = ownerItem.ParentInternal;
-                    if (owner != null) {
+                    if (owner != null) { 
                         return owner;
                     }
 
@@ -1478,7 +1478,11 @@ namespace System.Windows.Forms {
 
             if (itemOnPreviousMenuToSelect != null) {
                 itemOnPreviousMenuToSelect.Select();
-      
+
+                if (!AccessibilityImprovements.UseLegacyToolTipDisplay) {
+                    KeyboardToolTipStateMachine.Instance.NotifyAboutGotFocus(itemOnPreviousMenuToSelect);
+                }
+
                 if (OwnerToolStrip != null) {
                     // make sure we send keyboard handling where we've just
                     // sent selection
@@ -1676,10 +1680,16 @@ namespace System.Windows.Forms {
               UnsafeNativeMethods.SetWindowLong(new HandleRef(this, Handle), NativeMethods.GWL_HWNDPARENT, ownerHandle);
           }
 
-          /// <devdoc>
-          ///     VERY similar to Form.ScaleCore
-          /// </devdoc>
-          [EditorBrowsable(EditorBrowsableState.Never)]
+          internal override void ResetScaling(int newDpi) {
+              base.ResetScaling(newDpi);
+              CommonProperties.xClearPreferredSizeCache(this);
+              scaledDefaultPadding = DpiHelper.LogicalToDeviceUnits(defaultPadding, newDpi);
+          }
+
+        /// <devdoc>
+        ///     VERY similar to Form.ScaleCore
+        /// </devdoc>
+        [EditorBrowsable(EditorBrowsableState.Never)]
           protected override void ScaleCore(float dx, float dy) {
               Debug.WriteLineIf(CompModSwitches.RichLayout.TraceInfo, GetType().Name + "::ScaleCore(" + dx + ", " + dy + ")");
               SuspendLayout();

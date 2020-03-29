@@ -165,7 +165,14 @@ namespace System.Windows.Controls
         /// </summary>
         public void MouseWheelUp()
         {
-            SetVerticalOffset(VerticalOffset - SystemParameters.WheelScrollLines * ((Orientation == Orientation.Vertical) ? 1.0 : ScrollViewer._scrollLineDelta));
+            if (CanMouseWheelVerticallyScroll)
+            {
+                SetVerticalOffset(VerticalOffset - SystemParameters.WheelScrollLines * ((Orientation == Orientation.Vertical) ? 1.0 : ScrollViewer._scrollLineDelta));
+            }
+            else
+            {
+                PageUp();
+            }
         }
 
         /// <summary>
@@ -173,7 +180,14 @@ namespace System.Windows.Controls
         /// </summary>
         public void MouseWheelDown()
         {
-            SetVerticalOffset(VerticalOffset + SystemParameters.WheelScrollLines * ((Orientation == Orientation.Vertical) ? 1.0 : ScrollViewer._scrollLineDelta));
+            if (CanMouseWheelVerticallyScroll)
+            {
+                SetVerticalOffset(VerticalOffset + SystemParameters.WheelScrollLines * ((Orientation == Orientation.Vertical) ? 1.0 : ScrollViewer._scrollLineDelta));
+            }
+            else
+            {
+                PageDown();
+            }
         }
 
         /// <summary>
@@ -1051,6 +1065,11 @@ namespace System.Windows.Controls
         void IStackMeasure.OnScrollChange()
         {
             OnScrollChange();
+        }
+
+        private bool CanMouseWheelVerticallyScroll
+        {
+            get { return (SystemParameters.WheelScrollLines > 0); }
         }
 
         #endregion Private Properties

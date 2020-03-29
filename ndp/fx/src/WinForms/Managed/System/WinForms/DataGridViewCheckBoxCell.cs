@@ -1935,7 +1935,7 @@ namespace System.Windows.Forms
                 get {
                     if (runtimeId == null) {
                         runtimeId = new int[2];
-                        runtimeId[0] = 0x2a; // first item is static - 0x2a
+                        runtimeId[0] = RuntimeIDFirstItem; // first item is static - 0x2a
                         runtimeId[1] = this.GetHashCode();
                     }
 

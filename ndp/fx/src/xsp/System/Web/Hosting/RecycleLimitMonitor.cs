@@ -13,6 +13,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Linq;
 using System.Web.Caching;
 using System.Web.Configuration;
 using System.Web.Util;
@@ -476,20 +477,23 @@ namespace System.Web.Hosting {
 
             private bool AlertProxyMonitors(long current, long limit, RecycleLimitNotificationFrequency frequency) {
                 bool requestGC = false;
+                KeyValuePair<RecycleLimitMonitor, string>[] proxies = null;
 
                 lock (this) {
                     if (_proxyMonitors.Count == 0) {
                         StopTimer();
                         return requestGC;
                     }
+
+                    proxies = _proxyMonitors.ToArray<KeyValuePair<RecycleLimitMonitor, string>>();
                 }
 
-                foreach (RecycleLimitMonitor proxy in _proxyMonitors.Keys) {
+                foreach (KeyValuePair<RecycleLimitMonitor, string> pair in proxies) {
                     try {
-                        var ac = _appManager.GetLockableAppDomainContext(_proxyMonitors[proxy]);
+                        var ac = _appManager.GetLockableAppDomainContext(pair.Value);
                         if (ac != null) {
                             lock (ac) {
-                                requestGC |= proxy.RaiseRecycleLimitEvent(current, limit, frequency);
+                                requestGC |= pair.Key.RaiseRecycleLimitEvent(current, limit, frequency);
                             }
                         }
                     }

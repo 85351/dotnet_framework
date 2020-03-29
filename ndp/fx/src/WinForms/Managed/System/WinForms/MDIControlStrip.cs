@@ -61,6 +61,8 @@ namespace System.Windows.Forms {
                     item.Overflow       = ToolStripItemOverflow.Never;
                     item.Alignment      = ToolStripItemAlignment.Right;
                     item.Padding        = Padding.Empty;
+                    // image is not scaled well on high dpi devices. Setting property to fit to size.                    
+                    item.ImageScaling   = ToolStripItemImageScaling.SizeToFit;
                 }
 
                 // set up the sytem menu

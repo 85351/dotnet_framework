@@ -723,6 +723,24 @@ namespace System.Windows.Forms {
             return base.ApplyBoundsConstraints(suggestedX,suggestedY, proposedWidth, PreferredHeight);
         }
 
+        /// <summary>
+        /// Gets an accessible name.
+        /// </summary>
+        /// <param name="baseName">The base name.</param>
+        /// <returns>The accessible name.</returns>
+        internal string GetAccessibleName(string baseName) {
+            if (baseName == null) {
+                if (AccessibilityImprovements.Level3) {
+                    return SR.GetString(SR.SpinnerAccessibleName);
+                }
+                else if (AccessibilityImprovements.Level1) {
+                    return this.GetType().Name;
+                }
+            }
+
+            return baseName;
+        }
+
         /// <include file='doc\UpDownBase.uex' path='docs/doc[@for="UpDownBase.RescaleConstantsForDpi"]/*' />
         /// <devdoc>
         ///       When overridden in a derived class, handles rescaling of any magic numbers used in control painting.
@@ -1329,11 +1347,11 @@ namespace System.Windows.Forms {
 
             protected override void OnGotFocus(EventArgs e) {
                 parent.SetActiveControlInternal(this);
-                parent.OnGotFocus(e);
+                parent.InvokeGotFocus(parent, e);
             }
 
             protected override void OnLostFocus(EventArgs e) {
-                parent.OnLostFocus(e);
+                parent.InvokeLostFocus(parent, e);
             }
 
             // Microsoft: Focus fixes. The XXXUpDown control will
@@ -1803,7 +1821,11 @@ namespace System.Windows.Forms {
                     get {
                         string baseName = base.Name;
                         if (baseName == null || baseName.Length == 0) {
-                            return "Spinner";
+                            if (AccessibilityImprovements.Level3) {
+                                // For AI.Level3 spinner is already announced so use type name.
+                                return Owner.ParentInternal.GetType().Name;
+                            }
+                            return SR.GetString(SR.SpinnerAccessibleName);
                         }
                         return baseName;
                     }

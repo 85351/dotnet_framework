@@ -214,10 +214,16 @@ namespace System.Windows.Forms.DataVisualization.Charting
 			// NOTE: Fixes issue #4475
 			this.SetStyle(ControlStyles.DoubleBuffer, true);
 
+			if (AccessibilityImprovements.Level3)
+			{
+				// This is necessary to raise focus event on chart mouse click.
+				this.SetStyle(ControlStyles.UserMouse, true);
+			}
+
 			//*********************************************************
 			//** Create services
 			//*********************************************************
-			serviceContainer = new ServiceContainer();
+            serviceContainer = new ServiceContainer();
 			_chartTypeRegistry = new ChartTypeRegistry();
 			_borderTypeRegistry = new BorderTypeRegistry();
 			_customAttributeRegistry = new CustomPropertyRegistry();
@@ -2123,14 +2129,61 @@ namespace System.Windows.Forms.DataVisualization.Charting
             return this.selection.GetChartElementOutline(element, elementType);
         }
 
-		#endregion
-		
-		#region ISupportInitialize implementation
+        #endregion
 
-		/// <summary>
-		/// Signals the object that initialization is starting.
-		/// </summary>
-		public void BeginInit()
+        #region Control protected methods
+
+        protected override void OnGotFocus(EventArgs e)
+        {
+            base.OnGotFocus(e);
+
+            if (!AccessibilityImprovements.Level3)
+            {
+                return;
+            }
+
+            using (Graphics g = Graphics.FromHwndInternal(Handle))
+            {
+                ControlPaint.DrawFocusRectangle(g, new Rectangle(1, 1, Size.Width - 2, Size.Height - 2));
+            }
+        }
+
+        protected override void OnLostFocus(EventArgs e)
+        {
+            base.OnLostFocus(e);
+
+            if (!AccessibilityImprovements.Level3)
+            {
+                return;
+            }
+
+            using (Graphics g = Graphics.FromHwndInternal(Handle))
+            {
+                using (Brush b = new SolidBrush(BackColor))
+                {
+                    Rectangle topBorder = new Rectangle(1, 1, Size.Width - 2, 1);
+                    g.FillRectangle(b, topBorder);
+
+                    Rectangle rightBorder = new Rectangle(Size.Width - 2, 1, 1, Size.Height - 2);
+                    g.FillRectangle(b, rightBorder);
+
+                    Rectangle bottomBorder = new Rectangle(1, Size.Height - 2, Size.Width - 2, 1);
+                    g.FillRectangle(b, bottomBorder);
+
+                    Rectangle leftBorder = new Rectangle(1, 1, 1, Size.Height - 2);
+                    g.FillRectangle(b, leftBorder);
+                }
+            }
+        }
+
+        #endregion
+
+        #region ISupportInitialize implementation
+
+        /// <summary>
+        /// Signals the object that initialization is starting.
+        /// </summary>
+        public void BeginInit()
 		{
 			// Disable control invalidation
 			disableInvalidates = true;

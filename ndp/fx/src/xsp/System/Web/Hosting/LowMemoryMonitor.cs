@@ -220,7 +220,7 @@ namespace System.Web.Hosting {
             }
 
             // convert <cache privateBytesPollTime/> to milliseconds
-            s_configuredPollInterval = (int)cacheSection.PrivateBytesPollTime.TotalMilliseconds;
+            s_configuredPollInterval = (int)Math.Min(cacheSection.PrivateBytesPollTime.TotalMilliseconds, (double)Int32.MaxValue);
 
             // Read the percentagePhysicalMemoryUsedLimit set in config
             int limit = cacheSection.PercentagePhysicalMemoryUsedLimit;

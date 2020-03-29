@@ -124,6 +124,9 @@ namespace System.Security.Policy
                 // The line separator
                 this.lineLabel.AccessibleName = string.Empty;
 
+                // Assigning accessible role to be in consistant with other dialogs.
+                this.lineLabel.AccessibleRole = AccessibleRole.Separator;
+
                 // Re-order panes to fix Narrator's Scan Mode navigation
                 this.tableLayoutPanelOuter.Controls.SetChildIndex(this.tableLayoutPanelQuestion, 0);
                 this.tableLayoutPanelOuter.Controls.SetChildIndex(this.tableLayoutPanelInfo, 1);
@@ -399,7 +402,17 @@ namespace System.Security.Policy
             Bitmap bitmap;
             lock (typeof(System.Windows.Forms.Form))
             {
-                bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerGlobe.bmp");
+                if (!LocalAppContextSwitches.UseLegacyImages)
+                {
+                    var globeIcon = new Icon(typeof(System.Windows.Forms.Form), "TrustManagerGlobe.ico");
+                    bitmap = globeIcon.ToBitmap();                    
+                }
+                else
+                {
+                    Bitmap globeBmp = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerGlobe.bmp");
+                    this.ScaleBitmapLogicalToDevice(ref globeBmp);
+                    bitmap = globeBmp;
+                }
             }
             if (bitmap != null)
             {
@@ -634,16 +647,40 @@ namespace System.Security.Policy
             switch (warningLevel)
             {
                 case TrustManagerWarningLevel.Green:
-                    bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerOK.bmp");
+                    if (!LocalAppContextSwitches.UseLegacyImages)
+                    {
+                        var icon = new Icon(typeof(System.Windows.Forms.Form), "TrustManagerOK.ico");
+                        bitmap = icon.ToBitmap();
+                    }
+                    else
+                    {
+                        bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerOK.bmp");
+                    }
                     this.pictureBoxWarning.AccessibleDescription = string.Format(CultureInfo.CurrentCulture, SR.GetString(SR.TrustManager_WarningIconAccessibleDescription_LowRisk), this.pictureBoxWarning.AccessibleDescription);
                     break;
                 case TrustManagerWarningLevel.Yellow:
-                    bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerWarning.bmp");
+                    if (!LocalAppContextSwitches.UseLegacyImages)
+                    {
+                        var icon = new Icon(typeof(System.Windows.Forms.Form), "TrustManagerWarning.ico");
+                        bitmap = icon.ToBitmap();
+                    }
+                    else
+                    {
+                        bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerWarning.bmp");                       
+                    }
                     this.pictureBoxWarning.AccessibleDescription = string.Format(CultureInfo.CurrentCulture, SR.GetString(SR.TrustManager_WarningIconAccessibleDescription_MediumRisk), this.pictureBoxWarning.AccessibleDescription);
                     break;
                 default:
                     Debug.Assert(warningLevel == TrustManagerWarningLevel.Red);
-                    bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerHighRisk.bmp");
+                    if (!LocalAppContextSwitches.UseLegacyImages)
+                    {
+                        var icon = new Icon(typeof(System.Windows.Forms.Form), "TrustManagerHighRisk.ico");
+                        bitmap = icon.ToBitmap();
+                    }
+                    else
+                    {
+                        bitmap = new Bitmap(typeof(System.Windows.Forms.Form), "TrustManagerHighRisk.bmp");
+                    }
                     this.pictureBoxWarning.AccessibleDescription = string.Format(CultureInfo.CurrentCulture, SR.GetString(SR.TrustManager_WarningIconAccessibleDescription_HighRisk), this.pictureBoxWarning.AccessibleDescription);
                     break;
             }

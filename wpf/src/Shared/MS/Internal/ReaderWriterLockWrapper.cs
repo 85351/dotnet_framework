@@ -59,9 +59,27 @@ namespace MS.Internal
             // one instance of this within WPF (CanExecuteChanged delegates to
             // RequerySuggested), and it could also happen in user code.
             _rwLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
-            _awr = new AutoWriterRelease(this);
-            _arr = new AutoReaderRelease(this);
             _defaultSynchronizationContext = new NonPumpingSynchronizationContext();
+            Initialize(!MS.Internal.BaseAppContextSwitches.EnableWeakEventMemoryImprovements);
+        }
+
+        private void Initialize(bool useLegacyMemoryBehavior)
+        {
+            if (useLegacyMemoryBehavior)
+            {
+                _awr = new AutoWriterRelease(this);
+                _arr = new AutoReaderRelease(this);
+            }
+            else
+            {
+                _awrc = new AutoWriterReleaseClass(this);
+                _arrc = new AutoReaderReleaseClass(this);
+
+                _enterReadAction = _rwLock.EnterReadLock;
+                _exitReadAction = _rwLock.ExitReadLock;
+                _enterWriteAction = _rwLock.EnterWriteLock;
+                _exitWriteAction = _rwLock.ExitWriteLock;
+            }
         }
 
         #endregion Constructors
@@ -78,8 +96,16 @@ namespace MS.Internal
         {
             get
             {
-                CallWithNonPumpingWait(()=>{_rwLock.EnterWriteLock();});
-                return _awr;
+                if (!MS.Internal.BaseAppContextSwitches.EnableWeakEventMemoryImprovements)
+                {
+                    CallWithNonPumpingWait(()=>{_rwLock.EnterWriteLock();});
+                    return _awr;
+                }
+                else
+                {
+                    CallWithNonPumpingWait(_enterWriteAction);
+                    return _awrc;
+                }
             }
         }
 
@@ -87,8 +113,16 @@ namespace MS.Internal
         {
             get
             {
-                CallWithNonPumpingWait(()=>{_rwLock.EnterReadLock();});
-                return _arr;
+                if (!MS.Internal.BaseAppContextSwitches.EnableWeakEventMemoryImprovements)
+                {
+                    CallWithNonPumpingWait(()=>{_rwLock.EnterReadLock();});
+                    return _arr;
+                }
+                else
+                {
+                    CallWithNonPumpingWait(_enterReadAction);
+                    return _arrc;
+                }
             }
         }
 
@@ -112,6 +146,18 @@ namespace MS.Internal
         private void ReleaseReaderLock()
         {
             CallWithNonPumpingWait(()=>{_rwLock.ExitReadLock();});
+        }
+
+        // called when AutoWriterRelease is disposed
+        private void ReleaseWriterLock2()
+        {
+            CallWithNonPumpingWait(_exitWriteAction);
+        }
+
+        // called when AutoReaderRelease is disposed
+        private void ReleaseReaderLock2()
+        {
+            CallWithNonPumpingWait(_exitReadAction);
         }
 
         /// <SecurityNote>
@@ -168,6 +214,12 @@ namespace MS.Internal
         private ReaderWriterLockSlim _rwLock;
         private AutoReaderRelease _arr;
         private AutoWriterRelease _awr;
+        private AutoReaderReleaseClass _arrc;
+        private AutoWriterReleaseClass _awrc;
+        private Action _enterReadAction;
+        private Action _exitReadAction;
+        private Action _enterWriteAction;
+        private Action _exitWriteAction;
         private NonPumpingSynchronizationContext _defaultSynchronizationContext;
 
         #endregion Private Fields
@@ -205,6 +257,36 @@ namespace MS.Internal
             public void Dispose()
             {
                 _wrapper.ReleaseReaderLock();
+            }
+
+            private ReaderWriterLockWrapper _wrapper;
+        }
+
+        private class AutoWriterReleaseClass : IDisposable
+        {
+            public AutoWriterReleaseClass(ReaderWriterLockWrapper wrapper)
+            {
+                _wrapper = wrapper;
+            }
+
+            public void Dispose()
+            {
+                _wrapper.ReleaseWriterLock2();
+            }
+
+            private ReaderWriterLockWrapper _wrapper;
+        }
+
+        private class AutoReaderReleaseClass : IDisposable
+        {
+            public AutoReaderReleaseClass(ReaderWriterLockWrapper wrapper)
+            {
+                _wrapper = wrapper;
+            }
+
+            public void Dispose()
+            {
+                _wrapper.ReleaseReaderLock2();
             }
 
             private ReaderWriterLockWrapper _wrapper;

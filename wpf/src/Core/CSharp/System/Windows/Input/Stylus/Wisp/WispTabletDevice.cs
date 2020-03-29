@@ -87,8 +87,10 @@ namespace System.Windows.Input
                     // If this is an explicit dispose, need to check for deferral
                     DisposeOrDeferDisposal();
                 }
-
-                _disposed = !IsDisposalPending;
+                else
+                {
+                    _disposed = true;
+                }
             }
         }
 
@@ -406,6 +408,11 @@ namespace System.Windows.Input
 
                 _penThread = null;
                 _isDisposalPending = false;
+
+                // DDVSO:614343
+                // Ensure that we are marked disposed and no longer attempt to finalize.
+                _disposed = true;
+                GC.SuppressFinalize(this);
             }
             else
             {

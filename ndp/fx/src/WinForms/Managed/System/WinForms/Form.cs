@@ -5107,9 +5107,18 @@ namespace System.Windows.Forms {
                     float factor = (float)e.DeviceDpiNew / (float)e.DeviceDpiOld;
                     SuspendAllLayout(this);
                     try {
+
+                        // Form 'MinimumSize' is explicit set to make form shrink in case of DPI is changed. For scaling factor >1,
+                        // Form layout automatically grows to fit to the container size.
+                        if (DpiHelper.EnableDpiChangedHighDpiImprovements && factor < 1) {
+                            MinimumSize = new Size(e.SuggestedRectangle.Width, e.SuggestedRectangle.Height);
+                        }
+
                         SafeNativeMethods.SetWindowPos(new HandleRef(this, HandleInternal), NativeMethods.NullHandleRef, e.SuggestedRectangle.X, e.SuggestedRectangle.Y, e.SuggestedRectangle.Width, e.SuggestedRectangle.Height, NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE);
                         if (AutoScaleMode != AutoScaleMode.Font) {
-                            Font = new Font(this.Font.FontFamily, this.Font.Size * factor, this.Font.Style);
+                            Font = DpiHelper.EnableDpiChangedHighDpiImprovements ?
+                                new Font(this.Font.FontFamily, this.Font.Size * factor, this.Font.Style, this.Font.Unit, this.Font.GdiCharSet, this.Font.GdiVerticalFont) :
+                                new Font(this.Font.FontFamily, this.Font.Size * factor, this.Font.Style);
                             FormDpiChanged(factor);
                         }
                         else {
@@ -5118,7 +5127,8 @@ namespace System.Windows.Forms {
                         }
                     }
                     finally {
-                        ResumeAllLayout(this, false);
+                        // We want to perform layout for dpi-changed HDpi improvements - setting the second parameter to 'true'
+                        ResumeAllLayout(this, DpiHelper.EnableDpiChangedHighDpiImprovements);
                     }
                 }
             }

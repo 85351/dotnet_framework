@@ -17,6 +17,7 @@ namespace System.Security.Cryptography.Xml
     using Microsoft.Win32;
     using System.Collections;
     using System.Diagnostics;
+    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.IO;
     using System.Security.Cryptography.X509Certificates;
@@ -158,6 +159,7 @@ namespace System.Security.Cryptography.Xml
             return reader;
         }
 
+        [SuppressMessage("Microsoft.Security.Xml", "CA3069:ReviewDtdProcessingAssignment", Justification= "DTD risks are mitigated by URI restrictions and expansion limits")]
         internal static XmlReaderSettings GetSecureXmlReaderSettings(XmlResolver xmlResolver)
         {
             XmlReaderSettings settings = new XmlReaderSettings();
@@ -498,6 +500,7 @@ namespace System.Security.Cryptography.Xml
             return defaultValue;
         }
 
+        [SuppressMessage("Microsoft.Security.Xml", "CA3069:ReviewDtdProcessingAssignment", Justification= "Required for re-parsing documents which were user-loaded with DtdProcessing.Parse")]
         internal static XmlDocument PreProcessDocumentInput (XmlDocument document, XmlResolver xmlResolver, string baseUri) {
             if (document == null)
                 throw new ArgumentNullException("document");
@@ -518,6 +521,7 @@ namespace System.Security.Cryptography.Xml
             return doc;
         }
 
+        [SuppressMessage("Microsoft.Security.Xml", "CA3069:ReviewDtdProcessingAssignment", Justification= "Required for re-parsing elements which were user-loaded with DtdProcessing.Parse")]
         internal static XmlDocument PreProcessElementInput (XmlElement elem, XmlResolver xmlResolver, string baseUri) {
             if (elem == null)
                 throw new ArgumentNullException("elem");

@@ -831,7 +831,7 @@ namespace System.Windows.Data
                     // 90% case:  the first entry in _itemsRW already points to the item,
                     // so just re-use it.  Otherwise create a new reference.
                     if (itemReference == null ||
-                        !Object.Equals(dataContextItem, itemReference.Target))
+                        !ItemsControl.EqualsEx(dataContextItem, itemReference.Target))
                     {
                         itemReference = new WeakReference(dataContextItem);
                     }
@@ -1299,7 +1299,7 @@ namespace System.Windows.Data
         {
             for (int i=0, n=list.Count; i<n; ++i)
             {
-                if (Object.Equals(item, list[i].Target))
+                if (ItemsControl.EqualsEx(item, list[i].Target))
                 {
                     return i;
                 }
@@ -1597,7 +1597,7 @@ namespace System.Windows.Data
                     {
                         GetValueTableEntry entry = _table[i];
                         if (propertyName == entry.PropertyName &&
-                            Object.Equals(item, entry.Item))
+                            ItemsControl.EqualsEx(item, entry.Item))
                         {
                             return entry;
                         }
@@ -1934,7 +1934,7 @@ namespace System.Windows.Data
                 {
                     ProposedValueEntry entry = _table[i];
                     if (propertyName == entry.PropertyName &&
-                        Object.Equals(item, entry.Item))
+                        ItemsControl.EqualsEx(item, entry.Item))
                     {
                         return i;
                     }

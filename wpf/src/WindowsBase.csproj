@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{fd9de6ba-64aa-4dd1-8ee8-8bfb3ed06fb4}</ProjectGuid>
+    <ProjectGuid>{ef97030a-f8cc-442c-8ba0-bd9861d1ac98}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>WindowsBase</AssemblyName>
@@ -20,23 +20,23 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ndp\clr\src\bcl\mscorlib.csproj">
-      <Project>{01bc0b31-c49b-4d04-a987-8a3cdaa4447d}</Project>
+      <Project>{43e44db7-dc97-46cb-b868-751d11c60bf1}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\ndp\fx\src\System.csproj">
-      <Project>{f4d4a199-0778-423c-8e10-03216b942248}</Project>
+      <Project>{d218394f-a89e-455a-8c59-5e3554100e4a}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\ndp\fx\src\Core\System.Core.csproj">
-      <Project>{224c6b7d-0bee-4936-bf87-2dcacc9b6c09}</Project>
+      <Project>{e7e62ebb-b829-4b6e-9ec0-4ca0c96fe4ac}</Project>
       <Name>System.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\ndp\clr\src\managedlibraries\security\System.Security.csproj">
-      <Project>{642bb268-96f5-499f-9386-76f7bee6bb08}</Project>
+      <Project>{05d4e9cd-3a3a-461b-a895-b39e85f1969a}</Project>
       <Name>System.Security</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\ndp\fx\src\Xml\System.Xml.csproj">
-      <Project>{35533446-2370-45f0-83e8-65cb88ac88e2}</Project>
+      <Project>{23c706b3-6f70-42a4-9476-ee1b30c0cca3}</Project>
       <Name>System.Xml</Name>
     </ProjectReference>
   </ItemGroup>

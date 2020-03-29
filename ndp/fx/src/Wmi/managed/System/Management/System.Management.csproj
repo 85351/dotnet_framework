@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{537b0cfa-0fb7-4afb-a49c-d0c8b90d676c}</ProjectGuid>
+    <ProjectGuid>{f0e68f65-b217-48bb-8b98-28fd3bdf9afe}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>System.Management</AssemblyName>
@@ -20,11 +20,11 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\..\clr\src\bcl\mscorlib.csproj">
-      <Project>{01bc0b31-c49b-4d04-a987-8a3cdaa4447d}</Project>
+      <Project>{43e44db7-dc97-46cb-b868-751d11c60bf1}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\System.csproj">
-      <Project>{f4d4a199-0778-423c-8e10-03216b942248}</Project>
+      <Project>{d218394f-a89e-455a-8c59-5e3554100e4a}</Project>
       <Name>System</Name>
     </ProjectReference>
   </ItemGroup>

@@ -3,30 +3,33 @@
 // <copyright file="EventMap.cs" company="Microsoft">
 //    Copyright (C) Microsoft Corporation.  All rights reserved.
 // </copyright>
-// 
 //
-// Description: 
+//
+// Description:
 // Accessibility event map classes are used to determine if, and how many
 // listeners there are for events and property changes.
 //
-// History:  
+// History:
 //  07/23/2003 : BrendanM Ported to WCP
 //
 //---------------------------------------------------------------------------
 
 using System;
 using System.Collections;
+using System.Security;
+using System.Security.Permissions;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
+using System.Windows.Threading;
 
 using SR=MS.Internal.PresentationCore.SR;
 using SRID=MS.Internal.PresentationCore.SRID;
 
 namespace MS.Internal.Automation
-{   
-    // Manages the event map that is used to determine if there are Automation 
-    // clients interested in specific events.  
+{
+    // Manages the event map that is used to determine if there are Automation
+    // clients interested in specific events.
     internal static class EventMap
     {
 
@@ -68,7 +71,7 @@ namespace MS.Internal.Automation
 
             return false;
         }
-        
+
         // Never inline, as we don't want to unnecessarily link the automation DLL.
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static bool IsKnownNewEvent(int id)
@@ -79,13 +82,13 @@ namespace MS.Internal.Automation
             }
             return false;
         }
-        
+
         // Never inline, as we don't want to unnecessarily link the automation DLL.
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static bool IsKnownEvent(int id)
         {
             if (IsKnownLegacyEvent(id) ||
-                (!CoreAppContextSwitches.UseLegacyAccessibilityFeatures && IsKnownNewEvent(id)))
+                (!AccessibilitySwitches.UseNetFx47CompatibleAccessibilityFeatures && IsKnownNewEvent(id)))
             {
                 return true;
             }
@@ -134,21 +137,35 @@ namespace MS.Internal.Automation
 
         internal static void AddEvent(int idEvent)
         {
-            lock (_lock)
+            //  to avoid unbound memory allocations,
+            //  register only events that we recognize
+            if (IsKnownEvent(idEvent))
             {
-                if (_eventsTable == null)
-                    _eventsTable = new Hashtable(20, .1f);
+                bool firstEvent = false;
+                lock (_lock)
+                {
+                    if (_eventsTable == null)
+                    {
+                        _eventsTable = new Hashtable(20, .1f);
+                        firstEvent = true;
+                    }
 
-                if (_eventsTable.ContainsKey(idEvent))
-                {
-                    EventInfo info = (EventInfo)_eventsTable[idEvent];
-                    info.NumberOfListeners++;
+                    if (_eventsTable.ContainsKey(idEvent))
+                    {
+                        EventInfo info = (EventInfo)_eventsTable[idEvent];
+                        info.NumberOfListeners++;
+                    }
+                    else
+                    {
+                        _eventsTable[idEvent] = new EventInfo();
+                    }
                 }
-                //  to avoid unbound memory allocations, 
-                //  register only events that we recognize
-                else if (IsKnownEvent(idEvent))
+
+                // notify PresentationSources (outside the lock) when the number
+                // of listeners becomes non-zero
+                if (firstEvent)
                 {
-                    _eventsTable[idEvent] = new EventInfo();
+                    NotifySources();
                 }
             }
         }
@@ -180,8 +197,8 @@ namespace MS.Internal.Automation
                 }
             }
         }
-        
-        //  Unlike GetRegisteredEvent below, 
+
+        //  Unlike GetRegisteredEvent below,
         //  HasRegisteredEvent does NOT cause automation DLLs loading
         internal static bool HasRegisteredEvent(AutomationEvents eventId)
         {
@@ -206,6 +223,97 @@ namespace MS.Internal.Automation
             }
 
             return (null);
+        }
+
+        internal static bool HasListeners
+        {
+            get { return (_eventsTable != null); }
+        }
+
+        // Most automation clients send WM_GETOBJECT messages to our hwnd(s).
+        // We rely on these to add the top-level peers to the LayoutManager's
+        // AutomationEvents list, so that the automation tree stays in sync with
+        // the visual tree.  But some "clients" merely add WinEvent hooks to
+        // intercept automation messages, and don't send WM_GETOBJECT messages.
+        // This can lead to crashes (as in DDVSO 673291) as follows:
+        //  1. external process installs a WinEvent hook
+        //  2. WPF app opens a popup.  PopupSecurityHelper.ForceMsaaToUiaBridge
+        //      detects the hook, creates a peer, informs uiacore.
+        //  3. uiacore registers for automation events, calling EventMap.AddEvent
+        //  4. elements throughout the app (on any thread) create peers, thinking
+        //      that there is interest in the relevant automation events
+        //      (EventMap.HasRegisteredEvent returns true).
+        //  5. after visual tree changes, the automation tree is not fixed up fully
+        //  6. some automation code uses outdated information and throws
+        //      an exception or makes bad decisions that lead to problems later
+        // [In DDVSO 673291, TreeViewItems get recycled to display different data,
+        // but the corresponding TreeViewItemAutomationPeers don't always get
+        // fixed up to refer to a different EventSource (TreeViewDataItemAutomationPeer).
+        // A subsequent UpdatePeer (induced by changing IsEnabled) walks down
+        // the wrong path, finds a stale data item peer, and throws ElementNotFoundException.]
+        //
+        // To mitigate this, ensure that all top-level peers get added to the
+        // AutomationEvents list whenever there are any event listeners.  This
+        // has two parts:
+        //  a. new top-level elements (HwndSource.RootVisual) check for listeners
+        //      and add themselves to the list
+        //  b. when the listener count becomes non-zero, add existing top-level
+        //      elements to the list
+        // This strategy is much cheaper than checking something each time an
+        // element creates a peer (as in (4) above), but it will create a full
+        // automation tree for all windows, even those that don't have any
+        // elements that check for events.  However, that's just what would
+        // happen in the presence of a full automation client that sends
+        // WM_GETOBJECT, so it's a cost we're already paying in the "normal" case.
+        //
+        // The following methods implement (b).   See <see cref="HwndSource.RootVisual"/> for (a).
+
+        /// <SecurityNote>
+        ///    Critical: Calls critical member PresentationSource.CriticalCurrentSources
+        ///    Safe: Does not expose anything to the user
+        /// </SecurityNote>
+        [SecuritySafeCritical]
+        private static void NotifySources()
+        {
+            foreach (PresentationSource source in PresentationSource.CriticalCurrentSources)
+            {
+                if (!source.IsDisposed)
+                {
+                    source.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
+                                                  new DispatcherOperationCallback(NotifySource),
+                                                  new object[]{source});
+                }
+            }
+        }
+
+        /// <SecurityNote>
+        ///    Critical: Calls critical member PresentationSource.RootVisual
+        ///    Safe: Does not expose anything to the user
+        /// </SecurityNote>
+        [SecuritySafeCritical]
+        private static object NotifySource(Object args)
+        {
+            object[] argsArray = (object[])args;
+            PresentationSource source = argsArray[0] as PresentationSource;
+            if (source != null && !source.IsDisposed)
+            {
+                bool needAsserts = System.Security.SecurityManager.CurrentThreadRequiresSecurityContextCapture();
+                if (needAsserts)
+                {
+                    // permission required to set RootVisual
+                    new UIPermission(UIPermissionWindow.AllWindows).Assert();
+                }
+
+                // setting the RootVisual to itself triggers the logic to
+                // add to the AutomationEvents list
+                source.RootVisual = source.RootVisual;
+
+                if (needAsserts)
+                {
+                    UIPermission.RevertAssert();
+                }
+            }
+            return null;
         }
 
         private static Hashtable _eventsTable;        // key=event id, data=listener count

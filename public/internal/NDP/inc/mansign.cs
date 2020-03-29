@@ -45,6 +45,7 @@ namespace System.Deployment.Internal.CodeSigning {
         // Constants.
         //
         internal const int S_OK                                = unchecked((int) 0x00000000);
+        internal const int NTE_BAD_HASH                        = unchecked((int) 0x80090002);
         internal const int NTE_BAD_KEY                         = unchecked((int) 0x80090003);
                        
         // Trust errors.
@@ -184,6 +185,9 @@ namespace System.Deployment.Internal.CodeSigning {
         internal const string szOID_OIWSEC_sha1 = "1.3.14.3.2.26";
         internal const string szOID_NIST_sha256 = "2.16.840.1.101.3.4.2.1";
 
+        internal const string szOID_RSA_messageDigest = "1.2.840.113549.1.9.4";
+        internal const string szOID_PKIX_KP_TIMESTAMP_SIGNING = "1.3.6.1.5.5.7.3.8";
+
         [StructLayout(LayoutKind.Sequential)]
         internal struct CRYPT_TIMESTAMP_CONTEXT {
             internal uint           cbEncoded;      // DWORD->unsigned int
@@ -221,6 +225,20 @@ namespace System.Deployment.Internal.CodeSigning {
             [In,Out] ref IntPtr                         ppTsContext,
             [In,Out] ref IntPtr                         ppTsSigner,
             [In,Out] ref IntPtr                         phStore);
+
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [DllImport(CRYPT32, CallingConvention = CallingConvention.Winapi, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal extern static
+        bool CryptVerifyTimeStampSignature(
+            [In]     byte[]     pbTSContentInfo,
+            [In]     int        cbTSContentInfo,
+            [In]     byte[]     pbData,
+            [In]     int        cbData,
+            [In]     IntPtr     hAdditionalStore,
+            [In,Out] ref IntPtr ppTsContext,
+            [In,Out] ref IntPtr ppTsSigner,
+            [In,Out] ref IntPtr phStore);
 
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
         [DllImport(CRYPT32, CallingConvention = CallingConvention.Winapi, SetLastError = true)]

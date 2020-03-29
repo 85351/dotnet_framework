@@ -524,7 +524,7 @@ namespace System.Windows.Data
             VerifyRefreshNotDeferred();
 
             // if already on item, or item is the placeholder, don't do anything
-            if (Object.Equals(CurrentItem, item) || Object.Equals(NewItemPlaceholder, item))
+            if (System.Windows.Controls.ItemsControl.EqualsEx(CurrentItem, item) || System.Windows.Controls.ItemsControl.EqualsEx(NewItemPlaceholder, item))
             {
                 // also check that we're not fooled by a false null _currentItem
                 if (item != null || IsCurrentInView)
@@ -533,7 +533,7 @@ namespace System.Windows.Data
 
             int index = -1;
             IEditableCollectionView ecv = this as IEditableCollectionView;
-            bool isNewItem = (ecv != null && ecv.IsAddingNew && Object.Equals(item, ecv.CurrentAddItem));
+            bool isNewItem = (ecv != null && ecv.IsAddingNew && System.Windows.Controls.ItemsControl.EqualsEx(item, ecv.CurrentAddItem));
             if (isNewItem || PassesFilter(item))
             {
                 // if the item is not found IndexOf() will return -1, and

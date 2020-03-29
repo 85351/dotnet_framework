@@ -822,6 +822,25 @@ namespace System.Windows.Controls.Primitives
             set { SetValue(SelectionBrushProperty, value); }
         }
 
+        /// <summary>
+        /// Brush used for selected text.
+        /// </summary>
+        /// <remarks>
+        /// If set to null, the selected text will not be rendered.
+        /// </remarks>
+        public static readonly DependencyProperty SelectionTextBrushProperty =
+            DependencyProperty.Register("SelectionTextBrush", typeof(Brush), typeof(TextBoxBase),
+                new FrameworkPropertyMetadata(GetDefaultSelectionTextBrush(), new PropertyChangedCallback(UpdateCaretElement)));
+
+        /// <summary>
+        /// <see cref="SelectionTextBrushProperty"/>
+        /// </summary>
+        public Brush SelectionTextBrush
+        {
+            get { return (Brush)GetValue(SelectionTextBrushProperty); }
+            set { SetValue(SelectionTextBrushProperty, value); }
+        }
+
         internal const double AdornerSelectionOpacityDefaultValue = 0.4;
         internal const double NonAdornerSelectionOpacityDefaultValue = 1;
 
@@ -1947,6 +1966,16 @@ namespace System.Windows.Controls.Primitives
             Brush selectionBrush = new SolidColorBrush(SystemColors.HighlightColor);
             selectionBrush.Freeze();
             return selectionBrush;
+        }
+
+        /// <summary>
+        /// Creates the default brush used for selection text rendering.
+        /// </summary>
+        private static Brush GetDefaultSelectionTextBrush()
+        {
+            Brush selectionTextBrush = new SolidColorBrush(SystemColors.HighlightTextColor);
+            selectionTextBrush.Freeze();
+            return selectionTextBrush;
         }
 
         /// <summary>

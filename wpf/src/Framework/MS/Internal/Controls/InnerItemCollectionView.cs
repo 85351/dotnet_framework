@@ -447,7 +447,7 @@ namespace MS.Internal.Controls
         public override bool MoveCurrentTo(object item)
         {
             // if already on item, don't do anything
-            if (Object.Equals(CurrentItem, item))
+            if (ItemsControl.EqualsEx(CurrentItem, item))
             {
                 // also check that we're not fooled by a false null CurrentItem
                 if (item != null || IsCurrentInView)

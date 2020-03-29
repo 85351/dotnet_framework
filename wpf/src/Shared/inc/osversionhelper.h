@@ -52,6 +52,7 @@ namespace WPFUtils
         static bool IsWindows10RS1OrGreater();
         static bool IsWindows10RS2OrGreater();
         static bool IsWindows10RS3OrGreater();
+        static bool IsWindows10RS5OrGreater();
         static bool IsWindowsServer();
     };
 }

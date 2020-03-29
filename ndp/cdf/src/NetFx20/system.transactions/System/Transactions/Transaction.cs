@@ -18,6 +18,7 @@ namespace System.Transactions
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
     using System.Runtime.Serialization;
+    using System.Runtime.Remoting.Lifetime;
     using System.Runtime.Remoting.Messaging;
     using System.Security.Permissions;
     using System.Threading;
@@ -1478,22 +1479,22 @@ namespace System.Transactions
 
         // ConditionalWeakTable is used to automatically remove the entries that are no longer referenced. This will help prevent leaks in async nested TransactionScope
         // usage and when child nested scopes are not syncronized properly. 
-        static readonly ConditionalWeakTable<string, ContextData> ContextDataTable = new ConditionalWeakTable<string, ContextData>();
+        static readonly ConditionalWeakTable<ContextKey, ContextData> ContextDataTable = new ConditionalWeakTable<ContextKey, ContextData>();
 
         // 
         //  Set CallContext data with the given contextKey. 
         //  return the ContextData if already present in contextDataTable, otherwise return the default value. 
         // 
-        static public ContextData CreateOrGetCurrentData(string contextKey)
+        static public ContextData CreateOrGetCurrentData(ContextKey contextKey)
         {
            CallContext.LogicalSetData(CurrentTransactionProperty, contextKey);
            return ContextDataTable.GetValue(contextKey, (env) => new ContextData(true));
         }
 
-        static public void ClearCurrentData(string contextKey, bool removeContextData)
+        static public void ClearCurrentData(ContextKey contextKey, bool removeContextData)
         {
             // Get the current ambient CallContext.
-            string key = (string)CallContext.LogicalGetData(CurrentTransactionProperty);
+            ContextKey key = (ContextKey)CallContext.LogicalGetData(CurrentTransactionProperty);
             if (contextKey != null || key != null)
             {
                 // removeContextData flag is used for perf optimization to avoid removing from the table in certain nested TransactionScope usage. 
@@ -1513,7 +1514,7 @@ namespace System.Transactions
         static public bool TryGetCurrentData(out ContextData currentData)
         {
             currentData = null;
-            string contextKey = (string)CallContext.LogicalGetData(CurrentTransactionProperty);
+            ContextKey contextKey = (ContextKey)CallContext.LogicalGetData(CurrentTransactionProperty);
             if (contextKey == null)
             {
                return false;
@@ -1522,6 +1523,29 @@ namespace System.Transactions
             {
                return ContextDataTable.TryGetValue(contextKey, out currentData);
             }
+        }
+    }
+
+    //
+    // MarshalByRefObject is needed for cross AppDomain scenarios where just using object will end up with a different reference when call is made across serialization boundary.
+    //
+    class ContextKey : MarshalByRefObject
+    {
+        // Set the lease lifetime according to the AppSetting Transactions:ContextKeyLeaseLifetimeInMinutes. Only change it if the value is greater than 0.
+        public override object InitializeLifetimeService()
+        {
+            ILease lease = (ILease)base.InitializeLifetimeService();
+            int leaseLifetime = AppSettings.ContextKeyRemotingLeaseLifetimeInMinutes;
+            // If the specified lease lifetime is less than 0, we don't change the value from the AppDomain.
+            // This is how you opt-out of this fix.
+            // A specified value of 0 was filtered out when initializing the AppSettings and it was mapped to
+            // the default value, treating it as if it wasn't specified.
+            if ((lease != null) && (lease.CurrentState == LeaseState.Initial) && (leaseLifetime > 0))
+            {
+                lease.InitialLeaseTime = TimeSpan.FromMinutes(leaseLifetime);
+                lease.RenewOnCallTime = TimeSpan.FromMinutes(leaseLifetime);
+            }
+            return lease;
         }
     }
 

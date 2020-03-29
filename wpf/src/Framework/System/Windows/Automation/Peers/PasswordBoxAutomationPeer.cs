@@ -117,7 +117,7 @@ namespace System.Windows.Automation.Peers
             get 
             {
                 // DDVSO 404634: We shouldn't throw InvalidOperationException, return an empty string instead
-                if (FrameworkAppContextSwitches.UseLegacyAccessibilityFeatures)
+                if (AccessibilitySwitches.UseNetFx47CompatibleAccessibilityFeatures)
                 {
                     throw new InvalidOperationException();
                 }

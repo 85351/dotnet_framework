@@ -41,13 +41,13 @@ namespace System.Windows.Automation.Peers
             List<AutomationPeer> children = base.GetChildrenCore();
             ToggleButton expanderToggleButton = ((Expander)Owner).ExpanderToggleButton;
 
-            if (!CoreAppContextSwitches.UseLegacyAccessibilityFeatures && children != null)
+            if (!AccessibilitySwitches.UseNetFx47CompatibleAccessibilityFeatures && children != null)
             {
                 foreach (UIElementAutomationPeer peer in children)
                 {
                     if (peer.Owner == expanderToggleButton)
                     {
-                        peer.EventsSource = this;
+                        peer.EventsSource = (!AccessibilitySwitches.UseNetFx472CompatibleAccessibilityFeatures && this.EventsSource != null) ? this.EventsSource : this;
                         break;
                     }
                 }
@@ -59,7 +59,7 @@ namespace System.Windows.Automation.Peers
         /// The expander should have Automation Keyboard focus whenever the actual focus is set in the toggle button
         override protected bool HasKeyboardFocusCore()
         {
-            return ((!CoreAppContextSwitches.UseLegacyAccessibilityFeatures && ((Expander)Owner).IsExpanderToggleButtonFocused) 
+            return ((!AccessibilitySwitches.UseNetFx47CompatibleAccessibilityFeatures && ((Expander)Owner).IsExpanderToggleButtonFocused) 
                     || base.HasKeyboardFocusCore());
         }
         

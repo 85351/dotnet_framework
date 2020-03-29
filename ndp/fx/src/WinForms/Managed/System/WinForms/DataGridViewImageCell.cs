@@ -1038,7 +1038,19 @@ namespace System.Windows.Forms
             [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             public override void DoDefaultAction()
             {
-                // do nothing
+                // do nothing if Level < 3
+
+                if (AccessibilityImprovements.Level3)
+                {
+                    DataGridViewImageCell dataGridViewCell = (DataGridViewImageCell)this.Owner;
+                    DataGridView dataGridView = dataGridViewCell.DataGridView;
+
+                    if (dataGridView != null && dataGridViewCell.RowIndex != -1 &&
+                        dataGridViewCell.OwningColumn != null && dataGridViewCell.OwningRow != null)
+                    {
+                        dataGridView.OnCellContentClickInternal(new DataGridViewCellEventArgs(dataGridViewCell.ColumnIndex, dataGridViewCell.RowIndex));
+                    }
+                }
             }
 
             /// <include file='doc\DataGridViewImageCell.uex' path='docs/doc[@for="DataGridViewImageCellAccessibleObject.GetChildCount"]/*' />
@@ -1064,7 +1076,22 @@ namespace System.Windows.Forms
                     return NativeMethods.UIA_ImageControlTypeId;
                 }
 
+                if (AccessibilityImprovements.Level3 && propertyID == NativeMethods.UIA_IsInvokePatternAvailablePropertyId)
+                {
+                    return true;
+                }
+
                 return base.GetPropertyValue(propertyID);
+            }
+
+            internal override bool IsPatternSupported(int patternId)
+            {
+                if (AccessibilityImprovements.Level3 && patternId == NativeMethods.UIA_InvokePatternId)
+                {
+                    return true;
+                }
+
+                return base.IsPatternSupported(patternId);
             }
         }
     }

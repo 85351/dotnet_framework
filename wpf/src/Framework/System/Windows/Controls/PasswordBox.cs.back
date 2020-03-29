@@ -88,6 +88,8 @@ namespace System.Windows.Controls
 
             TextBoxBase.SelectionBrushProperty.OverrideMetadata(typeof(PasswordBox),
                 new FrameworkPropertyMetadata(new PropertyChangedCallback(UpdateCaretElement)));
+            TextBoxBase.SelectionTextBrushProperty.OverrideMetadata(typeof(PasswordBox),
+                new FrameworkPropertyMetadata(new PropertyChangedCallback(UpdateCaretElement)));
             TextBoxBase.SelectionOpacityProperty.OverrideMetadata(typeof(PasswordBox), 
                 new FrameworkPropertyMetadata(new PropertyChangedCallback(UpdateCaretElement)));
             TextBoxBase.CaretBrushProperty.OverrideMetadata(typeof(PasswordBox),
@@ -300,6 +302,21 @@ namespace System.Windows.Controls
         {
             get { return (Brush)GetValue(SelectionBrushProperty); }
             set { SetValue(SelectionBrushProperty, value); }
+        }
+
+        /// <summary>
+        /// <see cref="TextBoxBase.SelectionTextBrushProperty"/>
+        /// </summary>
+        public static readonly DependencyProperty SelectionTextBrushProperty =
+            TextBoxBase.SelectionTextBrushProperty.AddOwner(typeof(PasswordBox));
+
+        /// <summary>
+        /// <see cref="TextBoxBase.SelectionTextBrushProperty"/>
+        /// </summary>
+        public Brush SelectionTextBrush
+        {
+            get { return (Brush)GetValue(SelectionTextBrushProperty); }
+            set { SetValue(SelectionTextBrushProperty, value); }
         }
 
         /// <summary>

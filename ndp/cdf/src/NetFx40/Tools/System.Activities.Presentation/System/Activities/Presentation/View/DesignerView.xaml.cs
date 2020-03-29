@@ -191,12 +191,19 @@ namespace System.Activities.Presentation.View
                 this.scrollViewerPanner.DraggingHand = (Cursor)this.Resources["PanningCursor"];
             }
 
-            if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures && this.zoomPicker != null && this.zoomPicker.Template != null)
+            if (this.zoomPicker != null && this.zoomPicker.Template != null)
             {
                 var zoomPickerTextBox = this.zoomPicker.Template.FindName("PART_EditableTextBox", this.zoomPicker) as TextBox;
                 if (zoomPickerTextBox != null)
                 {
-                    zoomPickerTextBox.SetValue(AutomationProperties.NameProperty, SR.ZoomPickerEditorAutomationName);
+                    if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures)
+                    {
+                        zoomPickerTextBox.SetValue(AutomationProperties.NameProperty, SR.ZoomPickerEditorAutomationName);
+                    }
+                    if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures3 && WorkflowDesignerColors.IsHighContrastEnabled)
+                    {
+                        zoomPickerTextBox.SetValue(TextBox.SelectionOpacityProperty, 0.0);
+                    }
                 }
             }
         }
@@ -798,6 +805,27 @@ namespace System.Activities.Presentation.View
             this.ShouldStillAllowRubberBandEvenIfMouseLeftButtonDownIsHandled = false;
         }
 
+        private void OnExpandAllCollapseAllButtonLoaded(object sender, RoutedEventArgs e)
+        {
+            if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures3)
+            {
+                ToggleButton toggleButton = sender as ToggleButton;
+                if (toggleButton != null && toggleButton.Template != null)
+                {
+                    TextBlock toggleButtonTextBlock = toggleButton.Template.FindName("collapseAllText", toggleButton) as TextBlock;
+                    if (toggleButtonTextBlock != null)
+                    {
+                        Binding toggleButtonHelpTextBinding = new Binding("Text");
+                        toggleButtonHelpTextBinding.Source = toggleButtonTextBlock;
+                        toggleButtonHelpTextBinding.Mode = BindingMode.OneWay;                        
+                        toggleButtonHelpTextBinding.Converter = new TextFormattingConverter();
+                        toggleButtonHelpTextBinding.ConverterParameter = SR.ExpandAllCollapseAllHelpTextFormat;
+                        BindingOperations.SetBinding(toggleButton, AutomationProperties.HelpTextProperty, toggleButtonHelpTextBinding);
+                    }
+                }
+            }
+        }
+        
         void OnDesignerSurfaceMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             //user clicked on designer surface, somwhere around actual designer - try to select root designer
@@ -1188,6 +1216,30 @@ namespace System.Activities.Presentation.View
         void OnArgumentsCollectionChanged(object sender, RoutedEventArgs e)
         {
             CheckButtonArguments();
+        }
+        
+        void OnZoompickerGotFocus(object sender, RoutedEventArgs e)
+        {
+            if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures3 && this.zoomPicker != null && this.zoomPicker.Template != null)
+            {
+                var zoomPickerTextBox = this.zoomPicker.Template.FindName("PART_EditableTextBox", zoomPicker) as TextBox;
+                if (zoomPickerTextBox != null)
+                {
+                    zoomPickerTextBox.SetValue(TextBlock.ForegroundProperty, this.Resources["ShellBarForegroundActiveColor"] as SolidColorBrush);
+                }
+            }
+        }
+
+        void OnZoompickerLostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures3 && this.zoomPicker != null && this.zoomPicker.Template != null)
+            {
+                var zoomPickerTextBox = this.zoomPicker.Template.FindName("PART_EditableTextBox", zoomPicker) as TextBox;
+                if (zoomPickerTextBox != null)
+                {
+                    zoomPickerTextBox.SetValue(TextBlock.ForegroundProperty, this.Resources["ShellBarForegroundInactiveColor"] as SolidColorBrush);
+                }
+            }
         }
 
         void ApplyShellBarItemVisibility(ShellBarItemVisibility visibility)

@@ -931,7 +931,7 @@ namespace System.Windows.Data
                 object item = contextElement.GetValue(FrameworkElement.DataContextProperty);
 
                 // if binding inactive or the data item has changed, (re-)activate
-                if (StatusInternal == BindingStatusInternal.Inactive || !Object.Equals(item, DataItem))
+                if (StatusInternal == BindingStatusInternal.Inactive || !System.Windows.Controls.ItemsControl.EqualsEx(item, DataItem))
                 {
                     Activate(item);
                 }
@@ -1483,7 +1483,7 @@ namespace System.Windows.Data
 
             // if this is a re-transfer after a source update and the value
             // hasn't changed, don't do any more work.
-            bool realTransfer = !(IsInUpdate && Object.Equals(value, Value));
+            bool realTransfer = !(IsInUpdate && System.Windows.Controls.ItemsControl.EqualsEx(value, Value));
 
             if (realTransfer)
             {
@@ -1807,6 +1807,12 @@ namespace System.Windows.Data
             }
         }
 
+
+        internal override bool ShouldReactToDirtyOverride()
+        {
+            // if the binding has disconnected, no need to react to Dirty()
+            return (DataItem != DisconnectedItem);
+        }
 
         // transfer a value from target to source
         internal override bool UpdateOverride()
@@ -2284,7 +2290,7 @@ namespace System.Windows.Data
             }
 
             // If the top-level item is different, ignore the update
-            if (!Object.Equals(DataItem, item))
+            if (!System.Windows.Controls.ItemsControl.EqualsEx(DataItem, item))
                 return true;
 
             // check the rest of the path
@@ -2412,7 +2418,7 @@ namespace System.Windows.Data
                 }
 
                 object newItem = contextElement.GetValue(FrameworkElement.DataContextProperty);
-                if (!Object.Equals(DataItem, newItem))
+                if (!System.Windows.Controls.ItemsControl.EqualsEx(DataItem, newItem))
                 {
                     Activate(newItem);
                 }

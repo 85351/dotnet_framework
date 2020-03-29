@@ -238,6 +238,18 @@ namespace System.Windows.Forms {
             base.OnMouseUp(mea);
         }
 
+        internal override void ToolStrip_RescaleConstants(int oldDpi, int newDpi) {
+            base.RescaleConstantsInternal(newDpi);
+            scaledDefaultPadding = DpiHelper.LogicalToDeviceUnits(defaultPadding, newDpi);
+            scaledGripThickness = DpiHelper.LogicalToDeviceUnits(gripThicknessDefault, newDpi);
+            scaledGripThicknessVisualStylesEnabled = DpiHelper.LogicalToDeviceUnits(gripThicknessVisualStylesEnabled, newDpi);
+            this.Margin = DefaultMargin;
+
+            gripThickness = ToolStripManager.VisualStylesEnabled ? scaledGripThicknessVisualStylesEnabled : scaledGripThickness;
+
+            OnFontChanged(EventArgs.Empty);
+        }
+
         private static void SetCursor(Control control, Cursor cursor) {
             IntSecurity.ModifyCursor.Assert();
             control.Cursor = cursor;
@@ -277,6 +289,18 @@ namespace System.Windows.Forms {
                }
             }
 
+            internal override object GetPropertyValue(int propertyID) {
+                if (AccessibilityImprovements.Level3) {
+                    switch (propertyID) {
+                        case NativeMethods.UIA_IsOffscreenPropertyId:
+                            return false;
+                        case NativeMethods.UIA_ControlTypePropertyId:
+                            return NativeMethods.UIA_ThumbControlTypeId;
+                    }
+                }
+
+                return base.GetPropertyValue(propertyID);
+            }
         }
     }
 }

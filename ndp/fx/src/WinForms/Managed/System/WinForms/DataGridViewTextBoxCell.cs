@@ -58,7 +58,7 @@ namespace System.Windows.Forms
         /// </returns>
         protected override AccessibleObject CreateAccessibilityInstance()
         {
-            if (AccessibilityImprovements.Level2)
+            if (AccessibilityImprovements.Level1)
             {
                 return new DataGridViewTextBoxCellAccessibleObject(this);
             }
@@ -846,7 +846,7 @@ namespace System.Windows.Forms
             {
                 if (propertyID == NativeMethods.UIA_ControlTypePropertyId)
                 {
-                    return NativeMethods.UIA_TextControlTypeId;
+                    return NativeMethods.UIA_EditControlTypeId;
                 }
 
                 return base.GetPropertyValue(propertyID);

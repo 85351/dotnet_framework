@@ -36,6 +36,11 @@ namespace System
                             LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.SwitchCmsUseInsecureHashAlgorithms, true);
                         }
 
+                        if (version <= 40702)
+                        {
+                            LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.SwitchEnvelopedCmsUseLegacyDefaultAlgorithm, true);
+                        }
+
                         break;
                     }
             }

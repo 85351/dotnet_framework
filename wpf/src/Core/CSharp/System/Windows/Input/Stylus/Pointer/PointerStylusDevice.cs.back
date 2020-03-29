@@ -161,6 +161,10 @@ namespace System.Windows.Input.StylusPointer
         /// Eagerly dispose any resources
         /// </summary>
         /// <param name="disposing">If this is a dispose or finalize call</param>
+        /// <SecurityNote>
+        /// Critical:  Calls PointerInteractionEngine.Dispose()
+        /// </SecurityNote>
+        [SecurityCritical]
         protected override void Dispose(bool disposing)
         {
             if (!_disposed)

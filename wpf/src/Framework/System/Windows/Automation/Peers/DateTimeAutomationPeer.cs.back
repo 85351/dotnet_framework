@@ -417,6 +417,54 @@ namespace System.Windows.Automation.Peers
             return result;
         }
 
+        /// <summary>
+        /// Gets the position of a this DateTime element within a set.
+        /// </summary>
+        /// <remarks>
+        /// Forwards the call to the wrapperPeer.
+        /// </remarks>
+        /// <returns>
+        /// The PositionInSet property value from the wrapper peer
+        /// </returns>
+        protected override int GetPositionInSetCore()
+        {
+            AutomationPeer wrapperPeer = WrapperPeer;
+            if (wrapperPeer != null)
+            {
+                return wrapperPeer.GetPositionInSet();
+            }
+            else
+            {
+                ThrowElementNotAvailableException();
+            }
+
+            return AutomationProperties.AutomationPositionInSetDefault;
+        }
+
+        /// <summary>
+        /// Gets the size of a set that contains this DateTime element.
+        /// </summary>
+        /// <remarks>
+        /// Forwards the call to the wrapperPeer.
+        /// </remarks>
+        /// <returns>
+        /// The SizeOfSet property value from the wrapper peer
+        /// </returns>
+        protected override int GetSizeOfSetCore()
+        {
+            AutomationPeer wrapperPeer = WrapperPeer;
+            if (wrapperPeer != null)
+            {
+                return wrapperPeer.GetSizeOfSet();
+            }
+            else
+            {
+                ThrowElementNotAvailableException();
+            }
+
+            return AutomationProperties.AutomationSizeOfSetDefault;
+        }
+
         internal override Rect GetVisibleBoundingRectCore()
         {
             AutomationPeer wrapperPeer = WrapperPeer;

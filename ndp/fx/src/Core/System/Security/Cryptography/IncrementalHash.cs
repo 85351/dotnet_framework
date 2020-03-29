@@ -194,6 +194,7 @@ namespace System.Security.Cryptography
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA5351", Justification = "MD5 is used when the user asks for it.")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA5350", Justification = "SHA1 is used when the user asks for it.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA5354", Justification = "SHA1 is used when the user asks for it.")]
         private static HashAlgorithm GetHashAlgorithm(HashAlgorithmName hashAlgorithm)
         {
             if (hashAlgorithm == HashAlgorithmName.MD5)

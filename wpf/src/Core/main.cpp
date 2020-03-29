@@ -345,6 +345,11 @@ private :
 
 void CleanUp();
 
+// Important Note: This variable is declared as System::IntPtr to fool the compiler into creating
+// a safe static method that initializes it. If this variable was declared as CModuleInitialize
+// Then the generated method is unsafe, fails NGENing and causes Jitting.
+__declspec(appdomain) static System::IntPtr cmiStartupRunner; 
+
 /// <summary>
 /// This method is a workaround to an ugly bug in the compiler that caused Jitting.
 /// The compiler generates a static unsafe method to initialize cmiStartupRunner
@@ -356,15 +361,13 @@ void CleanUp();
 /// Safe    : The code is safe and only returns a new object.
 /// </SecurityNote>
 [SecuritySafeCritical]
-__declspec(noinline) static System::IntPtr CreateCModuleInitialize()
+__declspec(noinline) static __int64 InitCmiStartupRunner()
 {
-    return System::IntPtr(new CModuleInitialize(CleanUp));
+    cmiStartupRunner = System::IntPtr(new CModuleInitialize(CleanUp));
+    return cmiStartupRunner.ToInt64();
 }
 
-// Important Note: This variable is declared as System::IntPtr to fool the compiler into creating
-// a safe static method that initialzes it. If this variable was declared as CModuleInitialize
-// Then the generated method is unsafe, fails NGENing and causes Jitting.
-__declspec(appdomain) static System::IntPtr cmiStartupRunner = CreateCModuleInitialize();
+__declspec(appdomain) static __int64 unused = InitCmiStartupRunner();
 
 [SecuritySafeCritical]
 void CleanUp()

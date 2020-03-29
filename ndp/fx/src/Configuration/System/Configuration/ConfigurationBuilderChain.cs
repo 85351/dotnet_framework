@@ -8,6 +8,7 @@ namespace System.Configuration
 {
     using System.Collections.Generic;
     using System.Collections.Specialized;
+    using System.Configuration;
     using System.Configuration.Provider;
     using System.Xml;
 
@@ -24,18 +25,36 @@ namespace System.Configuration
 
         public override XmlNode ProcessRawXml(XmlNode rawXml) {
             XmlNode processedXml = rawXml;
-            foreach (ConfigurationBuilder b in _builders) {
-                processedXml = b.ProcessRawXml(processedXml);
+            String currentBuilderName = null;
+
+            try {
+                foreach (ConfigurationBuilder b in _builders) {
+                    currentBuilderName = b.Name;
+                    processedXml = b.ProcessRawXml(processedXml);
+                }
+                return processedXml;
             }
-            return processedXml;
+            catch (Exception e) {
+                throw ExceptionUtil.WrapAsConfigException(SR.GetString(SR.ConfigBuilder_processXml_error_short,
+                                                        currentBuilderName), e, null);
+            }
         }
 
         public override ConfigurationSection ProcessConfigurationSection(ConfigurationSection configSection) {
             ConfigurationSection processedConfigSection = configSection;
-            foreach (ConfigurationBuilder b in _builders) {
-                processedConfigSection = b.ProcessConfigurationSection(processedConfigSection);
+            String currentBuilderName = null;
+
+            try {
+                foreach (ConfigurationBuilder b in _builders) {
+                    currentBuilderName = b.Name;
+                    processedConfigSection = b.ProcessConfigurationSection(processedConfigSection);
+                }
+                return processedConfigSection;
             }
-            return processedConfigSection;
+            catch (Exception e) {
+                throw ExceptionUtil.WrapAsConfigException(SR.GetString(SR.ConfigBuilder_processSection_error,
+                                                            currentBuilderName, configSection.SectionInformation.Name), e, null);
+            }
         }
     }
 }

@@ -2556,7 +2556,8 @@ void MetaImport::LoadProperties
             // to implement/override the property.
             if (SetterSymbol)
             {
-                for (BCSYM_Param * parm = SetterSymbol->GetFirstParam(); parm && parm->GetNext(); parm = parm->GetNext())
+				BCSYM_Param * parm;
+                for (parm = SetterSymbol->GetFirstParam(); parm && parm->GetNext(); parm = parm->GetNext())
                 {
                 }
 

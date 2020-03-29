@@ -732,6 +732,19 @@ namespace System.Windows.Forms {
             /// </devdoc>
             public DomainUpDownAccessibleObject(Control owner) : base(owner) {
             }
+
+            /// <summary>
+            /// Gets or sets the accessible name.
+            /// </summary>
+            public override string Name {
+                get {
+                    string baseName = base.Name;
+                    return ((DomainUpDown)Owner).GetAccessibleName(baseName);
+                }
+                set {
+                    base.Name = value;
+                }
+            }
             
             private DomainItemListAccessibleObject ItemList {
                 get {
@@ -760,20 +773,6 @@ namespace System.Windows.Forms {
                             return AccessibleRole.ComboBox;
                         }
                     }
-                }
-            }
-
-            public override string Name {
-                get {
-                    if (base.Name == null && AccessibilityImprovements.Level1) {
-                        return Owner.GetType().Name;
-                    }
-                    else {
-                        return base.Name;
-                    }
-                }
-                set {
-                    base.Name = value;
                 }
             }
 

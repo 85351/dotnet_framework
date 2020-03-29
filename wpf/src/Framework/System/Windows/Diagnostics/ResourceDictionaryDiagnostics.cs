@@ -239,20 +239,23 @@ namespace System.Windows.Diagnostics
         {
             lock (_dictionariesFromUriLock)
             {
-                List<WeakReference<ResourceDictionary>> list;
-                if (_dictionariesFromUri.TryGetValue(uri, out list))
+                if (_dictionariesFromUri != null)
                 {
-                    List<WeakReference<ResourceDictionary>> toRemove = new List<WeakReference<ResourceDictionary>>();
-                    foreach (WeakReference<ResourceDictionary> wr in list)
+                    List<WeakReference<ResourceDictionary>> list;
+                    if (_dictionariesFromUri.TryGetValue(uri, out list))
                     {
-                        ResourceDictionary target;
-                        if (!wr.TryGetTarget(out target) || target == rd)
+                        List<WeakReference<ResourceDictionary>> toRemove = new List<WeakReference<ResourceDictionary>>();
+                        foreach (WeakReference<ResourceDictionary> wr in list)
                         {
-                            toRemove.Add(wr);
+                            ResourceDictionary target;
+                            if (!wr.TryGetTarget(out target) || target == rd)
+                            {
+                                toRemove.Add(wr);
+                            }
                         }
-                    }
 
-                    RemoveEntries(uri, list, toRemove);
+                        RemoveEntries(uri, list, toRemove);
+                    }
                 }
             }
         }

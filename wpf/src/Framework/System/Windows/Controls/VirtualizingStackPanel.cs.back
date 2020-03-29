@@ -296,18 +296,25 @@ namespace System.Windows.Controls
         /// </summary>
         public virtual void MouseWheelUp()
         {
-            if (ScrollTracer.IsEnabled && ScrollTracer.IsTracing(this))
+            if (CanMouseWheelVerticallyScroll)
             {
-                ScrollTracer.Trace(this, ScrollTraceOp.MouseWheelUp);
+                if (ScrollTracer.IsEnabled && ScrollTracer.IsTracing(this))
+                {
+                    ScrollTracer.Trace(this, ScrollTraceOp.MouseWheelUp);
+                }
+
+                int lines = SystemParameters.WheelScrollLines;
+                bool isHorizontal = (Orientation == Orientation.Horizontal);
+                double newOffset = (IsPixelBased || isHorizontal)
+                    ? VerticalOffset - lines * ScrollViewer._scrollLineDelta
+                    : NewItemOffset(isHorizontal, (double)-lines, fromFirst:true);
+
+                SetVerticalOffsetImpl(newOffset, setAnchorInformation:true);
             }
-
-            int lines = SystemParameters.WheelScrollLines;
-            bool isHorizontal = (Orientation == Orientation.Horizontal);
-            double newOffset = (IsPixelBased || isHorizontal)
-                ? VerticalOffset - lines * ScrollViewer._scrollLineDelta
-                : NewItemOffset(isHorizontal, (double)-lines, fromFirst:true);
-
-            SetVerticalOffsetImpl(newOffset, setAnchorInformation:true);
+            else
+            {
+                PageUp();
+            }
         }
 
         /// <summary>
@@ -317,18 +324,25 @@ namespace System.Windows.Controls
         /// </summary>
         public virtual void MouseWheelDown()
         {
-            if (ScrollTracer.IsEnabled && ScrollTracer.IsTracing(this))
+            if (CanMouseWheelVerticallyScroll)
             {
-                ScrollTracer.Trace(this, ScrollTraceOp.MouseWheelDown);
+                if (ScrollTracer.IsEnabled && ScrollTracer.IsTracing(this))
+                {
+                    ScrollTracer.Trace(this, ScrollTraceOp.MouseWheelDown);
+                }
+
+                int lines = SystemParameters.WheelScrollLines;
+                bool isHorizontal = (Orientation == Orientation.Horizontal);
+                double newOffset = (IsPixelBased || isHorizontal)
+                    ? VerticalOffset + lines * ScrollViewer._scrollLineDelta
+                    : NewItemOffset(isHorizontal, (double)lines, fromFirst:false);
+
+                SetVerticalOffsetImpl(newOffset, setAnchorInformation:true);
             }
-
-            int lines = SystemParameters.WheelScrollLines;
-            bool isHorizontal = (Orientation == Orientation.Horizontal);
-            double newOffset = (IsPixelBased || isHorizontal)
-                ? VerticalOffset + lines * ScrollViewer._scrollLineDelta
-                : NewItemOffset(isHorizontal, (double)lines, fromFirst:false);
-
-            SetVerticalOffsetImpl(newOffset, setAnchorInformation:true);
+            else
+            {
+                PageDown();
+            }
         }
 
         /// <summary>
@@ -4595,6 +4609,14 @@ namespace System.Windows.Controls
                 }
 
                 cacheUnit = VirtualizationCacheLengthUnit.Pixel;
+            }
+
+            // if the viewport is empty in the scrolling direction, force the
+            // cache to be empty also.   This avoids an infinite loop re- and
+            // de-virtualizing the last item (DDVSO 448747)
+            if (IsViewportEmpty(isHorizontal, viewport))
+            {
+                cacheLength = new VirtualizationCacheLength(0, 0);
             }
         }
 
@@ -11476,6 +11498,11 @@ namespace System.Windows.Controls
         private double ExpectedDistanceBetweenViewports
         {
             get { return _scrollData?._expectedDistanceBetweenViewports ?? 0.0; }
+        }
+
+        private bool CanMouseWheelVerticallyScroll
+        {
+            get { return (SystemParameters.WheelScrollLines > 0); }
         }
 
         #endregion Private Properties

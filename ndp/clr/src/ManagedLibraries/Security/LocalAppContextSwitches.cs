@@ -44,5 +44,15 @@ namespace System
             }
         }
 
+        private static int _envelopedCmsUseLegacyDefaultAlgorithm;
+        internal static readonly string SwitchEnvelopedCmsUseLegacyDefaultAlgorithm = "Switch.System.Security.Cryptography.Pkcs.EnvelopedCmsUseLegacyDefaultAlgorithm";
+        public static bool EnvelopedCmsUseLegacyDefaultAlgorithm
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(SwitchEnvelopedCmsUseLegacyDefaultAlgorithm, ref _envelopedCmsUseLegacyDefaultAlgorithm);
+            }
+        }
     }
 }

@@ -10,13 +10,33 @@ namespace System.Activities
     internal static class LocalAppContextSwitches
     {
         private static int useMD5ForWFDebugger;
-        
+        private static int useSHA1HashForDebuggerSymbols;
+        private static int terminateOnUnhandledExceptionInCancel;
+
         public static bool UseMD5ForWFDebugger
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 return LocalAppContext.GetCachedSwitchValue(@"Switch.System.Activities.UseMD5ForWFDebugger", ref useMD5ForWFDebugger);
+            }
+        }
+
+        public static bool UseSHA1HashForDebuggerSymbols
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(@"Switch.System.Activities.UseSHA1HashForDebuggerSymbols", ref useSHA1HashForDebuggerSymbols);
+            }
+        }
+
+        public static bool TerminateOnUnhandledExceptionDuringCancel
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(@"Switch.System.Activities.TerminateOnUnhandledExceptionDuringCancel", ref terminateOnUnhandledExceptionInCancel);
             }
         }
     }

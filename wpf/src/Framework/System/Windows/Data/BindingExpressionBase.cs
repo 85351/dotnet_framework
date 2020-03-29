@@ -1116,7 +1116,7 @@ namespace System.Windows.Data
             object value = Value;
 
             // TargetNullValue is the UI representation of a "null" value.  Use null internally.
-            if (Object.Equals(value, EffectiveTargetNullValue))
+            if (ItemsControl.EqualsEx(value, EffectiveTargetNullValue))
             {
                 value = null;
             }
@@ -1445,7 +1445,7 @@ namespace System.Windows.Data
         /// <summary> the target value has changed - the source needs to be updated </summary>
         internal void Dirty()
         {
-            if (!IsInTransfer && IsAttached)    // Dev11 377333:  don't react if the binding isn't attached
+            if (ShouldReactToDirty())
             {
                 NeedsUpdate = true;
 
@@ -1463,6 +1463,20 @@ namespace System.Windows.Data
 
                 NotifyCommitManager();
             }
+        }
+
+        private bool ShouldReactToDirty()
+        {
+            if (IsInTransfer || !IsAttached)    // Dev11 377333:  don't react if the binding isn't attached
+            {
+                return false;
+            }
+            return ShouldReactToDirtyOverride();
+        }
+
+        internal virtual bool ShouldReactToDirtyOverride()
+        {
+            return true;
         }
 
         private void ProcessDirty()
@@ -1717,7 +1731,7 @@ namespace System.Windows.Data
                 DependencyProperty dataContextDP = FrameworkElement.DataContextProperty;
                 DependencyObject groupContextElement = bg.InheritanceContext;
                 if (groupContextElement == null ||
-                    !Object.Equals( contextElement.GetValue(dataContextDP),
+                    !ItemsControl.EqualsEx( contextElement.GetValue(dataContextDP),
                                     groupContextElement.GetValue(dataContextDP)))
                 {
                     MarkAsNonGrouped();
@@ -2345,7 +2359,7 @@ namespace System.Windows.Data
                     int j;
                     for (j=toRemove.Count-1; j>=0; --j)
                     {
-                        if (Object.Equals(toRemove[j].ErrorContent, errorContent))
+                        if (ItemsControl.EqualsEx(toRemove[j].ErrorContent, errorContent))
                         {
                             // this error appears on both lists - remove it from toRemove
                             toRemove.RemoveAt(j);

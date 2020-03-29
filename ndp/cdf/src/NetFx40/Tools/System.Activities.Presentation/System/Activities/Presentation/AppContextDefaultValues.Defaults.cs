@@ -28,6 +28,10 @@ namespace System
                         LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.UseLegacyAccessibilityFeaturesSwitchName, true);
                     }
                     
+                    if (version <= 40702)
+                    {
+                        LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.UseLegacyAccessibilityFeatures3SwitchName, true);
+                    }
                     break;
                 }
             }

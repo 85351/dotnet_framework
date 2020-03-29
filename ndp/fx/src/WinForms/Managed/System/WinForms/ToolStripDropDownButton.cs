@@ -238,7 +238,12 @@ namespace System.Windows.Forms {
             private Rectangle                  dropDownArrowRect    = Rectangle.Empty;
             
             public ToolStripDropDownButtonInternalLayout(ToolStripDropDownButton ownerItem) : base(ownerItem) {
-                if (DpiHelper.IsScalingRequired) {
+                if (DpiHelper.EnableToolStripPerMonitorV2HighDpiImprovements)
+                {
+                    dropDownArrowSize = DpiHelper.LogicalToDeviceUnits(dropDownArrowSizeUnscaled, ownerItem.DeviceDpi);
+                    scaledDropDownArrowPadding = DpiHelper.LogicalToDeviceUnits(dropDownArrowPadding, ownerItem.DeviceDpi);
+                }
+                else if (DpiHelper.IsScalingRequired) {
                     // these 2 values are used to calculate size of the clickable drop down button
                     // on the right of the image/text
                     dropDownArrowSize = DpiHelper.LogicalToDeviceUnits(dropDownArrowSizeUnscaled);

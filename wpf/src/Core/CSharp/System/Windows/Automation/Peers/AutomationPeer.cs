@@ -1,3 +1,5 @@
+//#define ENABLE_AUTOMATIONPEER_LOGGING   // uncomment to include logging of various activities
+
 using System;
 using System.Collections;
 using System.Diagnostics;
@@ -282,6 +284,13 @@ namespace System.Windows.Automation.Peers
                 Initialize();
             }
         }
+
+#if ENABLE_AUTOMATIONPEER_LOGGING
+        protected AutomationPeer()
+        {
+            LogPeer(this);
+        }
+#endif
 
         //
         // VIRTUAL CALLBACKS
@@ -698,12 +707,40 @@ namespace System.Windows.Automation.Peers
 
         ///
         abstract protected void SetFocusCore();
-        
+
         ///
         virtual protected AutomationLiveSetting GetLiveSettingCore()
         {
             return AutomationLiveSetting.Off;
         }
+
+        /// <summary>
+        /// Override this method to provide UIAutomation with a list of elements affected or controlled by this AutomationPeer.
+        /// </summary>
+        /// <returns>
+        /// A list of AutomationPeers for the controlled elements.
+        /// </returns>
+        virtual protected List<AutomationPeer> GetControlledPeersCore()
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Override this method to provide UIAutomation with an integer value describing the size of a group or set this element belongs to.
+        /// </summary>
+        virtual protected int GetSizeOfSetCore()
+        {
+            return AutomationProperties.AutomationSizeOfSetDefault;
+        }
+
+        /// <summary>
+        /// Override this method to provide UIAutomation with a 1-based integer value describing the position this element occupies in a group or set.
+        /// </summary>
+        virtual protected int GetPositionInSetCore()
+        {
+            return AutomationProperties.AutomationPositionInSetDefault;
+        }
+
 
         //
         // INTERNAL STUFF - NOT OVERRIDABLE
@@ -1168,7 +1205,7 @@ namespace System.Windows.Automation.Peers
                 _publicSetFocusInProgress = false;
             }
         }
-        
+
         ///
         public AutomationLiveSetting GetLiveSetting()
         {
@@ -1180,6 +1217,110 @@ namespace System.Windows.Automation.Peers
             {
                 _publicCallInProgress = true;
                 result = GetLiveSettingCore();
+            }
+            finally
+            {
+                _publicCallInProgress = false;
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// This method provides UIAuatomation with a list of elements affected or controlled by this AutomationPeer.
+        /// </summary>
+        /// <returns>
+        /// A list of AutomationPeers for the controlled elements.
+        /// </returns>
+        public List<AutomationPeer> GetControlledPeers()
+        {
+            List<AutomationPeer> result = null;
+            if (_publicCallInProgress)
+                throw new InvalidOperationException(SR.Get(SRID.Automation_RecursivePublicCall));
+
+            try
+            {
+                _publicCallInProgress = true;
+                result = GetControlledPeersCore();
+            }
+            finally
+            {
+                _publicCallInProgress = false;
+            }
+            return result;
+        }
+
+        /// <summary>
+        ///     Calls <see cref="GetControlledPeers"/> to get a list of AutomationPeers then transforms it into an array
+        ///     of <see cref="IRawElementProviderSimple"/> to provide the ControlleFor property to UIA.
+        /// </summary>
+        /// <returns>
+        ///     An array of <see cref="IRawElementProviderSimple"/> representing the AutomationPeers provided by <see cref="GetControlledPeers"/>
+        /// </returns>
+        private IRawElementProviderSimple[] GetControllerForProviderArray()
+        {
+            List<AutomationPeer> controlledPeers = GetControlledPeers();
+            IRawElementProviderSimple[] result = null;
+
+            if (controlledPeers != null)
+            {
+                result = new IRawElementProviderSimple[controlledPeers.Count];
+
+                for (int i = 0; i < controlledPeers.Count; i++)
+                {
+                    result[i] = ProviderFromPeer(controlledPeers[i]);
+                }
+            }
+
+            return result;
+        }
+        /// <summary>
+        /// Attempt to get the value for the SizeOfSet property.
+        /// </summary>
+        /// <remarks>
+        /// This public call cannot be attempted if another public call is in progress.
+        /// </remarks>
+        /// <returns>
+        /// The value for the SizeOfSet property.
+        /// </returns>
+        public int GetSizeOfSet()
+        {
+            int result = AutomationProperties.AutomationSizeOfSetDefault;
+
+            if (_publicCallInProgress)
+                throw new InvalidOperationException(SR.Get(SRID.Automation_RecursivePublicCall));
+
+            try
+            {
+                _publicCallInProgress = true;
+                result = GetSizeOfSetCore();
+            }
+            finally
+            {
+                _publicCallInProgress = false;
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Attempt to get the value for the PositionInSet property.
+        /// </summary>
+        /// <remarks>
+        /// This public call cannot be attempted if another public call is in progress.
+        /// </remarks>
+        /// <returns>
+        /// The value for the PositionInSet property.
+        /// </returns>
+        public int GetPositionInSet()
+        {
+            int result = AutomationProperties.AutomationPositionInSetDefault;
+
+            if (_publicCallInProgress)
+                throw new InvalidOperationException(SR.Get(SRID.Automation_RecursivePublicCall));
+
+            try
+            {
+                _publicCallInProgress = true;
+                result = GetPositionInSetCore();
             }
             finally
             {
@@ -1215,7 +1356,9 @@ namespace System.Windows.Automation.Peers
         ///
         public void ResetChildrenCache()
         {
-            UpdateChildren();
+            using (UpdateChildren())
+            {
+            }
         }
 
         ///
@@ -1653,6 +1796,9 @@ namespace System.Windows.Automation.Peers
                 AutomationPropertyChangedEventArgs e = new AutomationPropertyChangedEventArgs(propertyId, oldValue, newValue);
                 AutomationInteropProvider.RaiseAutomationPropertyChangedEvent(provider, e);
             }
+#if ENABLE_AUTOMATIONPEER_LOGGING
+            LogPropertyChanged(this, propertyId);
+#endif
         }
 
         // InvalidateLimit – lower bound for  raising ChildrenInvalidated StructureChange event
@@ -1775,9 +1921,10 @@ namespace System.Windows.Automation.Peers
         }
 
         // internal handling of structure changed events
-        virtual internal void UpdateChildren()
+        virtual internal IDisposable UpdateChildren()
         {
             UpdateChildrenInternal(AutomationInteropProvider.InvalidateLimit);
+            return null;
         }
 
         //
@@ -1867,13 +2014,14 @@ namespace System.Windows.Automation.Peers
                     //  if somebody asked for property changed then structure must be updated
                     if (this._childrenValid? (this.AncestorsInvalid || (ControlType.Custom == this.GetControlType())) : (notifyStructureChanged || notifyPropertyChanged))
                     {
-                        UpdateChildren();
-
-                        AncestorsInvalid = false;
-
-                        for(AutomationPeer peer = GetFirstChild(); peer != null; peer = peer.GetNextSibling())
+                        using (UpdateChildren())
                         {
-                            peer.UpdateSubtree();
+                            AncestorsInvalid = false;
+
+                            for(AutomationPeer peer = GetFirstChild(); peer != null; peer = peer.GetNextSibling())
+                            {
+                                peer.UpdateSubtree();
+                            }
                         }
                     }
                     AncestorsInvalid = false;
@@ -2016,6 +2164,128 @@ namespace System.Windows.Automation.Peers
             }
         }
 
+        // Determine whether invisible items should show up in UIAutomation Control View
+        internal bool IncludeInvisibleElementsInControlView
+        {
+            get
+            {
+                // DDVSO 433560: As part of this breaking change, invisible items should no longer show in
+                // UIAutomation's Control View, as usual with other accessibility breaking changes we control
+                // whether the user gets the new behavior or not via the UseLegacyAccessibilityFeatures3 AppContext flag.
+                return AccessibilitySwitches.UseNetFx472CompatibleAccessibilityFeatures;
+            }
+        }
+
+#if ENABLE_AUTOMATIONPEER_LOGGING
+                // For diagnosing bugs (especially perf), it can be helpful to know how
+                // often certain activities occur in a given timeframe.  These logs record
+                // two such activities:  raising of PropertyChanged events, and creation
+                // of new AutomationPeers.  Each broken down by the type of peer.
+                // To use this:
+                // 1. Uncomment the definition of ENABLE_AUTOMATIONPEER_LOGGING (line 1)
+                // 2. Add calls to ClearLog and SummarizeLog at the beginning and end
+                //      of the timeframe of interest.  For example, at the beginning and
+                //      end of ContextLayoutManager.fireAutomationEvents - to record
+                //      activity during a single pass of rebuilding the automation tree.
+                // 3. Set the thresholds as desired (can also be done at debug time).
+                // 4. Rebuild PresentationCore (and any assemblies you changed in step 2).
+                // 5. Install the instrumented assemblies and run your scenario
+                // 6. Set breakpoints/tracepoints in SummarizeLog to see the results of
+                //      interest.  Start by tracing the summary string.
+                // 7. Add logs for other activities as desired, following the obvious pattern.
+
+                static Dictionary<Type, int> _pcLog = new Dictionary<Type, int>();
+                static int _pcThreshold = 20;
+
+                static Dictionary<Type, int> _peerLog = new Dictionary<Type, int>();
+                static int _peerThreshold = 20;
+
+                static void LogPropertyChanged(AutomationPeer peer, AutomationProperty property)
+                {
+                    int oldCount, newCount;
+                    Type peerType = peer.GetType();
+                    if (_pcLog.TryGetValue(peerType, out oldCount))
+                    {
+                        newCount = oldCount + 1;
+                    }
+                    else
+                    {
+                        newCount = 1;
+                    }
+                    _pcLog[peerType] = newCount;
+                }
+
+                static void LogPeer(AutomationPeer peer)
+                {
+                    int oldCount, newCount;
+                    Type peerType = peer.GetType();
+                    if (_peerLog.TryGetValue(peerType, out oldCount))
+                    {
+                        newCount = oldCount + 1;
+                    }
+                    else
+                    {
+                        newCount = 1;
+                    }
+                    _peerLog[peerType] = newCount;
+                }
+
+                static internal void ClearLog()
+                {
+                    _pcLog.Clear();
+                    _peerLog.Clear();
+                }
+
+                static internal void SummarizeLog()
+                {
+                    SummarizeLog(_pcLog, _pcThreshold, "events");
+                    SummarizeLog(_peerLog, _peerThreshold, "peers");
+                }
+
+                static void SummarizeLog(Dictionary<Type,int> log, int threshold, string title)
+                {
+                    int size = log.Count;
+                    if (size == 0)
+                        return;
+
+                    KeyValuePair<Type,int>[] pairs = new KeyValuePair<Type,int>[size];
+                    foreach (KeyValuePair<Type,int> kvp in log)
+                    {
+                        pairs[--size] = kvp;
+                    }
+
+                    Array.Sort(pairs, new LogComparer());
+
+                    int largeCount = 0;
+                    int sum = 0;
+                    size = pairs.Length;
+                    for (int i=0; i<size; ++i)
+                    {
+                        KeyValuePair<Type,int> kvp = pairs[i];
+                        if (kvp.Value > threshold)
+                        {
+                            string s1 = String.Format("{0} {1}", kvp.Value, kvp.Key.Name);
+                            ++largeCount;
+                        }
+                        sum += kvp.Value;
+                    }
+
+                    if (largeCount > 0)
+                    {
+                        string s = String.Format("--- {0} {3}, {1}/{2} types ---",
+                                        sum, largeCount, size, title);
+                    }
+                }
+
+                class LogComparer : Comparer<KeyValuePair<Type,int>>
+                {
+                    public override int Compare(KeyValuePair<Type,int> x, KeyValuePair<Type,int> y)
+                    {
+                        return (y.Value - x.Value);
+                    }
+                }
+#endif
+
         private static void Initialize()
         {
             //  initializeing patterns
@@ -2079,9 +2349,21 @@ namespace System.Windows.Automation.Peers
             s_propertyInfo[AutomationElementIdentifiers.FrameworkIdProperty.Id] = new GetProperty(GetFrameworkId);
             s_propertyInfo[AutomationElementIdentifiers.IsRequiredForFormProperty.Id] = new GetProperty(IsRequiredForForm);
             s_propertyInfo[AutomationElementIdentifiers.ItemStatusProperty.Id] = new GetProperty(GetItemStatus);
-            if (!CoreAppContextSwitches.UseLegacyAccessibilityFeatures && AutomationElementIdentifiers.LiveSettingProperty != null)
+            if (!AccessibilitySwitches.UseNetFx47CompatibleAccessibilityFeatures && AutomationElementIdentifiers.LiveSettingProperty != null)
             {
                 s_propertyInfo[AutomationElementIdentifiers.LiveSettingProperty.Id] = new GetProperty(GetLiveSetting);
+            }
+            if (!AccessibilitySwitches.UseNetFx472CompatibleAccessibilityFeatures && AutomationElementIdentifiers.ControllerForProperty != null)
+            {
+                s_propertyInfo[AutomationElementIdentifiers.ControllerForProperty.Id] = new GetProperty(GetControllerFor);
+            }
+            if (!AccessibilitySwitches.UseNetFx472CompatibleAccessibilityFeatures && AutomationElementIdentifiers.SizeOfSetProperty != null)
+            {
+                s_propertyInfo[AutomationElementIdentifiers.SizeOfSetProperty.Id] = new GetProperty(GetSizeOfSet);
+            }
+            if (!AccessibilitySwitches.UseNetFx472CompatibleAccessibilityFeatures && AutomationElementIdentifiers.PositionInSetProperty != null)
+            {
+                s_propertyInfo[AutomationElementIdentifiers.PositionInSetProperty.Id] = new GetProperty(GetPositionInSet);
             }
         }
 
@@ -2130,7 +2412,10 @@ namespace System.Windows.Automation.Peers
         private static object GetFrameworkId(AutomationPeer peer)           {   return peer.GetFrameworkId();   }
         private static object IsRequiredForForm(AutomationPeer peer)        {   return peer.IsRequiredForForm();    }
         private static object GetItemStatus(AutomationPeer peer)            {   return peer.GetItemStatus();    }
-        private static object GetLiveSetting(AutomationPeer peer)           {   return peer.GetLiveSetting();    }
+        private static object GetLiveSetting(AutomationPeer peer)           {   return peer.GetLiveSetting(); }
+        private static object GetControllerFor(AutomationPeer peer)         {   return peer.GetControllerForProviderArray(); }
+        private static object GetSizeOfSet(AutomationPeer peer)             {   return peer.GetSizeOfSet(); }
+        private static object GetPositionInSet(AutomationPeer peer)         {   return peer.GetPositionInSet(); }
 
         private static Hashtable s_patternInfo;
         private static Hashtable s_propertyInfo;

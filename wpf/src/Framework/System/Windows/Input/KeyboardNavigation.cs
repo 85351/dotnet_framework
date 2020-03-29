@@ -1030,12 +1030,15 @@ namespace System.Windows.Input
             return Navigate(currentElement, request, Keyboard.Modifiers);
         }
 
-        private bool Navigate(DependencyObject currentElement, TraversalRequest request, ModifierKeys modifierKeys)
+        // DDVSO: 542626
+        // Navigate needs the extra fromProcessInputTabKey parameter to know if this call is coming directly from a keyboard tab key ProcessInput call
+        // so it can return false and let the key message go unhandled, we don't want to do this if Navigate was called by MoveFocus, or recursively.
+        private bool Navigate(DependencyObject currentElement, TraversalRequest request, ModifierKeys modifierKeys, bool fromProcessInputTabKey = false)
         {
-            return Navigate(currentElement, request, modifierKeys, null);
+            return Navigate(currentElement, request, modifierKeys, null, fromProcessInputTabKey);
         }
 
-        private bool Navigate(DependencyObject currentElement, TraversalRequest request, ModifierKeys modifierKeys, DependencyObject firstElement)
+        private bool Navigate(DependencyObject currentElement, TraversalRequest request, ModifierKeys modifierKeys, DependencyObject firstElement, bool fromProcessInputTabKey = false)
         {
             Debug.Assert(currentElement != null, "currentElement should not be null");
             DependencyObject nextTab = null;
@@ -1079,13 +1082,16 @@ namespace System.Windows.Input
                 if (request.Wrapped || request.FocusNavigationDirection == FocusNavigationDirection.First || request.FocusNavigationDirection == FocusNavigationDirection.Last)
                     return false;
 
+                bool shouldCycle = true;
                 // Try to navigate outside the PresentationSource
-                bool navigatedOutside = NavigateOutsidePresentationSource(currentElement, request);
+                // Depending on whether this Navigate call came directly from a ProcessInput tab key call,
+                // NavigateOutsidePresentationSource may determine that we should not cycle, and instead bubble up the failure to find a next element for focus.
+                bool navigatedOutside = NavigateOutsidePresentationSource(currentElement, request, fromProcessInputTabKey, ref shouldCycle);
                 if (navigatedOutside)
                 {
                     return true;
                 }
-                else if (request.FocusNavigationDirection == FocusNavigationDirection.Next || request.FocusNavigationDirection == FocusNavigationDirection.Previous)
+                else if (shouldCycle && (request.FocusNavigationDirection == FocusNavigationDirection.Next || request.FocusNavigationDirection == FocusNavigationDirection.Previous))
                 {
                     // In case focus cannot navigate outside - we should cycle
                     Visual visualRoot = GetVisualRoot(currentElement);
@@ -1145,8 +1151,12 @@ namespace System.Windows.Input
         ///     Critical: Asserting UnmanagedCode permission to obtain HwndSource.IKeyboardInputSink.KeyboardInputSite
         ///     TreatAsSafe: Not leaking the InputKeyboardSite obtained under elevation.
         /// </SecurityNote>
+        /// <param name="currentElement">The element from which Navigation is starting.</param>
+        /// <param name="request">The TraversalRequest that determines the navigation direction.</param>
+        /// <param name="fromProcessInput">Whether this call comes from a ProcessInput call.</param>
+        /// <param name="shouldCycle">A recommendation on whether navigation should cycle in case this call can't navigate outside the PresentationSource.</param>
         [SecurityCritical, SecurityTreatAsSafe]
-        private bool NavigateOutsidePresentationSource(DependencyObject currentElement, TraversalRequest request)
+        private bool NavigateOutsidePresentationSource(DependencyObject currentElement, TraversalRequest request, bool fromProcessInput, ref bool shouldCycle)
         {
             Visual visual = currentElement as Visual;
             if (visual == null)
@@ -1172,7 +1182,19 @@ namespace System.Windows.Input
                 }
 
                 if (ikis != null && ShouldNavigateOutsidePresentationSource(currentElement, request))
+                {
+                    // Only call into the specialized OnNoMoreTabStops if App context flag is set, 
+                    // otherwise we call into the regular OnNoMoreTabStops and leave shouldCycle as it is
+                    if (!AccessibilitySwitches.UseNetFx472CompatibleAccessibilityFeatures)
+                    {
+                        System.Windows.Input.IAvalonAdapter avalonAdapter = ikis as System.Windows.Input.IAvalonAdapter;
+                        if (avalonAdapter != null && fromProcessInput)
+                        {
+                            return avalonAdapter.OnNoMoreTabStops(request, ref shouldCycle);
+                        }
+                    }
                     return ikis.OnNoMoreTabStops(request);
+                }
             }
 
             return false;
@@ -1305,7 +1327,7 @@ namespace System.Windows.Input
                     break;
             }
 
-            keyEventArgs.Handled = Navigate(sourceElement, keyEventArgs.Key, keyEventArgs.KeyboardDevice.Modifiers);
+            keyEventArgs.Handled = Navigate(sourceElement, keyEventArgs.Key, keyEventArgs.KeyboardDevice.Modifiers, fromProcessInput: true);
         }
 
         internal static void EnableKeyboardCues(DependencyObject element, bool enable)
@@ -1458,7 +1480,7 @@ namespace System.Windows.Input
             return result;
         }
 
-        internal bool Navigate(DependencyObject sourceElement, Key key, ModifierKeys modifiers)
+        internal bool Navigate(DependencyObject sourceElement, Key key, ModifierKeys modifiers, bool fromProcessInput = false)
         {
             bool success = false;
 
@@ -1468,7 +1490,7 @@ namespace System.Windows.Input
                 case Key.Tab:
                     success = Navigate(sourceElement,
                         new TraversalRequest(((modifiers & ModifierKeys.Shift) == ModifierKeys.Shift) ?
-                        FocusNavigationDirection.Previous : FocusNavigationDirection.Next), modifiers);
+                        FocusNavigationDirection.Previous : FocusNavigationDirection.Next), modifiers, fromProcessInput);
                     break;
 
                 case Key.Right:

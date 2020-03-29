@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.ConstrainedExecution;
 using System.Windows.Interop;
 using MS.Internal;
+using MS.Internal.PresentationCore;
 using MS.Win32;
 
 namespace MS.Win32.Penimc
@@ -52,12 +53,6 @@ namespace MS.Win32.Penimc
 
         #endregion
 
-        /// <SecurityNote>
-        /// Critical to prevent inadvertant spread to transparent code
-        /// </SecurityNote>
-        [SecurityCritical]
-        private static IPimcManager2 _pimcManager;
-
         #region Stylus Input Thread Manager
 
         /// <summary>
@@ -86,10 +81,10 @@ namespace MS.Win32.Penimc
         #endregion
 
         /// <summary>
-        /// Make sure we load penimc.dll from COM registered location to avoid two instances of it.
+        /// Make sure we load penimc.dll from WPF's installed location to avoid two instances of it.
         /// </summary>
         /// <SecurityNote>
-        /// Critical calls COM interop code that uses suppress unmanaged code security attributes
+        /// Critical: Calls NativeLibraryLoader.EnsureLoaded
         /// </SecurityNote>
         [SecurityCritical]
         static UnsafeNativeMethods()
@@ -104,14 +99,21 @@ namespace MS.Win32.Penimc
             // penimc.dll.  One that we'd use for P/invokes and one that we'd use for COM.
             // If this happens then our Stylus code will fail since it relies on both P/invoke and COM
             // calls to talk to penimc.dll and it requires just one instance of this DLL to work.
-            // So to make sure this doesn't happen we want to ensure we load the DLL using the COM 
-            // registered path before doing any P/invokes into it.
-            _pimcManager = CreatePimcManager();
-
-            // DDVSO:514949
-            // Ensure that we release the lock taken by CoLockObjectExternal calls in CPimcManager::FinalConstruct
-            // This doesn't release the object, but ensures we do not leak it when the thread ends.
-            ReleaseManagerExternalLockImpl(_pimcManager);
+            //
+            // DDVSO:474688
+            // We cannot rely on COM to load PenIMC.  The CoCreate call can re-enter, potentially deadlocking.
+            //
+            // 1) CoCreate is COM Pumped and re-enters off of an EnableCore call
+            // 2) Message for, say, device changed or tablet added is received.
+            // 3) Work is sent to the PenThread and the UI thread waits on it
+            // 4) PenThread accesses MS.Win32.Penimc.UnsafeNativeMethods
+            // 
+            // At this point, the static constructor has not finished and the CLR blocks the PenThread on the 
+            // completion of the constructor.  However, the UI thread cannot complete the constructor call until 
+            // the PenThread returns.
+            // 
+            // Instead, use LoadLibrary with a full path here to ensure it won't load local binaries and we don't re-enter.
+            WpfLibraryLoader.EnsureLoaded(ExternDll.Penimc);
         }
 
         /// <summary>

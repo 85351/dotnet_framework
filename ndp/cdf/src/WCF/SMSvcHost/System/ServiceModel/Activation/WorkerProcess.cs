@@ -125,6 +125,14 @@ namespace System.ServiceModel.Activation
                 {
                     throw;
                 }
+                
+                if (exception is FaultException && !AppSettings.FailOnConnectionDispatchFaults)
+                {
+                    // Something went wrong with establishing a connection from the duplicated handle on the service side
+                    // The communication between SMSvcHost and the service host is still good so no need to tear down the
+                    // connection because of a single bad connecting client.
+                    return false;
+                }
 
                 Close();
 

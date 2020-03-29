@@ -470,21 +470,15 @@ namespace System.Windows.Controls
 
                 if (uiScope != null)
                 {
-                    // All selection properties are taken from TextBoxBase
-                    bool isSelectionActive = (bool)uiScope.GetValue(TextBoxBase.IsSelectionActiveProperty);
-                    bool isInactiveSelectionHighlightEnabled = (bool)uiScope.GetValue(TextBoxBase.IsInactiveSelectionHighlightEnabledProperty);
-
-                    Brush selectionTextBrush = SystemColors.HighlightTextBrush;
-
-                    // If we have an inactive selection and we allow the highlight, set the appropriate brush for the text here.
-                    if (!isSelectionActive && isInactiveSelectionHighlightEnabled)
-                    {
-                        selectionTextBrush = SystemColors.InactiveSelectionHighlightTextBrush;
-                    }
-
                     // Background should not be drawn since the selection is drawn below us
                     selectionProps.SetBackgroundBrush(null);
-                    selectionProps.SetForegroundBrush(selectionTextBrush);
+
+                    Brush selectionTextBrush = uiScope.GetValue(TextBoxBase.SelectionTextBrushProperty) as Brush;
+
+                    if (selectionTextBrush != null)
+                    {
+                        selectionProps.SetForegroundBrush(selectionTextBrush);
+                    }
                 }
 
                 properties = selectionProps;

@@ -185,7 +185,7 @@ namespace System.Windows.Forms {
         /// </devdoc>
         public static int GetVerticalScrollBarWidthForDpi(int dpi) {
             if (DpiHelper.EnableDpiChangedMessageHandling) {
-                return UnsafeNativeMethods.GetSystemMetricsForDpi(NativeMethods.SM_CXVSCROLL, (uint)dpi);
+                return UnsafeNativeMethods.TryGetSystemMetricsForDpi(NativeMethods.SM_CXVSCROLL, (uint)dpi);
             } else {
                 return UnsafeNativeMethods.GetSystemMetrics(NativeMethods.SM_CXVSCROLL);
             }
@@ -211,7 +211,7 @@ namespace System.Windows.Forms {
         /// </devdoc>
         public static int GetHorizontalScrollBarHeightForDpi(int dpi) {
             if (DpiHelper.EnableDpiChangedMessageHandling) {
-                return UnsafeNativeMethods.GetSystemMetricsForDpi(NativeMethods.SM_CYHSCROLL, (uint)dpi);
+                return UnsafeNativeMethods.TryGetSystemMetricsForDpi(NativeMethods.SM_CYHSCROLL, (uint)dpi);
             } else {
                 return UnsafeNativeMethods.GetSystemMetrics(NativeMethods.SM_CYHSCROLL);
             }
@@ -252,8 +252,8 @@ namespace System.Windows.Forms {
         /// </devdoc>
         public static Size GetBorderSizeForDpi(int dpi) {
             if (DpiHelper.EnableDpiChangedMessageHandling) {
-                return new Size(UnsafeNativeMethods.GetSystemMetricsForDpi(NativeMethods.SM_CXBORDER, (uint)dpi),
-                                UnsafeNativeMethods.GetSystemMetricsForDpi(NativeMethods.SM_CYBORDER, (uint)dpi));
+                return new Size(UnsafeNativeMethods.TryGetSystemMetricsForDpi(NativeMethods.SM_CXBORDER, (uint)dpi),
+                                UnsafeNativeMethods.TryGetSystemMetricsForDpi(NativeMethods.SM_CYBORDER, (uint)dpi));
             } else {
                 return BorderSize;
             }
@@ -382,7 +382,7 @@ namespace System.Windows.Forms {
             NativeMethods.NONCLIENTMETRICS data = new NativeMethods.NONCLIENTMETRICS();
             bool result;
             if (useDpi) {
-                result = UnsafeNativeMethods.SystemParametersInfoForDpi(NativeMethods.SPI_GETNONCLIENTMETRICS, data.cbSize, data, 0, dpi);
+                result = UnsafeNativeMethods.TrySystemParametersInfoForDpi(NativeMethods.SPI_GETNONCLIENTMETRICS, data.cbSize, data, 0, dpi);
             } else {
                 result = UnsafeNativeMethods.SystemParametersInfo(NativeMethods.SPI_GETNONCLIENTMETRICS, data.cbSize, data, 0);
             }
@@ -490,6 +490,14 @@ namespace System.Windows.Forms {
             }
         }
 
+        /// <summary>
+        /// Gets the height of the vertical scroll bar arrow bitmap in pixels.
+        /// </summary>
+        /// <param name="dpi"></param>
+        /// <returns></returns>
+        public static int VerticalScrollBarArrowHeightForDpi(int dpi) {
+                return UnsafeNativeMethods.TryGetSystemMetricsForDpi(NativeMethods.SM_CXHSCROLL, (uint)dpi);
+        }
         /// <include file='doc\SystemInformation.uex' path='docs/doc[@for="SystemInformation.HorizontalScrollBarArrowWidth"]/*' />
         /// <devdoc>
         ///    <para>
@@ -510,7 +518,7 @@ namespace System.Windows.Forms {
         /// </devdoc>
         public static int GetHorizontalScrollBarArrowWidthForDpi(int dpi) {
             if (DpiHelper.EnableDpiChangedMessageHandling) {
-                return UnsafeNativeMethods.GetSystemMetricsForDpi(NativeMethods.SM_CXHSCROLL, (uint)dpi);
+                return UnsafeNativeMethods.TryGetSystemMetricsForDpi(NativeMethods.SM_CXHSCROLL, (uint)dpi);
             }
             else {
                 return UnsafeNativeMethods.GetSystemMetrics(NativeMethods.SM_CXHSCROLL);

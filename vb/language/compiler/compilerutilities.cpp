@@ -2866,7 +2866,8 @@ unsigned VB_wtoi(
 
     if (InputStr)
     {
-        for(int i = 0; InputStr[i] != '\0'; i++)
+		int i;
+        for(i = 0; InputStr[i] != '\0'; i++)
         {
             WCHAR ch = InputStr[i];
 

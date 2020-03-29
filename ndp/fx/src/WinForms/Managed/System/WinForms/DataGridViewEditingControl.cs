@@ -81,12 +81,60 @@ namespace System.Windows.Forms
             Debug.Assert(ownerControl is IDataGridViewEditingControl, "ownerControl must implement IDataGridViewEditingControl");
         }
 
+        internal override bool IsIAccessibleExSupported()
+        {
+            if (AccessibilityImprovements.Level3)
+            {
+                return true;
+            }
+
+            return base.IsIAccessibleExSupported();
+        }
+
         public override AccessibleObject Parent
         {
             [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
             get
             {
                 return (Owner as IDataGridViewEditingControl)?.EditingControlDataGridView?.CurrentCell?.AccessibilityObject;
+            }
+        }
+
+        internal override bool IsPatternSupported(int patternId)
+        {
+            if (AccessibilityImprovements.Level3 && patternId == NativeMethods.UIA_ExpandCollapsePatternId)
+            {
+                ComboBox ownerComboBoxControl = Owner as ComboBox;
+                if (ownerComboBoxControl != null)
+                {
+                    return ownerComboBoxControl.DropDownStyle != ComboBoxStyle.Simple;
+                }
+            }
+
+            return base.IsPatternSupported(patternId);
+        }
+
+        internal override object GetPropertyValue(int propertyID)
+        {
+            if (AccessibilityImprovements.Level3 && propertyID == NativeMethods.UIA_IsExpandCollapsePatternAvailablePropertyId)
+            {
+                return IsPatternSupported(NativeMethods.UIA_ExpandCollapsePatternId);
+            }
+
+            return base.GetPropertyValue(propertyID);
+        }
+
+        internal override UnsafeNativeMethods.ExpandCollapseState ExpandCollapseState
+        {
+            get
+            {
+                ComboBox ownerComboBoxControl = Owner as ComboBox;
+                if (ownerComboBoxControl != null)
+                {
+                    return ownerComboBoxControl.DroppedDown == true ? UnsafeNativeMethods.ExpandCollapseState.Expanded : UnsafeNativeMethods.ExpandCollapseState.Collapsed;
+                }
+
+                return base.ExpandCollapseState;
             }
         }
     }

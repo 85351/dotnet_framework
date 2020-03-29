@@ -138,6 +138,8 @@ namespace MS.Internal.Data
             _head = new Task(null, TaskOps.TransferValue, null);
             _tail = _head;
             _mostRecentTask = new HybridDictionary();
+
+            _cleanupHelper = new CleanupHelper(DoCleanup);
         }
 
         //------------------------------------------------------
@@ -438,15 +440,46 @@ namespace MS.Internal.Data
         // schedule a cleanup pass.  This can be called from any thread.
         internal void ScheduleCleanup()
         {
-            // only the first request after a previous cleanup should schedule real work
-            if (Interlocked.Increment(ref _cleanupRequests) == 1)
+            if (!BaseAppContextSwitches.EnableCleanupSchedulingImprovements)
             {
-                Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new DispatcherOperationCallback(CleanupOperation), null);
+                // only the first request after a previous cleanup should schedule real work
+                if (Interlocked.Increment(ref _cleanupRequests) == 1)
+                {
+                    Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new DispatcherOperationCallback(CleanupOperation), null);
+                }
+            }
+            else
+            {
+                _cleanupHelper.ScheduleCleanup();
+            }
+        }
+
+        bool DoCleanup(bool forceCleanup)
+        {
+            if (CleanupEnabled || forceCleanup)
+            {
+                return DoCleanup();
+            }
+            else
+            {
+                return false;
             }
         }
 
         // return true if something was actually cleaned up
         internal bool Cleanup()
+        {
+            if (!BaseAppContextSwitches.EnableCleanupSchedulingImprovements)
+            {
+                return DoCleanup();
+            }
+            else
+            {
+                return _cleanupHelper.DoCleanup(forceCleanup:true);
+            }
+        }
+
+        bool DoCleanup()
         {
             bool foundDirt = false;
 
@@ -733,6 +766,7 @@ namespace MS.Internal.Data
         private ValueTable  _valueTable = new ValueTable();
         private AccessorTable _accessorTable = new AccessorTable();
         private int         _cleanupRequests;
+        private CleanupHelper _cleanupHelper;
 
         private Queue<DataBindOperation> _crossThreadQueue = new Queue<DataBindOperation>();
         private object      _crossThreadQueueLock = new object();

@@ -3248,6 +3248,7 @@ namespace System.Windows.Forms
         }
 
         /// <include file='doc\DataGridViewComboBoxCell.uex' path='docs/doc[@for="DataGridViewComboBoxCellAccessibleObject"]/*' />
+        [ComVisible(true)]
         protected class DataGridViewComboBoxCellAccessibleObject : DataGridViewCellAccessibleObject
         {
 

@@ -48,7 +48,15 @@ namespace System.Windows.Forms.VisualStyles {
             SystemEvents.UserPreferenceChanging += new UserPreferenceChangingEventHandler(OnUserPreferenceChanging);
         }
 
-
+        /// <summary>
+        /// Check if visual styles is supported for client area.
+        /// </summary>
+        private static bool AreClientAreaVisualStylesSupported {
+            get {
+                return (VisualStyleInformation.IsEnabledByUser &&
+                   ((Application.VisualStyleState & VisualStyleState.ClientAreaEnabled) == VisualStyleState.ClientAreaEnabled));
+            }
+        }
         /// <include file='doc\VisualStyleRenderer.uex' path='docs/doc[@for="VisualStyleRenderer.IsSupported"]/*' />
         /// <devdoc>
         ///    <para>
@@ -60,11 +68,7 @@ namespace System.Windows.Forms.VisualStyles {
         /// </devdoc>
         public static bool IsSupported {
             get {
-                bool supported =  (VisualStyleInformation.IsEnabledByUser &&
-                   (Application.VisualStyleState == VisualStyleState.ClientAreaEnabled ||
-                    Application.VisualStyleState == VisualStyleState.ClientAndNonClientAreasEnabled));
-
-                
+                bool supported = AreClientAreaVisualStylesSupported;
                 if (supported) {
                     // VSWhidbey #171915: In some cases, this check isn't enough, since the theme handle creation
                     // could fail for some other reason. Try creating a theme handle here - if successful, return true,
@@ -1050,20 +1054,16 @@ namespace System.Windows.Forms.VisualStyles {
             if (themeHandles != null) {
                 string[] classNames = new string[themeHandles.Keys.Count];
                 themeHandles.Keys.CopyTo(classNames, 0);
-
-                // We don't call IsSupported here, since that could cause RefreshCache to be called again,
-                // leading to stack overflow.
-                bool isSupported = (VisualStyleInformation.IsEnabledByUser &&
-                   (Application.VisualStyleState == VisualStyleState.ClientAreaEnabled ||
-                    Application.VisualStyleState == VisualStyleState.ClientAndNonClientAreasEnabled));
-                
+                                
                 foreach (string className in classNames) {
                     tHandle = (ThemeHandle) themeHandles[className];
                     if (tHandle != null) {
                         tHandle.Dispose();
                     }
 
-                    if (isSupported) {
+                    // We don't call IsSupported here, since that could cause RefreshCache to be called again,
+                    // leading to stack overflow.
+                    if (AreClientAreaVisualStylesSupported) {
                         tHandle = ThemeHandle.Create(className, false);
                         if (tHandle != null) {
                             themeHandles[className] = tHandle;

@@ -187,6 +187,24 @@ namespace System.Windows.Input
         #region Construction/Initilization
 
         /// <summary>
+        /// DDVSO:633620
+        /// True if the StylusLogic for the thread of the caller has been instantiated.
+        /// False if otherwise.
+        /// </summary>
+        /// <SecurityNote>
+        ///     Critical:   Accesses _currentStylusLogic
+        ///     Safe:       Does not expose any critical data
+        /// </SecurityNote>
+        internal static bool IsInstantiated
+        {
+            [SecuritySafeCritical]
+            get
+            {
+                return _currentStylusLogic?.Value != null;
+            }
+        }
+
+        /// <summary>
         /// Wrapper around accesses to CoreAppContextSwitches so it's easier to
         /// use from friend assemblies and more explicit everywhere.
         /// </summary>
@@ -501,7 +519,7 @@ namespace System.Windows.Input
         /// Used to make sure we log the stack shutting down as well as any statistics that were gathered during execution.
         /// </summary>
         protected StylusLogicShutDownListener ShutdownListener { get; set; }
-        
+
         /// <summary>
         /// The telemetry stats for this particular StylusLogic instance
         /// </summary>

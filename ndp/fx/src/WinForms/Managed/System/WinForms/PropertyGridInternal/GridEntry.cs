@@ -159,6 +159,21 @@ namespace System.Windows.Forms.PropertyGridInternal {
             }
         }
 
+        /// <summary>
+        /// Outline Icon padding
+        /// </summary>
+        private int OutlineIconPadding {
+            get {
+                if (DpiHelper.EnableDpiChangedHighDpiImprovements) {
+                    if (this.GridEntryHost != null) {
+                        return this.GridEntryHost.LogicalToDeviceUnits(OUTLINE_ICON_PADDING);
+                    }
+                }
+
+                return OUTLINE_ICON_PADDING;
+            }
+        }
+
         private bool colorInversionNeededInHC {
             get {
                  return SystemInformation.HighContrast && !OwnerGrid.developerOverride && AccessibilityImprovements.Level1;
@@ -573,7 +588,11 @@ namespace System.Windows.Forms.PropertyGridInternal {
                                 (PropertyGridView.PropertyGridViewAccessibleObject)((PropertyGridView)GridEntryHost).AccessibilityObject;
                                 
                             gridAccObj.NotifyClients(AccessibleEvents.Focus, id);
-                            gridAccObj.NotifyClients(AccessibleEvents.Selection, id); 
+                            gridAccObj.NotifyClients(AccessibleEvents.Selection, id);
+
+                            if (AccessibilityImprovements.Level3) {
+                                AccessibilityObject.SetFocus();
+                            }
                         }
                     }
                 }
@@ -810,11 +829,17 @@ namespace System.Windows.Forms.PropertyGridInternal {
                 PropertyGridView gridHost = this.GridEntryHost;
                 Debug.Assert(gridHost != null, "No propEntryHost!");
                 int outlineSize = gridHost.GetOutlineIconSize();
-                int borderWidth = outlineSize + OUTLINE_ICON_PADDING;
-                int left = (propertyDepth * borderWidth) + (OUTLINE_ICON_PADDING) / 2;//+ 1;
-                int top = (gridHost.GetGridEntryHeight() - outlineSize) / 2;// - 1;  // figure out edit positioning.
+                int borderWidth = outlineSize + OutlineIconPadding;
+                int left = (propertyDepth * borderWidth) + (OutlineIconPadding) / 2;
+                int top = (gridHost.GetGridEntryHeight() - outlineSize) / 2;
                 outlineRect = new Rectangle(left, top, outlineSize, outlineSize);
                 return outlineRect;
+            }
+            set {
+                // set property is required to reset cached value when dpi changed.
+                if (value != outlineRect) {
+                    outlineRect = value;
+                }
             }
         }
 
@@ -1016,7 +1041,7 @@ namespace System.Windows.Forms.PropertyGridInternal {
             }
         }
 
-        
+
         /// <include file='doc\GridEntry.uex' path='docs/doc[@for="GridEntry.AddOnLabelClick"]/*' />
         /// <devdoc>
         /// Add an event handler to be invoked when the label portion of
@@ -1956,7 +1981,7 @@ namespace System.Windows.Forms.PropertyGridInternal {
                     lastPaintWithExplorerStyle = true;
                 }
 
-                PaintOutlineWithExplorerTreeStyle(g, r);
+                PaintOutlineWithExplorerTreeStyle(g, r, (DpiHelper.EnableDpiChangedHighDpiImprovements && GridEntryHost!=null) ? this.GridEntryHost.HandleInternal: IntPtr.Zero);
             }
             // draw tree-view glyphs as +/-
             else {
@@ -1973,7 +1998,7 @@ namespace System.Windows.Forms.PropertyGridInternal {
             }
         }
 
-        private void PaintOutlineWithExplorerTreeStyle(System.Drawing.Graphics g, Rectangle r) {
+        private void PaintOutlineWithExplorerTreeStyle(System.Drawing.Graphics g, Rectangle r, IntPtr handle) {
             if (this.Expandable) {
                 bool fExpanded = this.InternalExpanded;
                 Rectangle outline = this.OutlineRect;
@@ -1999,7 +2024,7 @@ namespace System.Windows.Forms.PropertyGridInternal {
                 }               
 
                 VisualStyleRenderer explorerTreeRenderer = new VisualStyleRenderer(element);
-                explorerTreeRenderer.DrawBackground(g, outline);
+                explorerTreeRenderer.DrawBackground(g, outline, handle);
             }
         }
 
@@ -2749,6 +2774,49 @@ namespace System.Windows.Forms.PropertyGridInternal {
                 }
             }
 
+            /// <summary>
+            /// Request to return the element in the specified direction.
+            /// </summary>
+            /// <param name="direction">Indicates the direction in which to navigate.</param>
+            /// <returns>Returns the element in the specified direction.</returns>
+            internal override UnsafeNativeMethods.IRawElementProviderFragment FragmentNavigate(UnsafeNativeMethods.NavigateDirection direction) {
+                if (AccessibilityImprovements.Level3) {
+                    switch(direction) {
+                        case UnsafeNativeMethods.NavigateDirection.Parent:
+                            var parentGridEntry = owner.ParentGridEntry;
+                            if (parentGridEntry != null) {
+                                if (parentGridEntry is SingleSelectRootGridEntry) {
+                                    return owner.OwnerGrid.GridViewAccessibleObject;
+                                }
+                                else {
+                                    return parentGridEntry.AccessibilityObject;
+                                }
+                            }
+
+                            return Parent;
+                        case UnsafeNativeMethods.NavigateDirection.PreviousSibling:
+                            return Navigate(AccessibleNavigation.Previous);
+                        case UnsafeNativeMethods.NavigateDirection.NextSibling:
+                            return Navigate(AccessibleNavigation.Next);
+                    }
+                }
+
+                return base.FragmentNavigate(direction);
+            }
+
+            /// <summary>
+            /// Return the element that is the root node of this fragment of UI.
+            /// </summary>
+            internal override UnsafeNativeMethods.IRawElementProviderFragmentRoot FragmentRoot {
+                get {
+                    if (AccessibilityImprovements.Level3) {
+                        return (PropertyGridView.PropertyGridViewAccessibleObject)Parent;
+                    }
+
+                    return base.FragmentRoot;
+                }
+            }
+
             #region IAccessibleEx - patterns and properties
 
             internal override bool IsIAccessibleExSupported() {
@@ -2781,24 +2849,63 @@ namespace System.Windows.Forms.PropertyGridInternal {
             }
 
             internal override object GetPropertyValue(int propertyID) {
-                if (propertyID == NativeMethods.UIA_NamePropertyId) {
-                    return Name;
+                switch (propertyID) {
+                    case NativeMethods.UIA_NamePropertyId:
+                        return Name;
+                    case NativeMethods.UIA_ControlTypePropertyId:
+                        if (AccessibilityImprovements.Level3) {
+                            // In Level 3 the accessible hierarchy is changed so we cannot use Button type
+                            // for the grid items to not break automation logic that searches for the first
+                            // button in the PropertyGridView to show dialog/drop-down. In Level < 3 action
+                            // button is one of the first children of PropertyGridView.
+                            return NativeMethods.UIA_DataItemControlTypeId;
+                        }
+
+                        return NativeMethods.UIA_ButtonControlTypeId;
+                    case NativeMethods.UIA_IsExpandCollapsePatternAvailablePropertyId:
+                        return (Object)IsPatternSupported(NativeMethods.UIA_ExpandCollapsePatternId);
                 }
-                else if (propertyID == NativeMethods.UIA_ControlTypePropertyId) {
-                    return NativeMethods.UIA_ButtonControlTypeId;
-                }
-                else if (propertyID == NativeMethods.UIA_IsExpandCollapsePatternAvailablePropertyId) {
-                    return (Object)IsPatternSupported(NativeMethods.UIA_ExpandCollapsePatternId);
+
+                if (AccessibilityImprovements.Level3) {
+                    switch (propertyID) {
+                        case NativeMethods.UIA_AccessKeyPropertyId:
+                            return string.Empty;
+                        case NativeMethods.UIA_HasKeyboardFocusPropertyId:
+                            return owner.hasFocus;
+                        case NativeMethods.UIA_IsKeyboardFocusablePropertyId:
+                            return (this.State & AccessibleStates.Focusable) == AccessibleStates.Focusable;
+                        case NativeMethods.UIA_IsEnabledPropertyId:
+                            return true;
+                        case NativeMethods.UIA_AutomationIdPropertyId:
+                            return GetHashCode().ToString();
+                        case NativeMethods.UIA_HelpTextPropertyId:
+                            return Help ?? string.Empty;
+                        case NativeMethods.UIA_IsPasswordPropertyId:
+                            return false;
+                        case NativeMethods.UIA_IsOffscreenPropertyId:
+                            return (this.State & AccessibleStates.Offscreen) == AccessibleStates.Offscreen;
+                        case NativeMethods.UIA_LegacyIAccessibleRolePropertyId:
+                            return Role;
+                        case NativeMethods.UIA_LegacyIAccessibleDefaultActionPropertyId:
+                            return DefaultAction;
+                        default:
+                            return base.GetPropertyValue(propertyID);
+                    }
                 }
 
                 return null;
             }
 
             internal override bool IsPatternSupported(int patternId) {
-                if (owner.Expandable) {
-                    if (patternId == NativeMethods.UIA_ExpandCollapsePatternId) {
-                        return true;
-                    }
+                if (owner.Expandable &&
+                    patternId == NativeMethods.UIA_ExpandCollapsePatternId) {
+                    return true;
+                }
+
+                if (AccessibilityImprovements.Level3 && (
+                    patternId == NativeMethods.UIA_InvokePatternId ||
+                    patternId == NativeMethods.UIA_LegacyIAccessiblePatternId)) {
+                    return true;
                 }
 
                 return false;
@@ -2855,7 +2962,10 @@ namespace System.Windows.Forms.PropertyGridInternal {
 
             public override AccessibleRole Role {
                 get {
-                    if (AccessibilityImprovements.Level1)  {
+                    if (AccessibilityImprovements.Level3) {
+                        return AccessibleRole.Cell;
+                    }
+                    else if (AccessibilityImprovements.Level1)  {
                         if (owner.Expandable) {
                             return AccessibleRole.ButtonDropDownGrid;
                         }
@@ -2863,6 +2973,7 @@ namespace System.Windows.Forms.PropertyGridInternal {
                             return AccessibleRole.Cell;
                         }
                     }
+
                     return AccessibleRole.Row;
                 }
             }
@@ -2995,6 +3106,13 @@ namespace System.Windows.Forms.PropertyGridInternal {
                 }
             }
 
+            internal override void SetFocus() {
+                base.SetFocus();
+
+                if (AccessibilityImprovements.Level3) {
+                    RaiseAutomationEvent(NativeMethods.UIA_AutomationFocusChangedEventId);
+                }
+            }
         }
 
         public class DisplayNameSortComparer : IComparer {

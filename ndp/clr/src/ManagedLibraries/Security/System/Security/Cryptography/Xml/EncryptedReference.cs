@@ -174,7 +174,7 @@ namespace System.Security.Cryptography.Xml
             return referenceElement;
         }
 
-        public override void LoadXml(XmlElement value) {
+        public override void LoadXml (XmlElement value) {
             if (value == null)
                 throw new ArgumentNullException("value");
 

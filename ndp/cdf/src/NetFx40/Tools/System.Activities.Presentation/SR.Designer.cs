@@ -1188,6 +1188,15 @@ namespace System.Activities.Presentation {
                 return ResourceManager.GetString("ConnectorOfActivitiesAutomationName", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up the UI automation name of connector of Activities.
+        /// </summary>
+        internal static string ConnectorWithLabelAutomationName {
+            get {
+                return ResourceManager.GetString("ConnectorWithLabelAutomationName", resourceCulture);
+            }
+        }
 		
         /// <summary>
         ///   Looks up a localized string for the automation name of designer's context menu.
@@ -1208,6 +1217,17 @@ namespace System.Activities.Presentation {
             get
             {
                 return ResourceManager.GetString("ZoomPickerEditorAutomationName", resourceCulture);
+            }
+        }
+		
+        /// <summary>
+        ///   Looks up a localized string used for the HelpText of ExpandAll/CollapseAll toggleButtons.
+        /// </summary>
+        internal static string ExpandAllCollapseAllHelpTextFormat
+        {
+            get
+            {
+                return ResourceManager.GetString("ExpandAllCollapseAllHelpTextFormat", resourceCulture);
             }
         }
     }

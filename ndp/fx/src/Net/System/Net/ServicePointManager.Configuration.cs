@@ -24,10 +24,28 @@ namespace System.Net
         private const string RegistryLocalSecureProtocolName = "System.Net.ServicePointManager.SecurityProtocol";
         private const string RegistryGlobalRequireCertificateEKUs = "RequireCertificateEKUs";
         private const string RegistryLocalRequireCertificateEKUs = "System.Net.ServicePointManager.RequireCertificateEKUs";
+        private const string RegistryGlobalUseHttpPipeliningAndBufferPooling = "UseHttpPipeliningAndBufferPooling";
+        private const string RegistryLocalUseHttpPipeliningAndBufferPooling = "System.Net.ServicePointManager.UseHttpPipeliningAndBufferPooling";
+        private const string RegistryGlobalUseSafeSynchronousClose = "UseSafeSynchronousClose";
+        private const string RegistryLocalUseSafeSynchronousClose = "System.Net.ServicePointManager.UseSafeSynchronousClose";
+        private const string RegistryGlobalUseStrictRfcInterimResponseHandling = "UseStrictRfcInterimResponseHandling";
+        private const string RegistryLocalUseStrictRfcInterimResponseHandling = "System.Net.ServicePointManager.UseStrictRfcInterimResponseHandling";
+        private const string RegistryGlobalAllowDangerousUnicodeDecompositions = "AllowDangerousUnicodeDecompositions";
+        private const string RegistryLocalAllowDangerousUnicodeDecompositions = "System.Uri.AllowDangerousUnicodeDecompositions";
+        private const string RegistryGlobalUseStrictIPv6AddressParsing = "UseStrictIPv6AddressParsing";
+        private const string RegistryLocalUseStrictIPv6AddressParsing = "System.Uri.UseStrictIPv6AddressParsing";
+        private const string RegistryGlobalAllowAllUriEncodingExpansion = "AllowAllUriEncodingExpansion";
+        private const string RegistryLocalAllowAllUriEncodingExpansion = "System.Uri.AllowAllUriEncodingExpansion";
 
         private static void LoadConfiguration()
         {
             s_reusePort = TryInitialize(LoadReusePortConfiguration, false);
+            s_useHttpPipeliningAndBufferPooling = TryInitialize(LoadUseHttpPipeliningAndBufferPoolingConfiguration, true);
+            s_useSafeSynchronousClose = TryInitialize(LoadUseSafeSynchronousClose, true);
+            s_useStrictRfcInterimResponseHandling = TryInitialize(LoadUseStrictRfcInterimResponseHandlingConfiguration, true);
+            s_allowDangerousUnicodeDecompositions = TryInitialize(LoadAllowDangerousUnicodeDecompositionsConfiguration, false);
+            s_useStrictIPv6AddressParsing = TryInitialize(LoadUseStrictIPv6AddressParsingConfiguration, true);
+            s_allowAllUriEncodingExpansion = TryInitialize(LoadAllowAllUriEncodingExpansionConfiguration, false);
 
             // Ordering of the initialization statements below is important.
             s_disableStrongCrypto = TryInitialize(LoadDisableStrongCryptoConfiguration, true);
@@ -114,7 +132,7 @@ namespace System.Net
             }
             else if (!s_disableStrongCrypto)
             {
-                defaultValue = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
+                defaultValue = SslProtocols.Tls13 | SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
             }
             else
             {
@@ -176,6 +194,120 @@ namespace System.Net
             }
 
             return disable;
+        }
+
+        private static bool LoadUseHttpPipeliningAndBufferPoolingConfiguration(bool useFeature)
+        {
+            int useHttpPipeliningAndBufferPoolingKeyValue;
+
+            useHttpPipeliningAndBufferPoolingKeyValue = RegistryConfiguration.AppConfigReadInt(RegistryLocalUseHttpPipeliningAndBufferPooling, 1);
+            if (useHttpPipeliningAndBufferPoolingKeyValue == 0)
+            {
+                return false;
+            }
+
+            useHttpPipeliningAndBufferPoolingKeyValue = RegistryConfiguration.GlobalConfigReadInt(RegistryGlobalUseHttpPipeliningAndBufferPooling, 1);
+            if (useHttpPipeliningAndBufferPoolingKeyValue == 0)
+            {
+                return false;
+            }
+
+            return useFeature;
+        }
+
+        private static bool LoadUseSafeSynchronousClose(bool useFeature)
+        {
+            int useSynchronousCloseValue;
+
+            useSynchronousCloseValue = RegistryConfiguration.AppConfigReadInt(RegistryLocalUseSafeSynchronousClose, 1);
+            if (useSynchronousCloseValue == 0)
+            {
+                return false;
+            }
+
+            useSynchronousCloseValue = RegistryConfiguration.GlobalConfigReadInt(RegistryGlobalUseSafeSynchronousClose, 1);
+            if (useSynchronousCloseValue == 0)
+            {
+                return false;
+            }
+
+            return useFeature;
+        }
+
+        private static bool LoadUseStrictRfcInterimResponseHandlingConfiguration(bool useFeature)
+        {
+            int useStrictRfcInterimResponseHandlingKeyValue;
+
+            useStrictRfcInterimResponseHandlingKeyValue = RegistryConfiguration.AppConfigReadInt(RegistryLocalUseStrictRfcInterimResponseHandling, 1);
+            if (useStrictRfcInterimResponseHandlingKeyValue == 0)
+            {
+                return false;
+            }
+
+            useStrictRfcInterimResponseHandlingKeyValue = RegistryConfiguration.GlobalConfigReadInt(RegistryGlobalUseStrictRfcInterimResponseHandling, 1);
+            if (useStrictRfcInterimResponseHandlingKeyValue == 0)
+            {
+                return false;
+            }
+
+            return useFeature;
+        }
+
+        private static bool LoadAllowDangerousUnicodeDecompositionsConfiguration(bool useFeature)
+        {
+            int allowDangerousUnicodeDecompositionsKeyValue;
+
+            allowDangerousUnicodeDecompositionsKeyValue = RegistryConfiguration.AppConfigReadInt(RegistryLocalAllowDangerousUnicodeDecompositions, 0);
+            if (allowDangerousUnicodeDecompositionsKeyValue == 1)
+            {
+                return true;
+            }
+
+            allowDangerousUnicodeDecompositionsKeyValue = RegistryConfiguration.GlobalConfigReadInt(RegistryGlobalAllowDangerousUnicodeDecompositions, 0);
+            if (allowDangerousUnicodeDecompositionsKeyValue == 1)
+            {
+                return true;
+            }
+
+            return useFeature;
+        }
+
+        private static bool LoadUseStrictIPv6AddressParsingConfiguration(bool useFeature)
+        {
+            int useStrictIPv6AddressParsingKeyValue;
+
+            useStrictIPv6AddressParsingKeyValue = RegistryConfiguration.AppConfigReadInt(RegistryLocalUseStrictIPv6AddressParsing, 1);
+            if (useStrictIPv6AddressParsingKeyValue == 0)
+            {
+                return false;
+            }
+
+            useStrictIPv6AddressParsingKeyValue = RegistryConfiguration.GlobalConfigReadInt(RegistryGlobalUseStrictIPv6AddressParsing, 1);
+            if (useStrictIPv6AddressParsingKeyValue == 0)
+            {
+                return false;
+            }
+
+            return useFeature;
+        }
+
+        private static bool LoadAllowAllUriEncodingExpansionConfiguration(bool useFeature)
+        {
+            int allowAllUriEncodingExpansionKeyValue;
+
+            allowAllUriEncodingExpansionKeyValue = RegistryConfiguration.AppConfigReadInt(RegistryLocalAllowAllUriEncodingExpansion, 0);
+            if (allowAllUriEncodingExpansionKeyValue == 1)
+            {
+                return true;
+            }
+
+            allowAllUriEncodingExpansionKeyValue = RegistryConfiguration.GlobalConfigReadInt(RegistryGlobalAllowAllUriEncodingExpansion, 0);
+            if (allowAllUriEncodingExpansionKeyValue == 1)
+            {
+                return true;
+            }
+
+            return useFeature;
         }
 
         private static void EnsureConfigurationLoaded()

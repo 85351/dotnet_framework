@@ -744,6 +744,12 @@ namespace System.Windows.Forms {
             base.ScaleControl(factor, specified);
         }
 
+        internal override bool SupportsUiaProviders {
+            get {
+                return AccessibilityImprovements.Level3 && !DesignMode;
+            }
+        }
+
         /// <include file='doc\GroupBox.uex' path='docs/doc[@for="GroupBox.ToString"]/*' />
         /// <devdoc>
         ///     Returns a string representation for this control.
@@ -823,6 +829,25 @@ namespace System.Windows.Forms {
                     }
                     return AccessibleRole.Grouping;
                 }
+            }
+
+            internal override bool IsIAccessibleExSupported() {
+                if (AccessibilityImprovements.Level3) {
+                    return true;
+                }
+
+                return base.IsIAccessibleExSupported();
+            }
+
+            internal override object GetPropertyValue(int propertyID) {
+                switch (propertyID) {
+                    case NativeMethods.UIA_ControlTypePropertyId:
+                        return NativeMethods.UIA_GroupControlTypeId;
+                    case NativeMethods.UIA_IsKeyboardFocusablePropertyId:
+                        return true;
+                }
+
+                return base.GetPropertyValue(propertyID);
             }
         }
     }

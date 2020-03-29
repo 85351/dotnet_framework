@@ -1588,7 +1588,7 @@ namespace System.Windows.Baml2006
 
             Read_RecordSize();
 
-            XamlMember property = GetProperty(_binaryReader.ReadInt16(), _context.CurrentFrame.XamlType);          
+            XamlMember property = GetProperty(_binaryReader.ReadInt16(), _context.CurrentFrame.XamlType);
             _xamlNodesWriter.WriteStartMember(property);
 
             object value = _binaryReader.ReadString();

@@ -56,6 +56,7 @@ namespace System.Windows.Forms {
         private const int LB_CHECKED = 1;
         private const int LB_UNCHECKED = 0;
         private const int LB_ERROR = -1;
+        private const int BORDER_SIZE = 1;
 
 
         /// <include file='doc\CheckedListBox.uex' path='docs/doc[@for="CheckedListBox.killnextselect"]/*' />
@@ -763,10 +764,10 @@ namespace System.Windows.Forms {
                 }
 
                 Rectangle stringBounds = new Rectangle(
-                                                      textBounds.X + 1,
+                                                      textBounds.X + BORDER_SIZE,
                                                       textBounds.Y,
-                                                      textBounds.Width - 1,
-                                                      textBounds.Height - 2); // minus borders
+                                                      textBounds.Width - BORDER_SIZE,
+                                                      textBounds.Height - 2 * BORDER_SIZE); // minus borders
 
                 if( UseCompatibleTextRendering ){
                     using (StringFormat format = new StringFormat()) {
@@ -837,6 +838,33 @@ namespace System.Windows.Forms {
                 if ((e.State & DrawItemState.Focus) == DrawItemState.Focus &&
                     (e.State & DrawItemState.NoFocusRect) != DrawItemState.NoFocusRect) {
                     ControlPaint.DrawFocusRectangle(e.Graphics, textBounds, foreColor, backColor);
+                }
+            }
+
+            if (Items.Count == 0 && AccessibilityImprovements.Level3 &&
+                e.Bounds.Width > 2 * BORDER_SIZE && e.Bounds.Height > 2 * BORDER_SIZE) {
+                Color backColor = (SelectionMode != SelectionMode.None) ? e.BackColor : BackColor;
+                Rectangle bounds = e.Bounds;
+                Rectangle emptyRectangle = new Rectangle(
+                                      bounds.X + BORDER_SIZE,
+                                      bounds.Y,
+                                      bounds.Width - BORDER_SIZE,
+                                      bounds.Height - 2 * BORDER_SIZE); // Upper and lower borders.
+                if (Focused) {
+                    // Draw focus rectangle for virtual first item in the list if there are no items in the list.
+                    Color foreColor = (SelectionMode != SelectionMode.None) ? e.ForeColor : ForeColor;
+                    if (!Enabled) {
+                        foreColor = SystemColors.GrayText;
+                    }
+
+                    ControlPaint.DrawFocusRectangle(e.Graphics, emptyRectangle, foreColor, backColor);
+                }
+                else if (!Application.RenderWithVisualStyles) {
+                    // If VisualStyles are off, rectangle needs to be explicitly erased, when focus is lost.
+                    // This is because of persisting empty focus rectangle when VisualStyles are off.
+                    using (Brush brush = new SolidBrush(backColor)) {
+                        e.Graphics.FillRectangle(brush, emptyRectangle);
+                    }
                 }
             }
         }
@@ -1708,6 +1736,10 @@ namespace System.Windows.Forms {
                     //
                     if (ParentCheckedListBox.SelectedIndex == index) {
                         state |= AccessibleStates.Selected | AccessibleStates.Focused;
+                    }
+
+                    if (AccessibilityImprovements.Level3 && ParentCheckedListBox.Focused && ParentCheckedListBox.SelectedIndex == -1) {
+                        state |= AccessibleStates.Focused;
                     }
 
                     return state;

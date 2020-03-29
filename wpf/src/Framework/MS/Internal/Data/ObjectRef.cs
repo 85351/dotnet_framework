@@ -504,7 +504,7 @@ namespace MS.Internal.Data
                     }
 
                     if (child != null && parent != null &&
-                        Object.Equals(child.DataContext, parent.DataContext))
+                        ItemsControl.EqualsEx(child.DataContext, parent.DataContext))
                     {
                         d = parent;
                         if (!BindingExpression.HasLocalDataContext(parent))

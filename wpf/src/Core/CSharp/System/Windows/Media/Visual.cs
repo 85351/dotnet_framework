@@ -2652,9 +2652,7 @@ namespace System.Windows.Media
             //
             UIElement.PropagateResumeLayout(this, child);
 
-            if (HwndTarget.ProcessDpiAwareness == UnsafeNativeMethods.ProcessDpiAwareness.Process_Per_Monitor_DPI_Aware
-                && !CoreAppContextSwitches.DoNotScaleForDpiChanges
-                && OSVersionHelper.IsOsWindows10RS1OrGreater)
+            if (HwndTarget.IsProcessPerMonitorDpiAware == true && HwndTarget.IsPerMonitorDpiScalingEnabled)
             {
                 bool flag1 = CheckFlagsAnd(VisualFlags.DpiScaleFlag1);
                 bool flag2 = CheckFlagsAnd(VisualFlags.DpiScaleFlag2);

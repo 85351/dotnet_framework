@@ -135,33 +135,63 @@ namespace MS.Internal
 
         #endregion
 
-        #region UseLegacyAccessibilityFeatures
+        // Note that these switches merely forward to the AccessibilitySwitches class in WindowsBase.
+        #region Accessibility Switches
 
-        // DDVSO:444529
-        // Switch to disable new Accessibility features that may affect compat.
-        public static bool UseLegacyAccessibilityFeatures
+        #region UseNetFx47CompatibleAccessibilityFeatures
+
+        /// <summary>
+        /// Switch to force accessibility to only use features compatible with .NET 47
+        /// When true, all accessibility features are compatible with .NET 47
+        /// When false, accessibility features added in .NET versions greater than 47 can be enabled.
+        /// </summary>
+        public static bool UseNetFx47CompatibleAccessibilityFeatures
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return AccessibilitySwitches.UseLegacyAccessibilityFeatures;
+                return AccessibilitySwitches.UseNetFx47CompatibleAccessibilityFeatures;
             }
         }
 
         #endregion
 
-        #region UseLegacyAccessibilityFeatures2
+        #region UseNetFx471CompatibleAccessibilityFeatures
 
-        // Switch to disable new Accessibility features that may affect compat.
-        public static bool UseLegacyAccessibilityFeatures2
+        /// <summary>
+        /// Switch to force accessibility to only use features compatible with .NET 471
+        /// When true, all accessibility features are compatible with .NET 471
+        /// When false, accessibility features added in .NET versions greater than 471 can be enabled.
+        /// </summary>
+        public static bool UseNetFx471CompatibleAccessibilityFeatures
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return AccessibilitySwitches.UseLegacyAccessibilityFeatures2;
+                return AccessibilitySwitches.UseNetFx471CompatibleAccessibilityFeatures;
             }
         }
-        
+
+        #endregion
+
+        #region UseNetFx472CompatibleAccessibilityFeatures
+
+        /// <summary>
+        /// Switch to force accessibility to only use features compatible with .NET 472
+        /// When true, all accessibility features are compatible with .NET 472
+        /// When false, accessibility features added in .NET versions greater than 472 can be enabled.
+        /// </summary>
+        public static bool UseNetFx472CompatibleAccessibilityFeatures
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return AccessibilitySwitches.UseNetFx472CompatibleAccessibilityFeatures;
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region ShouldRenderEvenWhenNoDisplayDevicesAreAvailable and ShouldNotRenderInNonInteractiveWindowStation
@@ -187,12 +217,12 @@ namespace MS.Internal
         ///             "false"
         ///         Default:
         ///             "false"
-        ///     ii. An element in the <![CDATA[<AppContextSwitchOverrides>]]> element of the application 
+        ///     ii. An element in the <![CDATA[<AppContextSwitchOverrides>]]> element of the application
         ///     configuration file (App.Config) can be set as follows:
         ///     <![CDATA[
         ///         <configuration>
         ///             <runtime>
-        ///                 <AppContextSwitchOverrides 
+        ///                 <AppContextSwitchOverrides
         ///                     value="Switch.Name.One=value1;Switch.Name.Two=value2;Switch.System.Windows.Media.ShouldRenderEvenWhenNoDisplayDevicesAreAvailable=true" />
         ///             </runtime>
         ///         </configuration>
@@ -230,12 +260,12 @@ namespace MS.Internal
         ///             "false"
         ///         Default:
         ///             "false"
-        ///     ii. An element in the <![CDATA[<AppContextSwitchOverrides>]]> element of the application 
+        ///     ii. An element in the <![CDATA[<AppContextSwitchOverrides>]]> element of the application
         ///     configuration file (App.Config) can be set as follows:
         ///     <![CDATA[
         ///         <configuration>
         ///             <runtime>
-        ///                 <AppContextSwitchOverrides 
+        ///                 <AppContextSwitchOverrides
         ///                     value="Switch.Name.One=value1;Switch.Name.Two=value2;Switch.System.Windows.Media.ShouldNotRenderInNonInteractiveWindowStation=true" />
         ///             </runtime>
         ///         </configuration>
@@ -250,6 +280,86 @@ namespace MS.Internal
         }
 
         #endregion
+
+        #endregion
+
+        #region DoNotUsePresentationDpiCapabilityTier2OrGreater
+
+        internal const string DoNotUsePresentationDpiCapabilityTier2OrGreaterSwitchName = "Switch.System.Windows.DoNotUsePresentationDpiCapabilityTier2OrGreater";
+        private static int _doNotUsePresentationDpiCapabilityTier2OrGreater;
+
+        /// <summary>
+        /// When set to true, WPF will not enable the compatibility breaking bug fixes associated with
+        /// features advertised by "Switch.System.Windows.PresentationDpiCapabilityTier2"
+        /// The following behavior would be turned off when this flag is set by the application:
+        ///     - Improvements to how HwndHost sizes child windows in response to DPI changes
+        ///     - Improvements to window placement during startup
+        ///
+        /// The following fixes would remain unaffected:
+        ///     - High-DPI related accessibility fixes.
+        /// </summary>
+        public static bool DoNotUsePresentationDpiCapabilityTier2OrGreater
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(DoNotUsePresentationDpiCapabilityTier2OrGreaterSwitchName, ref _doNotUsePresentationDpiCapabilityTier2OrGreater);
+            }
+        }
+
+        #endregion
+
+        #region DoNotUsePresentationDpiCapabilityTier3OrGreater
+
+        internal const string DoNotUsePresentationDpiCapabilityTier3OrGreaterSwitchName = "Switch.System.Windows.DoNotUsePresentationDpiCapabilityTier3OrGreater";
+        private static int _doNotUsePresentationDpiCapabilityTier3OrGreater;
+
+        /// <summary>
+        /// Reserved for future use
+        /// </summary>
+        public static bool DoNotUsePresentationDpiCapabilityTier3OrGreater
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(DoNotUsePresentationDpiCapabilityTier3OrGreaterSwitchName, ref _doNotUsePresentationDpiCapabilityTier3OrGreater);
+            }
+        }
+
+        #endregion
+
+        #region AllowExternalProcessToBlockAccessToTemporaryFiles
+
+        internal const string AllowExternalProcessToBlockAccessToTemporaryFilesSwitchName = "Switch.System.Windows.AllowExternalProcessToBlockAccessToTemporaryFiles";
+        private static int _allowExternalProcessToBlockAccessToTemporaryFiles;
+        public static bool AllowExternalProcessToBlockAccessToTemporaryFiles
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(AllowExternalProcessToBlockAccessToTemporaryFilesSwitchName, ref _allowExternalProcessToBlockAccessToTemporaryFiles);
+            }
+        }
+
+        #endregion
+
+        #region EnableLegacyDangerousClipboardDeserializationMode
+
+        internal const string EnableLegacyDangerousClipboardDeserializationModeSwitchName = "Switch.System.Windows.EnableLegacyDangerousClipboardDeserializationMode";
+        private static int _enableLegacyDangerousClipboardDeserializationMode;
+        public static bool EnableLegacyDangerousClipboardDeserializationMode
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                /// <summary>
+                /// DDVSO 678471: Malicious managed objects could be placed in the clipboard lying about its format, 
+                /// to fix this OleConverter now restricts object deserialization in some cases.
+                /// When this switch is enabled behavior falls back to deserializing without restriction.
+                /// </summary>
+                return LocalAppContext.GetCachedSwitchValue(EnableLegacyDangerousClipboardDeserializationModeSwitchName, ref _enableLegacyDangerousClipboardDeserializationMode);
+            }
+        }
 
         #endregion
     }

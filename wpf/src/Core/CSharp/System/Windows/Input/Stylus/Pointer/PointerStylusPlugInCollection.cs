@@ -111,12 +111,12 @@ namespace System.Windows.Input.StylusPointer
                             Wrapper.OnLayoutUpdated(this.Wrapper, EventArgs.Empty);
                         }
                     }
-                }
+                }                
+            }
 
-                if (unhook)
-                {
-                    Unhook();
-                }
+            if (unhook)
+            {
+                Unhook();
             }
         }
 

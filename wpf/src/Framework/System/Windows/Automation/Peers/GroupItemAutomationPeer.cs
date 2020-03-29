@@ -18,18 +18,76 @@ using MS.Win32;
 
 namespace System.Windows.Automation.Peers
 {
-    /// 
+    ///
     public class GroupItemAutomationPeer : FrameworkElementAutomationPeer
     {
         ///
         public GroupItemAutomationPeer(GroupItem owner): base(owner)
         {
         }
-    
+
         ///
         override protected string GetClassNameCore()
         {
             return "GroupItem";
+        }
+
+        /// <summary>
+        /// Gets the position of this GroupItem within a set.
+        /// </summary>
+        /// <remarks>
+        /// Gets the CollectionViewGroupInternal linked to this groupItem via ItemForItemContainerProperty,
+        /// this collection describes the elements belonging to this GroupItem, we need the collection this
+        /// GroupItem belongs to, so we look one level up using Parent.
+        /// </remarks>
+        override protected int GetPositionInSetCore()
+        {
+            int positionInSet = base.GetPositionInSetCore();
+
+            if (positionInSet == AutomationProperties.AutomationPositionInSetDefault)
+            {
+                GroupItem groupItem = (GroupItem)Owner;
+                CollectionViewGroupInternal group = groupItem.GetValue(ItemContainerGenerator.ItemForItemContainerProperty) as CollectionViewGroupInternal;
+                if (group != null)
+                {
+                    CollectionViewGroup parent = group.Parent;
+                    if (parent != null)
+                    {
+                        positionInSet =  parent.Items.IndexOf(group) + 1;
+                    }
+                }
+            }
+
+            return positionInSet;
+        }
+
+        /// <summary>
+        /// Gets the size of a set that contains this GroupItem.
+        /// </summary>
+        /// <remarks>
+        /// Gets the CollectionViewGroupInternal linked to this groupItem via ItemForItemContainerProperty,
+        /// this collection describes the elements belonging to this GroupItem, we need the collection this
+        /// GroupItem belongs to, so we look one level up using Parent.
+        /// </remarks>
+        override protected int GetSizeOfSetCore()
+        {
+            int sizeOfSet = base.GetSizeOfSetCore();
+
+            if (sizeOfSet == AutomationProperties.AutomationSizeOfSetDefault)
+            {
+                GroupItem groupItem = (GroupItem)Owner;
+                CollectionViewGroupInternal group = groupItem.GetValue(ItemContainerGenerator.ItemForItemContainerProperty) as CollectionViewGroupInternal;
+                if (group != null)
+                {
+                    CollectionViewGroup parent = group.Parent;
+                    if (parent != null)
+                    {
+                        sizeOfSet = parent.Items.Count;
+                    }
+                }
+            }
+
+            return sizeOfSet;
         }
 
         ///
@@ -38,7 +96,7 @@ namespace System.Windows.Automation.Peers
             return AutomationControlType.Group;
         }
 
-        /// 
+        ///
         override public object GetPattern(PatternInterface patternInterface)
         {
             if(patternInterface == PatternInterface.ExpandCollapse)
@@ -73,9 +131,23 @@ namespace System.Windows.Automation.Peers
                     if (itemsHost == null)
                         return null;
 
-                    IList childItems = itemsHost.Children;                    
+                    IList childItems = itemsHost.Children;
                     List<AutomationPeer> children = new List<AutomationPeer>(childItems.Count);
                     ItemPeersStorage<ItemAutomationPeer> addedChildren = new ItemPeersStorage<ItemAutomationPeer>();
+                    bool useNetFx472CompatibleAccessibilityFeatures = AccessibilitySwitches.UseNetFx472CompatibleAccessibilityFeatures;
+
+                    if (!useNetFx472CompatibleAccessibilityFeatures && owner.Expander != null)
+                    {
+                        _expanderPeer = UIElementAutomationPeer.CreatePeerForElement(owner.Expander);
+
+                        if (_expanderPeer != null)
+                        {
+                            _expanderPeer.EventsSource = this;
+
+                            // Call GetChildren so the Expander's toggle button updates its EventsSource as well
+                            _expanderPeer.GetChildren();
+                        }
+                    }
 
                     foreach (UIElement child in childItems)
                     {
@@ -86,56 +158,85 @@ namespace System.Windows.Automation.Peers
                             {
                                 children.Add(peer);
 
-                                //
-                                // The AncestorsInvalid check is meant so that we do this call to invalidate the 
-                                // GroupItemPeers containing the realized item peers only when we arrive here from an 
-                                // UpdateSubtree call because that call does not otherwise descend into parts of the tree 
-                                // that have their children invalid as an optimization. 
-                                //
-                                if (itemsControlAP.RecentlyRealizedPeers.Count > 0 && this.AncestorsInvalid)
+                                if (useNetFx472CompatibleAccessibilityFeatures)
                                 {
-                                    GroupItemAutomationPeer groupItemPeer = peer as GroupItemAutomationPeer;
-                                    if (groupItemPeer != null)
+                                    //
+                                    // The AncestorsInvalid check is meant so that we do this call to invalidate the
+                                    // GroupItemPeers containing the realized item peers only when we arrive here from an
+                                    // UpdateSubtree call because that call does not otherwise descend into parts of the tree
+                                    // that have their children invalid as an optimization.
+                                    //
+                                    if (itemsControlAP.RecentlyRealizedPeers.Count > 0 && this.AncestorsInvalid)
                                     {
-                                        groupItemPeer.InvalidateGroupItemPeersContainingRecentlyRealizedPeers(itemsControlAP.RecentlyRealizedPeers);
+                                        GroupItemAutomationPeer groupItemPeer = peer as GroupItemAutomationPeer;
+                                        if (groupItemPeer != null)
+                                        {
+                                            groupItemPeer.InvalidateGroupItemPeersContainingRecentlyRealizedPeers(itemsControlAP.RecentlyRealizedPeers);
+                                        }
                                     }
                                 }
+                                else
+                                {
+                                    //
+                                    // The AncestorsInvalid check is meant so that we do this call to invalidate the
+                                    // GroupItemPeers only when we arrive here from an
+                                    // UpdateSubtree call because that call does not otherwise descend into parts of the tree
+                                    // that have their children invalid as an optimization.
+                                    //
+                                    if (this.AncestorsInvalid)
+                                    {
+                                        GroupItemAutomationPeer groupItemPeer = peer as GroupItemAutomationPeer;
+                                        if (groupItemPeer != null)
+                                        {
+                                            // invalidate all GroupItemAP children, so
+                                            // that the top-level ItemsControlAP's
+                                            // ItemPeers collection is repopulated.
+                                            groupItemPeer.AncestorsInvalid = true;
+                                            groupItemPeer.ChildrenValid = true;
+                                        }
+                                    }
+                                }
+
                             }
                         }
                         else
                         {
-                            object item =  itemsControl.GetItemOrContainerFromContainer(child);
+                            object item = itemsControl.ItemContainerGenerator.ItemFromContainer(child);
+
+                            // ItemFromContainer can return {UnsetValue} if we're in a re-entrant
+                            // call while the generator is in the midst of unhooking the container.
+                            // Ignore such children.  (DDVSO 781853)
+                            if (item == DependencyProperty.UnsetValue)
+                            {
+                                continue;
+                            }
 
                             // try to reuse old peer if it exists either in Current AT or in WeakRefStorage of Peers being sent to Client
-                            ItemAutomationPeer peer = itemsControlAP.ItemPeers[item];
-                            if (peer == null)
-                            {
-                                peer = itemsControlAP.GetPeerFromWeakRefStorage(item);
-                                
-                                if (peer != null)
-                                {
-                                    // As cached peer is getting used it must be invalidated.
-                                    peer.AncestorsInvalid = false;
-                                    peer.ChildrenValid = false;
-                                }                                
-                            }
-                            
+                            ItemAutomationPeer peer = useNetFx472CompatibleAccessibilityFeatures
+                                                        ? itemsControlAP.ItemPeers[item]
+                                                        : itemsControlAP.ReusablePeerFor(item);
+
+                            peer = itemsControlAP.ReusePeerForItem(peer, item);
+
                             if (peer != null)
                             {
-                                //
-                                // We have now connected the realized peer to its actual parent. Hence the cache can be cleared
-                                //
-                                int realizedPeerIndex = itemsControlAP.RecentlyRealizedPeers.IndexOf(peer);
-                                if (realizedPeerIndex >= 0)
+                                if (useNetFx472CompatibleAccessibilityFeatures)
                                 {
-                                    itemsControlAP.RecentlyRealizedPeers.RemoveAt(realizedPeerIndex);
+                                    //
+                                    // We have now connected the realized peer to its actual parent. Hence the cache can be cleared
+                                    //
+                                    int realizedPeerIndex = itemsControlAP.RecentlyRealizedPeers.IndexOf(peer);
+                                    if (realizedPeerIndex >= 0)
+                                    {
+                                        itemsControlAP.RecentlyRealizedPeers.RemoveAt(realizedPeerIndex);
+                                    }
                                 }
                             }
                             else
                             {
                                 peer = itemsControlAP.CreateItemAutomationPeerInternal(item);
                             }
-                            
+
                             //perform hookup so the events sourced from wrapper peer are fired as if from the data item
                             if (peer != null)
                             {
@@ -172,7 +273,7 @@ namespace System.Windows.Automation.Peers
                             }
                         }
                     }
-                    
+
                     return children;
                 }
             }
@@ -180,6 +281,7 @@ namespace System.Windows.Automation.Peers
             return null;
         }
 
+        // *** DEAD CODE   Only call is from dead code when UseNetFx472CompatibleAccessibilityFeatures==true ***
         internal void InvalidateGroupItemPeersContainingRecentlyRealizedPeers(List<ItemAutomationPeer> recentlyRealizedPeers)
         {
             ItemsControl itemsControl = ItemsControl.ItemsControlFromItemContainer(Owner);
@@ -192,7 +294,7 @@ namespace System.Windows.Automation.Peers
                     {
                         ItemAutomationPeer peer = recentlyRealizedPeers[i];
                         object item = peer.Item;
-                        
+
                         if (cvg.LeafIndexOf(item) >= 0)
                         {
                             AncestorsInvalid = true;
@@ -202,6 +304,47 @@ namespace System.Windows.Automation.Peers
                 }
             }
         }
+
+
+        override protected void SetFocusCore()
+        {
+            GroupItem owner = (GroupItem)Owner;
+            if (!AccessibilitySwitches.UseNetFx472CompatibleAccessibilityFeatures && owner.Expander != null)
+            {
+                if (owner.Expander.ExpanderToggleButton?.Focus() != true)
+                {
+                    throw new InvalidOperationException(SR.Get(SRID.SetFocusFailed));
+                }
+            }
+            else
+            {
+                base.SetFocusCore();
+            }
+        }
+
+
+        protected override bool IsKeyboardFocusableCore()
+        {
+            if (_expanderPeer != null)
+            {
+                return _expanderPeer.IsKeyboardFocusable();
+            }
+            else
+            {
+                return base.IsKeyboardFocusableCore();
+            }
+        }
+
+        override protected bool HasKeyboardFocusCore()
+        {
+            if (_expanderPeer != null)
+            {
+                return _expanderPeer.HasKeyboardFocus();
+            }
+            return base.HasKeyboardFocusCore();
+        }
+
+        private AutomationPeer _expanderPeer = null;
 
     }
 }

@@ -3999,8 +3999,8 @@ ColorizerState
 Scanner::GetState(_In_ Token *LastToken)
 {
     StateStack *States = NULL;
-
-    for (Token *T = m_FirstTokenOfLine;
+	Token *T;
+    for (T = m_FirstTokenOfLine;
         T != m_FirstFreeToken;
         T = T->m_Next)
     {

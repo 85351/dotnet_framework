@@ -18,6 +18,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Markup;
 using System.Windows.Input;
+using System.Windows.Automation.Peers;
 
 using MS.Utility;
 using MS.Internal;
@@ -1871,7 +1872,17 @@ namespace System.Windows.Controls
 
         internal bool NavigateByLine(FocusNavigationDirection direction, ItemNavigateArgs itemNavigateArgs)
         {
-            return NavigateByLine(FocusedInfo, Keyboard.FocusedElement as FrameworkElement, direction, itemNavigateArgs);
+            DependencyObject startingElement = Keyboard.FocusedElement as DependencyObject;
+            if (!FrameworkAppContextSwitches.KeyboardNavigationFromHyperlinkInItemsControlIsNotRelativeToFocusedElement)
+            {
+                while (startingElement != null && !(startingElement is FrameworkElement))
+                {
+                    // if focus is on a non-FE (e.g. Hyperlink), start the navigation
+                    // from its nearest FE ancestor (DDVSO 405208)
+                    startingElement = KeyboardNavigation.GetParent(startingElement) as DependencyObject;
+                }
+            }
+            return NavigateByLine(FocusedInfo, startingElement as FrameworkElement, direction, itemNavigateArgs);
         }
 
         internal void PrepareNavigateByLine(ItemInfo startingInfo,
@@ -3472,13 +3483,24 @@ namespace System.Windows.Controls
             return item;
         }
 
-        // A version of Object.Equals with paranoia for UnsetValue, to avoid problems
-        // with classes that implement Object.Equals poorly, as in Dev11 439664, 746174
+        // A version of Object.Equals with paranoia for mismatched types, to avoid problems
+        // with classes that implement Object.Equals poorly, as in Dev11 439664, 746174, DDVSO 602650
         internal static bool EqualsEx(object o1, object o2)
         {
-            if (DependencyProperty.UnsetValue == o1)    return (o1 == o2);
-            if (DependencyProperty.UnsetValue == o2)    return false;
-            return Object.Equals(o1, o2);
+            try
+            {
+                return Object.Equals(o1, o2);
+            }
+            catch (System.InvalidCastException)
+            {
+                // A common programming error: the type of o1 overrides Equals(object o2)
+                // but mistakenly assumes that o2 has the same type as o1:
+                //     MyType x = (MyType)o2;
+                // This throws InvalidCastException when o2 is a sentinel object,
+                // e.g. UnsetValue, DisconnectedItem, NewItemPlaceholder, etc.
+                // Rather than crash, just return false - the objects are clearly unequal.
+                return false;
+            }
         }
 
         #endregion
@@ -3598,7 +3620,7 @@ namespace System.Windows.Controls
                             object item = info.Item;
                             ItemContainerGenerator.FindItem(
                                 delegate(object o, DependencyObject d)
-                                    { return Object.Equals(o, item) &&
+                                    { return ItemsControl.EqualsEx(o, item) &&
                                         !claimedContainers.Contains(d); },
                                 out container, out index);
                         }
@@ -3915,6 +3937,20 @@ namespace System.Windows.Controls
             // but this function should try to return what's consistent with ItemsControl state.
             int itemsCount = HasItems ? Items.Count : 0;
             return SR.Get(SRID.ToStringFormatString_ItemsControl, this.GetType(), itemsCount);
+        }
+
+        // work around DDVSO 410007
+        // This should really override OnCreateAutomationPeer, but that API addition
+        // isn't an option.   When it becomes an option:
+        //  a. rename this method to OnCreateAutomationPeer
+        //  b. change its visibilty from internal to protected
+        //  c. remove UIElement.OnCreateAutomationPeerInternal, and its use in
+        //      UIElement.CreateAutomationPeer
+        //  d. change visibility of ItemsControlWrapperAutomationPeer and
+        //      ItemsControlItemAutomationPeer from internal to public
+        internal override AutomationPeer OnCreateAutomationPeerInternal()
+        {
+            return new ItemsControlWrapperAutomationPeer(this);
         }
 
         #endregion

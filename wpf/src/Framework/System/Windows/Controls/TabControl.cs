@@ -535,7 +535,7 @@ namespace System.Windows.Controls
                     // If so, re-fetch the right container using a more expensive method.
                     // (BTW, the previous line will cause a debug assert in this case)  [Dev10 452711]
                     if (tabItem == null ||
-                        !Object.Equals(selectedItem, ItemContainerGenerator.ItemFromContainer(tabItem)))
+                        !ItemsControl.EqualsEx(selectedItem, ItemContainerGenerator.ItemFromContainer(tabItem)))
                     {
                         tabItem = ItemContainerGenerator.ContainerFromItem(selectedItem) as TabItem;
                     }

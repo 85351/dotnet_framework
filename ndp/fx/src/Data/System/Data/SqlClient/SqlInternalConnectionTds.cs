@@ -1269,7 +1269,13 @@ namespace System.Data.SqlClient
             // upon the amount of time left in seconds.
             if (!timeout.IsInfinite)
             {
-                long t = timeout.MillisecondsRemaining/1000;
+                long t = timeout.MillisecondsRemaining / 1000;
+                if (t == 0 && LocalAppContextSwitches.UseMinimumLoginTimeout)
+                {
+                    // Take 1 as the minimum value, since 0 is treated as an infinite timeout
+                    t = 1;
+                }
+
                 if ((long)Int32.MaxValue > t)
                 {
                     timeoutInSeconds = (int)t;

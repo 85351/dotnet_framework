@@ -228,12 +228,17 @@ namespace System.Windows.Forms {
         /// </devdoc>
         public ListView() : base() {
 
-            listViewState = new System.Collections.Specialized.BitVector32(LISTVIEWSTATE_scrollable |
-                                                                           LISTVIEWSTATE_multiSelect |
-                                                                           LISTVIEWSTATE_labelWrap |
-                                                                           LISTVIEWSTATE_hideSelection |
-                                                                           LISTVIEWSTATE_autoArrange |
-                                                                           LISTVIEWSTATE_showGroups);
+            int listViewStateFlags = LISTVIEWSTATE_scrollable |
+                                     LISTVIEWSTATE_multiSelect |
+                                     LISTVIEWSTATE_labelWrap |
+                                     LISTVIEWSTATE_autoArrange |
+                                     LISTVIEWSTATE_showGroups;
+            if (!AccessibilityImprovements.Level3) {
+                // Show grey rectangle around the selected list item if the list view is out of focus.
+                listViewStateFlags |= LISTVIEWSTATE_hideSelection;
+            }
+
+            listViewState = new System.Collections.Specialized.BitVector32(listViewStateFlags);
 
             listViewState1 = new System.Collections.Specialized.BitVector32(LISTVIEWSTATE1_useCompatibleStateImageBehavior);
             SetStyle(ControlStyles.UserPaint, false);
@@ -9191,6 +9196,55 @@ namespace System.Windows.Forms {
                 return items.GetEnumerator();
             }
         }
+        
+        /// <summary>
+        /// Creates the new instance of AccessibleObject for this ListView control.
+        /// Returning ListViewAccessibleObject is only available in applications that
+        /// are recompiled to target .NET Framework 4.7.3 or opt-in into this feature
+        /// using a compatibility switch.
+        /// </summary>
+        /// <returns>
+        /// The AccessibleObject for this ListView instance.
+        /// </returns>
+        protected override AccessibleObject CreateAccessibilityInstance() {
+            if (AccessibilityImprovements.Level3) {
+                return new ListViewAccessibleObject(this);
+            }
+
+            return base.CreateAccessibilityInstance();
+        }
+
+        internal class ListViewAccessibleObject : ControlAccessibleObject {
+
+            private ListView owner;
+
+            internal ListViewAccessibleObject(ListView owner) : base(owner) {
+                this.owner = owner;
+            }
+
+            internal override bool IsIAccessibleExSupported()
+            {
+                if (owner != null) {
+                    return true;
+                }
+
+                return base.IsIAccessibleExSupported();
+            }
+
+            internal override object GetPropertyValue(int propertyID) {
+                if (propertyID == NativeMethods.UIA_ItemStatusPropertyId) {
+                    switch (owner.Sorting) {
+                        case SortOrder.None:
+                            return SR.GetString(SR.NotSortedAccessibleStatus);
+                        case SortOrder.Ascending:
+                            return SR.GetString(SR.SortedAscendingAccessibleStatus);
+                        case SortOrder.Descending:
+                            return SR.GetString(SR.SortedDescendingAccessibleStatus);
+                    }
+                }
+
+                return base.GetPropertyValue(propertyID);
+            }
+        }
     }
 }
-

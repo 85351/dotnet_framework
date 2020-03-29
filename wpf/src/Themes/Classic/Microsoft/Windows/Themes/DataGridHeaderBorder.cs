@@ -189,7 +189,7 @@ namespace Microsoft.Windows.Themes
                 // DDVSO:447486
                 // In high contrast scenarios, don't draw as disabled text color as this is confusing.  Instead, draw the same color as the control text.
                 Brush sortArrowColor = 
-                    (!FrameworkAppContextSwitches.UseLegacyAccessibilityFeatures && SystemParameters.HighContrast) 
+                    (!AccessibilitySwitches.UseNetFx47CompatibleAccessibilityFeatures && SystemParameters.HighContrast) 
                     ? SystemColors.ControlTextBrush : SystemColors.GrayTextBrush;
 
                 dc.DrawGeometry(sortArrowColor, null, arrowGeometry);

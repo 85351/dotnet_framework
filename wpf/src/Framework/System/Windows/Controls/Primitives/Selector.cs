@@ -1111,6 +1111,24 @@ namespace System.Windows.Controls.Primitives
         /// <param name="e">Information about what has changed</param>
         protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
         {
+            base.OnItemsChanged(e);
+
+            // if the selector is disconnected, don't do any more work - it
+            // wouldn't help, and could actually hurt, e.g. by sending bad
+            // values through bindings attached to the selection properties.
+            // The AppContext switches preserve the old behavior:
+            //   4.7.2-:  change selection properties unless inside a DataGrid
+            //   4.8:     also change selection properties when inside DataGrid
+            // (DDVSO 944752)
+            if (DataContext == BindingExpressionBase.DisconnectedItem &&
+                (   !FrameworkAppContextSwitches.SelectorUpdatesSelectionPropertiesWhenDisconnected
+                    || (!FrameworkAppContextSwitches.SelectorInDataGridUpdatesSelectionPropertiesWhenDisconnected
+                        && IsInDataGrid())
+                ))
+            {
+                return;
+            }
+
             // When items become available, reevaluate the choice of algorithm
             // used by _selectedItems.
             if (e.Action == NotifyCollectionChangedAction.Reset ||
@@ -1119,8 +1137,6 @@ namespace System.Windows.Controls.Primitives
             {
                 ResetSelectedItemsAlgorithm();
             }
-
-            base.OnItemsChanged(e);
 
             // Do not coerce the SelectedIndexProperty if it holds a DeferredSelectedIndexReference
             // because this deferred reference object is guaranteed to produce a pre-coerced value.
@@ -1904,6 +1920,31 @@ namespace System.Windows.Controls.Primitives
         private static void OnUnselected(object sender, RoutedEventArgs e)
         {
             ((Selector)sender).NotifyIsSelectedChanged(e.OriginalSource as FrameworkElement, false, e);
+        }
+
+        // determine if this Selector is in a DataGrid.  This is only needed
+        // for compat - see OnItemsChanged.
+        private bool IsInDataGrid()
+        {
+            // This should be:
+            //  ItemsControl itemsControl = ItemsControl.GetEncapsulatingItemsControl(this);
+            //  return (itemsControl is DataGrid) || (itemsControl is DataGridCellsPresenter);
+            // but GetEncapsulatingItemsControl is private.  Instead, just
+            // copy its implementation.
+
+            FrameworkElement element = this;
+            ItemsControl itemsControl = null;
+            while (element != null)
+            {
+                itemsControl = ItemsControl.ItemsControlFromItemContainer(element);
+                if (itemsControl != null)
+                {
+                    break;
+                }
+                element = System.Windows.Media.VisualTreeHelper.GetParent(element) as FrameworkElement;
+            }
+
+            return (itemsControl is DataGrid) || (itemsControl is DataGridCellsPresenter);
         }
 
         /// <summary>

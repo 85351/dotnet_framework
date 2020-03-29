@@ -47,27 +47,20 @@ namespace System.Windows.Input
 
         /////////////////////////////////////////////////////////////////////
 
-        ~PenContext()
-        {
-            Dispose();
-        }
-
-        /////////////////////////////////////////////////////////////////////
-
         /// <summary>
         /// Handles clean up of internal object data.
         /// </summary>
         /// <SecurityNote>
-        /// Critical - Calls critical code Disable.
+        /// Critical - Calls critical code TryRemove.
         ///          Called by Finalizer.
         /// TreatAsSafe -  Handles critical data but does not expose it.
         ///             -  No critical data returned or accepted as input.
         /// </SecurityNote>
         [SecuritySafeCritical]
-        void Dispose()
+        ~PenContext()
         {
-            Disable(false /*shutdownWorkerThread*/); // Make sure we remove the context from the active list.
-           
+            TryRemove(shutdownWorkerThread:false); // Make sure we remove the context from the active list.
+
             _pimcContext = null;
             _contexts = null;
 
@@ -238,11 +231,32 @@ namespace System.Windows.Input
         }
 
         /// <SecurityNote>
-        /// Critical - Calls SecurityCritical code (PenThread.RemovePenContext).
+        /// Critical - Calls SecurityCritical code TryRemove.
         ///             Called by PenContexts.RemoveContext and PenContexts.Disable.
         /// </SecurityNote>
         [SecurityCritical]
         internal void Disable(bool shutdownWorkerThread)
+        {
+            if (TryRemove(shutdownWorkerThread))
+            {
+                // DDVSO:614343
+                // A successful removal should suppress finalization as this is call is
+                // explicity and the finalizer only calls DisableImpl directly.
+                GC.SuppressFinalize(this);
+            }
+        }
+
+        /// <summary>
+        /// Attempts to remove this PenContext from the PenThread.  If removal succeeds this function
+        /// will also attempt to shutdown the associated PenThread if requested via <paramref name="shutdownWorkerThread"/>.
+        /// </summary>
+        /// <param name="shutdownWorkerThread">If true, will dispose the PenThread associated with this PenContext if context removal is successful.</param>
+        /// <returns>True if context removal is successful, false otherwise.</returns>
+        /// <SecurityNote>
+        /// Critical - Calls SecurityCritical code (PenThread.RemovePenContext).
+        /// </SecurityNote>
+        [SecurityCritical]
+        private bool TryRemove(bool shutdownWorkerThread)
         {
             // DDVSO:202023
             // There was a prior assumption here that this would always be called under Dispatcher.DisableProcessing.
@@ -262,8 +276,12 @@ namespace System.Windows.Input
                     }
 
                     _penThreadPenContext = null; // Can't free this ref until we can remove this context or else we won't see the stylus OutOfRange.
+
+                    return true;
                 }
             }
+
+            return false;
         }
 
         /////////////////////////////////////////////////////////////////////

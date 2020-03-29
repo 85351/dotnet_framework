@@ -61,6 +61,18 @@ namespace System
         }
         #endregion
 
+        private static int _disableEventLogRegistryKeysFiltering;
+        private const string DisableEventLogRegistryKeysFilteringName = @"Switch.System.Diagnostics.EventLog.DisableEventLogRegistryKeysFiltering";
+
+        public static bool DisableEventLogRegistryKeysFiltering
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(DisableEventLogRegistryKeysFilteringName, ref _disableEventLogRegistryKeysFiltering);
+            }
+        }
+
         #region System.Net quirks
         private static int _dontEnableSchUseStrongCrypto;
         internal const string DontEnableSchUseStrongCryptoName = @"Switch.System.Net.DontEnableSchUseStrongCrypto";
@@ -133,6 +145,18 @@ namespace System
                 return LocalAppContext.GetCachedSwitchValue(DontCheckCertificateEKUsName, ref _dontCheckCertificateEKUs);
             }
         }
+
+        private static int _dontCheckCertificateRevocation;
+        internal const string DontCheckCertificateRevocationName = @"System.Net.Security.SslStream.AuthenticateAsClient.DontCheckCertificateRevocation";
+
+        public static bool DontCheckCertificateRevocation
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(DontCheckCertificateRevocationName, ref _dontCheckCertificateRevocation);
+            }
+        }
         #endregion
 
         private static int _doNotCatchSerialStreamThreadExceptions;
@@ -168,6 +192,18 @@ namespace System
             get
             {
                 return LocalAppContext.GetCachedSwitchValue(DoNotUseNativeZipLibraryForDecompressionName, ref _doNotUseNativeZipLibraryForDecompression);
+            }
+        }
+
+        private static int _useLegacyTimeoutCheck;
+        internal const string UseLegacyTimeoutCheckName = @"Switch.System.Text.RegularExpressions.UseLegacyTimeoutCheck";
+
+        public static bool UseLegacyTimeoutCheck
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(UseLegacyTimeoutCheckName, ref _useLegacyTimeoutCheck);
             }
         }
     }

@@ -1279,28 +1279,28 @@ double CGDIPath::MaxCos(void)
 /**************************************************************************\
 *
 * Function Description:
-*    inline function to calculate min and max values of a sequence
-*
-* Return Value:
-*    update valmin and valmax through reference
-*
-* Created:
-*    9/28/2001 fyuan
-*
+*    inline function that adjusts bounds of a rectangle specified by 
+*    topleft and bottomright to ensure that it includes the point pt. 
 \**************************************************************************/
 
-inline void UpdateMinMax(
-    IN LONG nValue,         // input vale
-    interior_ptr<int> pnMin,        // current minimum
-    interior_ptr<int> pnMax)        // current maximum
+inline void AdjustBounds(PointI^ pt, PointI^ topleft, PointI^ bottomright)
 {
-    if (nValue < *pnMin)
+    if (pt->x < topleft->x)
     {
-        *pnMin = nValue;
+        topleft->x = pt->x;
     }
-    else if (nValue > *pnMax)
+    else if (pt->x > bottomright->x)
     {
-        *pnMax = nValue;
+        bottomright->x = pt->x;
+    }
+
+    if (pt->y < topleft->y)
+    {
+        topleft->y = pt->y;
+    }
+    else if (pt->y > bottomright->y)
+    {
+        bottomright->y = pt->y;
     }
 }
 
@@ -1335,7 +1335,6 @@ void CPolyPolygon::Set(
     m_cPolygons  = cPolygons;
 }
 
-
 /**************************************************************************\
 *
 * Function Description:
@@ -1365,8 +1364,7 @@ void CPolyPolygon::GetBounds(void)
 
     for (int i = 1; i < nTotal; i++)
     {
-        UpdateMinMax(m_rgptVertex[m_offsetP + i].x, &m_topleft.x, &m_bottomright.x);
-        UpdateMinMax(m_rgptVertex[m_offsetP + i].y, &m_topleft.y, &m_bottomright.y);
+        AdjustBounds(m_rgptVertex[m_offsetP + i], m_topleft, m_bottomright);
     }
 }
 

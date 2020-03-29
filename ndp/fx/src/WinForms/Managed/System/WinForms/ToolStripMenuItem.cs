@@ -194,7 +194,9 @@ namespace System.Windows.Forms {
         /// </devdoc>
         protected override Size DefaultSize {
             get {
-                return new Size(32, 19);
+                return DpiHelper.EnableToolStripPerMonitorV2HighDpiImprovements ?
+                       DpiHelper.LogicalToDeviceUnits(new Size(32, 19), DeviceDpi) :
+                       new Size(32, 19);
             }
         }
 
@@ -664,6 +666,22 @@ namespace System.Windows.Forms {
             return menuItem;
        }
 
+        internal override int DeviceDpi {
+            get {
+                return base.DeviceDpi;
+            }
+
+            // This gets called via ToolStripItem.RescaleConstantsForDpi.
+            // It's practically calling Initialize on DpiChanging with the new Dpi value.
+            // ToolStripItem.RescaleConstantsForDpi is already behind a quirk.
+            set {
+                base.DeviceDpi = value;
+                scaledDefaultPadding = DpiHelper.LogicalToDeviceUnits(defaultPadding, value);
+                scaledDefaultDropDownPadding = DpiHelper.LogicalToDeviceUnits(defaultDropDownPadding, value);
+                scaledCheckMarkBitmapSize = DpiHelper.LogicalToDeviceUnits(checkMarkBitmapSize, value);
+            }
+        }
+
         protected override void Dispose(bool disposing) {
             if (disposing) {
                 if (lastOwner != null) {
@@ -835,6 +853,9 @@ namespace System.Windows.Forms {
         internal void HandleAutoExpansion() {
             if (Enabled && ParentInternal != null && ParentInternal.MenuAutoExpand && HasDropDownItems) {
                 ShowDropDown();
+                if (!AccessibilityImprovements.UseLegacyToolTipDisplay) {
+                    KeyboardToolTipStateMachine.Instance.NotifyAboutLostFocus(this);
+                }
                 DropDown.SelectNextToolStripItem(null, /*forward=*/true);
             }
         }
@@ -1145,6 +1166,11 @@ namespace System.Windows.Forms {
              if (HasDropDownItems) {
 				 Select();
                  ShowDropDown();
+
+                 if (!AccessibilityImprovements.UseLegacyToolTipDisplay) {
+                    KeyboardToolTipStateMachine.Instance.NotifyAboutLostFocus(this);
+                 }
+
                  DropDown.SelectNextToolStripItem(null, /*forward=*/true);
                  return true;
              }
@@ -1191,6 +1217,18 @@ namespace System.Windows.Forms {
             else {
                 return TypeDescriptor.GetConverter(typeof(Keys)).ConvertToString(shortcutKeys);
             }
+        }
+
+        internal override bool IsBeingTabbedTo() {
+            if (base.IsBeingTabbedTo()) {
+                return true;
+            }
+
+            if (ToolStripManager.ModalMenuFilter.InMenuMode) {
+                return true;
+            }
+
+            return false;
         }
 
         /// <devdoc>
@@ -1393,7 +1431,7 @@ namespace System.Windows.Forms {
                 CurrentItem.OnMenuAutoExpand();
             }
         }
- 
+
 
     }
 

@@ -1695,6 +1695,7 @@ namespace System.Windows.Forms {
         TTM_WINDOWFROMPOINT = (0x0400 + 16),
         TTM_GETDELAYTIME = (0x0400 + 21),
         TTM_SETMAXTIPWIDTH = (0x0400 + 24),
+        TTM_GETBUBBLESIZE = (0x0400 + 30),
         TTN_GETDISPINFOA = ((0 - 520) - 0),
         TTN_GETDISPINFOW = ((0 - 520) - 10),
         TTN_SHOW = ((0 - 520) - 1),
@@ -2423,6 +2424,9 @@ namespace System.Windows.Forms {
         public const int OBJID_CLIENT            = unchecked(unchecked((int)0xFFFFFFFC));
         public const int OBJID_WINDOW            = unchecked(unchecked((int)0x00000000));
 
+        public const int UiaRootObjectId         = -25;
+        public const int UiaAppendRuntimeId      = 3;
+
         public const string uuid_IAccessible  = "{618736E0-3C3D-11CF-810C-00AA00389B71}";
         public const string uuid_IEnumVariant = "{00020404-0000-0000-C000-000000000046}";
 
@@ -3149,19 +3153,22 @@ namespace System.Windows.Forms {
             [MarshalAs(UnmanagedType.Struct)]
             public LOGFONT  lfStatusFont = null; 
             [MarshalAs(UnmanagedType.Struct)]
-            public LOGFONT  lfMessageFont = null; 
+            public LOGFONT  lfMessageFont = null;
+            // Added for Windows Vista.Since we are supporting >= Windows 7, 
+            // this is safe to add.
+            public int iPaddedBorderWidth = 0;
         }
-/*
-        [StructLayout(LayoutKind.Sequential)]
-        public class ICONMETRICS {
-            public int      cbSize = Marshal.SizeOf(typeof(ICONMETRICS));
-            public int      iHorzSpacing;
-            public int      iVertSpacing;
-            public int      iTitleWrap;
-            [MarshalAs(UnmanagedType.Struct)]
-            public LOGFONT  lfFont; 
-        }
-*/
+        /*
+                [StructLayout(LayoutKind.Sequential)]
+                public class ICONMETRICS {
+                    public int      cbSize = Marshal.SizeOf(typeof(ICONMETRICS));
+                    public int      iHorzSpacing;
+                    public int      iVertSpacing;
+                    public int      iTitleWrap;
+                    [MarshalAs(UnmanagedType.Struct)]
+                    public LOGFONT  lfFont; 
+                }
+        */
         [StructLayout(LayoutKind.Sequential)]
         [Serializable]
         public struct MSG {
@@ -6454,6 +6461,21 @@ namespace System.Windows.Forms {
 
         // Threading stuff
         public const uint STILL_ACTIVE = 259;
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct UiaRect {
+            public double left;
+            public double top;
+            public double width;
+            public double height;
+
+            public UiaRect(System.Drawing.Rectangle r) {
+                this.left = r.Left;
+                this.top = r.Top;
+                this.width = r.Width;
+                this.height = r.Height;
+            }
+        }
 
         // UIAutomation IDs
         // obtained from uiautomationclient.idl and uiautomationcore.idl

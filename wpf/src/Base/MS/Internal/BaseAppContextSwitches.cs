@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------
 //
 // Copyright (C) Microsoft Corporation.  All rights reserved.
-// 
+//
 // File: BaseAppContextSwitches.cs
 //---------------------------------------------------------------------------
 
@@ -11,29 +11,29 @@ using System.Runtime.CompilerServices;
 namespace MS.Internal
 {
 
-    // There are cases where we have multiple assemblies that are going to import this file and 
+    // There are cases where we have multiple assemblies that are going to import this file and
     // if they are going to also have InternalsVisibleTo between them, there will be a compiler warning
-    // that the type is found both in the source and in a referenced assembly. The compiler will prefer 
+    // that the type is found both in the source and in a referenced assembly. The compiler will prefer
     // the version of the type defined in the source
     //
     // In order to disable the warning for this type we are disabling this warning for this entire file.
     #pragma warning disable 436
 
     /// <summary>
-    /// Appcompat switches used by WindowsBase. See comments at the start of each switch. 
-    /// Also see AppContextDefaultValues which initializes default values for each of 
+    /// Appcompat switches used by WindowsBase. See comments at the start of each switch.
+    /// Also see AppContextDefaultValues which initializes default values for each of
     /// these switches.
     /// </summary>
     internal static class BaseAppContextSwitches
     {
         /// <summary>
-        /// Starting .NET 4.6, ExecutionContext tracks Thread.CurrentCulture and Thread.CurrentUICulture, which would be restored 
-        /// to their respective previous values after a call to ExecutionContext.Run. This behavior is undesirable within the 
-        /// Dispatcher - various dispatcher operations can run user code that can in turn set Thread.CurrentCulture or 
-        /// Thread.CurrentUICulture, and we do not want those values to be overwritten with their respective previous values. 
-        /// To work around the new ExecutionContext behavior, we introduce CulturePreservingExecutionContext for use within 
-        /// Dispatcher and DispatcherOperation. WPF in .NET 4.6 & 4.6.1 shipped with buggy behavior - each DispatcherOperation 
-        /// ends with all modificaitons to culture infos being reverted.Though unlikely, if some applications targeting 4.6 or 
+        /// Starting .NET 4.6, ExecutionContext tracks Thread.CurrentCulture and Thread.CurrentUICulture, which would be restored
+        /// to their respective previous values after a call to ExecutionContext.Run. This behavior is undesirable within the
+        /// Dispatcher - various dispatcher operations can run user code that can in turn set Thread.CurrentCulture or
+        /// Thread.CurrentUICulture, and we do not want those values to be overwritten with their respective previous values.
+        /// To work around the new ExecutionContext behavior, we introduce CulturePreservingExecutionContext for use within
+        /// Dispatcher and DispatcherOperation. WPF in .NET 4.6 & 4.6.1 shipped with buggy behavior - each DispatcherOperation
+        /// ends with all modificaitons to culture infos being reverted.Though unlikely, if some applications targeting 4.6 or
         /// above might have taken a dependence on this bug, we provide this compatiblity switch that can be enabled by the application.
         /// </summary>
         #region UseCulturePreservingDispatcherOperations
@@ -75,7 +75,7 @@ namespace MS.Internal
         /// <summary>
         /// DDVSO:606492
         /// Allowing developers to turn off the Invoke added by DDVSO:543980 as there are compat issues with timing during shutdown for some applications.
-        /// Applications that require this switch are most likely mismanaging their Dispatchers.  They should ensure that any Dispatchers created on a 
+        /// Applications that require this switch are most likely mismanaging their Dispatchers.  They should ensure that any Dispatchers created on a
         /// worker thread are shut down prior to shutting down the AppDomain or process.  While this switch may help to alleviate specific symptoms of this
         /// it does not handle all possible side effects of this application bug.
         /// </summary>
@@ -90,6 +90,64 @@ namespace MS.Internal
             get
             {
                 return LocalAppContext.GetCachedSwitchValue(SwitchDoNotInvokeInWeakEventTableShutdownListener, ref _doNotInvokeInWeakEventTableShutdownListener);
+            }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// DDVSO:676441, 733795
+        /// Enable/disable various perf and memory improvements related to WeakEvents
+        /// and the cleanup of WeakReference-dependent data structures
+        /// </summary>
+        #region EnableWeakEventMemoryImprovements
+
+        internal const string SwitchEnableWeakEventMemoryImprovements = "Switch.MS.Internal.EnableWeakEventMemoryImprovements";
+        private static int _enableWeakEventMemoryImprovements;
+
+        public static bool EnableWeakEventMemoryImprovements
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(SwitchEnableWeakEventMemoryImprovements, ref _enableWeakEventMemoryImprovements);
+            }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// DDVSO:676441, 733795
+        /// Enable/disable heuristic for scheduling cleanup of
+        /// WeakReference-dependent data structures
+        /// </summary>
+        #region EnableCleanupSchedulingImprovements
+
+        internal const string SwitchEnableCleanupSchedulingImprovements = "Switch.MS.Internal.EnableCleanupSchedulingImprovements";
+        private static int _enableCleanupSchedulingImprovements;
+
+        public static bool EnableCleanupSchedulingImprovements
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(SwitchEnableCleanupSchedulingImprovements, ref _enableCleanupSchedulingImprovements);
+            }
+        }
+
+        #endregion
+
+        #region AllowFontReuseDuringFontSubsetting
+
+        internal const string SwitchAllowFontReuseDuringFontSubsetting = "Switch.MS.Internal.TtfDelta.AllowFontReuseDuringFontSubsetting";
+        private static int _allowFontReuseDuringFontSubsetting;
+
+        public static bool AllowFontReuseDuringFontSubsetting
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(SwitchAllowFontReuseDuringFontSubsetting, ref _allowFontReuseDuringFontSubsetting);
             }
         }
 

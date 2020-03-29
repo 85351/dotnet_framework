@@ -16,7 +16,7 @@ namespace System.Windows.Forms
     using System.Security.Permissions;
     using System.Collections;
     using System.Windows.Forms;
-    using System.Windows.Forms.Design;    
+    using System.Windows.Forms.Design;
     using System.ComponentModel.Design;
     using System.Drawing;
     using System.Windows.Forms.ComponentModel;
@@ -301,6 +301,7 @@ namespace System.Windows.Forms
         private object uneditedFormattedValue;
         private Control editingControl, latestEditingControl, cachedEditingControl;
         private Panel editingPanel;
+        private DataGridViewEditingPanelAccessibleObject editingPanelAccessibleObject;
         private Point ptCurrentCell, ptCurrentCellCache = Point.Empty, ptAnchorCell, ptMouseDownCell, ptMouseEnteredCell, ptToolTipCell, ptMouseDownGridCoord;
 
         private DataGridViewSelectionMode selectionMode;
@@ -412,7 +413,7 @@ namespace System.Windows.Forms
 #if DEBUG
         // set to false when the grid is not in sync with the underlying data store
         // in virtual mode, and OnCellValueNeeded cannot be called.
-// disable csharp compiler warning #0414: field assigned unused value
+        // disable csharp compiler warning #0414: field assigned unused value
 #pragma warning disable 0414
         internal bool dataStoreAccessAllowed = true;
 #pragma warning restore 0414
@@ -2086,6 +2087,16 @@ namespace System.Windows.Forms
             }
         }
 
+        /// <summary>
+        /// Indicates whether the ComboBox editing control was just detached. (focused out to another cell)
+        /// </summary>
+        internal bool ComboBoxControlWasDetached { get; set; }
+
+        /// <summary>
+        /// Indicates whether the TextBox editing control was just detached. (focused out to another cell)
+        /// </summary>
+        internal bool TextBoxControlWasDetached { get; set; }
+
         /// <include file='doc\DataGridView.uex' path='docs/doc[@for="DataGridView.ColumnHeadersVisible"]/*' />
         /// <devdoc>
         ///    <para>
@@ -2806,6 +2817,14 @@ namespace System.Windows.Forms
             }
         }
 
+        internal AccessibleObject EditingControlAccessibleObject
+        {
+            get
+            {
+                return EditingControl.AccessibilityObject;
+            }
+        }
+
         /// <include file='doc\DataGridView.uex' path='docs/doc[@for="DataGridView.EditingPanel"]/*' />
         [
             Browsable(false),
@@ -2817,10 +2836,31 @@ namespace System.Windows.Forms
             {
                 if (this.editingPanel == null)
                 {
-                    this.editingPanel = new Panel();
+                    this.editingPanel = AccessibilityImprovements.Level3 ? new DataGridViewEditingPanel(this) : new Panel();
                     this.editingPanel.AccessibleName = SR.GetString(SR.DataGridView_AccEditingPanelAccName);
                 }
                 return this.editingPanel;
+            }
+        }
+
+        internal DataGridViewEditingPanelAccessibleObject EditingPanelAccessibleObject
+        {
+            get
+            {
+                if (this.editingPanelAccessibleObject == null)
+                {
+                    IntSecurity.UnmanagedCode.Assert();
+                    try
+                    {
+                        editingPanelAccessibleObject = new DataGridViewEditingPanelAccessibleObject(this, this.EditingPanel);
+                    }
+                    finally
+                    {
+                        CodeAccessPermission.RevertAssert();
+                    }
+                }
+
+                return editingPanelAccessibleObject;
             }
         }
 
@@ -4994,6 +5034,14 @@ namespace System.Windows.Forms
             }
         }
 
+        internal override bool SupportsUiaProviders
+        {
+            get
+            {
+                return AccessibilityImprovements.Level3 && !DesignMode;
+            }
+        }
+
         /// <include file='doc\DataGridView.uex' path='docs/doc[@for="DataGridView.Text"]/*' />
         [
             Browsable(false), 
@@ -7006,6 +7054,34 @@ namespace System.Windows.Forms
             public int y;
             public int col;
             public int row;
+        }
+
+        internal class DataGridViewEditingPanel : Panel
+        {
+            private DataGridView owningDataGridView;
+
+            public DataGridViewEditingPanel(DataGridView owningDataGridView)
+            {
+                this.owningDataGridView = owningDataGridView;
+            }
+
+            internal override bool SupportsUiaProviders
+            {
+                get
+                {
+                    return AccessibilityImprovements.Level3;
+                }
+            }
+
+            protected override AccessibleObject CreateAccessibilityInstance()
+            {
+                if (AccessibilityImprovements.Level3)
+                {
+                    return new DataGridViewEditingPanelAccessibleObject(owningDataGridView, this);
+                }
+
+                return base.CreateAccessibilityInstance();
+            }
         }
     }
 }

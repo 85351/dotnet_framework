@@ -413,8 +413,9 @@ Mismatch:
 
     bool badParam = false;
     // Fill in the parameter types.
-    for (Parameter *DelegateParam = DelegateParameters,
-            *LambdaParam = UnboundLambda->FirstParameter;
+	Parameter *DelegateParam, *LambdaParam;
+    for (DelegateParam = DelegateParameters,
+            LambdaParam = UnboundLambda->FirstParameter;
          DelegateParam && LambdaParam;
          DelegateParam = DelegateParam->GetNext(),
             LambdaParam = LambdaParam->GetNext())
@@ -1705,9 +1706,10 @@ Mismatch:
 
     GenericTypeBinding *DelegateBindingContext = TypeHelpers::IsGenericTypeBinding(DelegateType) ? DelegateType->PGenericTypeBinding() : NULL;
 
+	Parameter *DelegateParam, *LambdaParam;
     // Check the parameter types.
-    for (Parameter *DelegateParam = InvokeMethod->PProc()->GetFirstParam(),
-            *LambdaParam = Lambda->FirstParameter;
+    for (DelegateParam = InvokeMethod->PProc()->GetFirstParam(),
+            LambdaParam = Lambda->FirstParameter;
          DelegateParam && LambdaParam;
          DelegateParam = DelegateParam->GetNext(),
             LambdaParam = LambdaParam->GetNext())
@@ -2558,7 +2560,8 @@ Semantics::ConstructAnonymousDelegateClass
 
     // Tricky loop here, GenericParams will be the head of the list and GenericParam is the pointer
     // to the next Element of the Last element.
-    for (unsigned i = 0; i < NumberOfLambdaParameters; ++i)
+	unsigned i;
+    for (i = 0; i < NumberOfLambdaParameters; ++i)
     {
         WCHAR GenericParamName[MaxStringLengthForParamSize + 1];
         IfFailThrow(StringCchPrintfW(GenericParamName, DIM(GenericParamName), WIDE("TArg%d"), i));

@@ -26,6 +26,8 @@ namespace System.Windows.Forms.ButtonInternal {
 
         internal ButtonStandardAdapter(ButtonBase control) : base(control) {}
 
+        protected bool IsFilledWithHighlightColor { get; private set; }
+
         private PushButtonState DetermineState(bool up) {
             PushButtonState state = PushButtonState.Normal;
         
@@ -67,8 +69,12 @@ namespace System.Windows.Forms.ButtonInternal {
             }
 
             // Now draw the actual themed background
-
-            ButtonRenderer.DrawButton(e.Graphics, Control.ClientRectangle, false, pbState);
+            if (!DpiHelper.EnableDpiChangedHighDpiImprovements) {
+                ButtonRenderer.DrawButton(e.Graphics, Control.ClientRectangle, false, pbState);
+            }
+            else {
+                ButtonRenderer.DrawButtonForHandle(e.Graphics, Control.ClientRectangle, false, pbState, this.Control.HandleInternal);
+            }
 
             // Now overlay the background image or backcolor (the former overrides the latter), leaving a 
             // margin. We hardcode this margin for now since GetThemeMargins returns 0 all the
@@ -110,6 +116,7 @@ namespace System.Windows.Forms.ButtonInternal {
                         //
                         using (Brush brush = new SolidBrush(color)) {
                             e.Graphics.FillRectangle(brush, bounds);
+                            IsFilledWithHighlightColor = (color.ToArgb() == SystemColors.Highlight.ToArgb());
                         }
                     }
                 }
@@ -123,6 +130,8 @@ namespace System.Windows.Forms.ButtonInternal {
 
         void PaintWorker(PaintEventArgs e, bool up, CheckState state) {
             up = up && state == CheckState.Unchecked;
+
+            IsFilledWithHighlightColor = false;
 
             ColorData colors = PaintRender(e.Graphics).Calculate();
             LayoutData layout;

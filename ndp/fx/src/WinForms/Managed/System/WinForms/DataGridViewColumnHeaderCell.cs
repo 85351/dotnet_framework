@@ -1550,6 +1550,69 @@ namespace System.Windows.Forms
                     }
                 }
             }
+
+            #region IRawElementProviderFragment Implementation
+
+            internal override UnsafeNativeMethods.IRawElementProviderFragment FragmentNavigate(UnsafeNativeMethods.NavigateDirection direction)
+            {
+                if (this.Owner.OwningColumn == null)
+                {
+                    return null;
+                }
+
+                switch (direction)
+                {
+                    case UnsafeNativeMethods.NavigateDirection.Parent:
+                        return Parent;
+                    case UnsafeNativeMethods.NavigateDirection.NextSibling:
+                        return NavigateForward();
+                    case UnsafeNativeMethods.NavigateDirection.PreviousSibling:
+                        return NavigateBackward();
+                    default:
+                        return null;
+                }
+            }
+
+            #endregion
+
+            #region IRawElementProviderSimple Implementation
+
+            internal override bool IsPatternSupported(int patternId)
+            {
+                return patternId.Equals(NativeMethods.UIA_LegacyIAccessiblePatternId) ||
+                    patternId.Equals(NativeMethods.UIA_InvokePatternId);
+            }
+
+            internal override object GetPropertyValue(int propertyId)
+            {
+                if (AccessibilityImprovements.Level3)
+                {
+                    switch (propertyId)
+                    {
+                        case NativeMethods.UIA_NamePropertyId:
+                            return this.Name;
+                        case NativeMethods.UIA_ControlTypePropertyId:
+                            return NativeMethods.UIA_HeaderControlTypeId;
+                        case NativeMethods.UIA_IsEnabledPropertyId:
+                            return Owner.DataGridView.Enabled;
+                        case NativeMethods.UIA_HelpTextPropertyId:
+                            return this.Help ?? string.Empty;
+                        case NativeMethods.UIA_IsKeyboardFocusablePropertyId:
+                            return (this.State & AccessibleStates.Focusable) == AccessibleStates.Focusable;
+                        case NativeMethods.UIA_HasKeyboardFocusPropertyId:
+                        case NativeMethods.UIA_IsPasswordPropertyId:
+                            return false;
+                        case NativeMethods.UIA_IsOffscreenPropertyId:
+                            return (this.State & AccessibleStates.Offscreen) == AccessibleStates.Offscreen;
+                        case NativeMethods.UIA_AccessKeyPropertyId:
+                            return string.Empty;
+                    }
+                }
+
+                return base.GetPropertyValue(propertyId);
+            }
+
+            #endregion
         }
     }
 }

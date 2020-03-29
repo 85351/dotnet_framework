@@ -35,7 +35,7 @@ namespace System.Windows.Automation.Peers
                 throw new ArgumentNullException("dataGridColumn");
             }
 
-            _item = item;
+            _item = new WeakReference(item);
             _column = dataGridColumn;
         }
 
@@ -195,7 +195,7 @@ namespace System.Windows.Automation.Peers
         ///
         protected override string GetLocalizedControlTypeCore()
         {
-            if (!MS.Internal.FrameworkAppContextSwitches.UseLegacyAccessibilityFeatures)
+            if (!AccessibilitySwitches.UseNetFx47CompatibleAccessibilityFeatures)
             {
                 return SR.Get(SRID.DataGridCellItemAutomationPeer_LocalizedControlType);
             }
@@ -233,7 +233,7 @@ namespace System.Windows.Automation.Peers
 
             if (string.IsNullOrEmpty(name))
             {
-                name = SR.Get(SRID.DataGridCellItemAutomationPeer_NameCoreFormat, _item, _column.DisplayIndex);
+                name = SR.Get(SRID.DataGridCellItemAutomationPeer_NameCoreFormat, Item, _column.DisplayIndex);
             }
 
             return name;
@@ -306,6 +306,58 @@ namespace System.Windows.Automation.Peers
 
 
             return null;
+        }
+
+        /// <summary>
+        /// Gets the position of this DataGridCellItem within a set.
+        /// </summary>
+        /// <remarks>
+        /// Forwards the call to the wrapperPeer.
+        /// </remarks>
+        /// <returns>
+        /// The PositionInSet property value from the wrapper peer
+        /// </returns>
+        protected override int GetPositionInSetCore()
+        {
+            AutomationPeer wrapperPeer = OwningCellPeer;
+            int position = AutomationProperties.AutomationPositionInSetDefault;
+
+            if (wrapperPeer != null)
+            {
+                position = wrapperPeer.GetPositionInSet();
+            }
+            else
+            {
+                ThrowElementNotAvailableException();
+            }
+
+            return position;
+        }
+
+        /// <summary>
+        /// Gets the size of a set that contains this DataGridCellItem.
+        /// </summary>
+        /// <remarks>
+        /// Forwards the call to the wrapperPeer.
+        /// </remarks>
+        /// <returns>
+        /// The SizeOfSet property value from the wrapper peer
+        /// </returns>
+        protected override int GetSizeOfSetCore()
+        {
+            AutomationPeer wrapperPeer = OwningCellPeer;
+            int size = AutomationProperties.AutomationSizeOfSetDefault;
+
+            if (wrapperPeer != null)
+            {
+                size = wrapperPeer.GetSizeOfSet();
+            }
+            else
+            {
+                ThrowElementNotAvailableException();
+            }
+
+            return size;
         }
 
         override internal Rect GetVisibleBoundingRectCore()
@@ -468,7 +520,7 @@ namespace System.Windows.Automation.Peers
         {
             get
             {
-                return this.OwningDataGrid.Items.IndexOf(this._item);
+                return this.OwningDataGrid.Items.IndexOf(this.Item);
             }
         }
 
@@ -512,7 +564,7 @@ namespace System.Windows.Automation.Peers
                 (this.OwningDataGrid.HeadersVisibility & DataGridHeadersVisibility.Row) == DataGridHeadersVisibility.Row)
             {
                 DataGridAutomationPeer dataGridAutomationPeer = UIElementAutomationPeer.CreatePeerForElement(this.OwningDataGrid) as DataGridAutomationPeer;
-                DataGridItemAutomationPeer dataGridItemAutomationPeer = dataGridAutomationPeer.FindOrCreateItemAutomationPeer(_item) as DataGridItemAutomationPeer;
+                DataGridItemAutomationPeer dataGridItemAutomationPeer = dataGridAutomationPeer.FindOrCreateItemAutomationPeer(Item) as DataGridItemAutomationPeer;
                 if (dataGridItemAutomationPeer != null)
                 {
                     AutomationPeer rowHeaderAutomationPeer = dataGridItemAutomationPeer.RowHeaderAutomationPeer;
@@ -546,7 +598,7 @@ namespace System.Windows.Automation.Peers
             // If the current cell is virtualized - scroll into view
             if (this.OwningCell == null)
             {
-                this.OwningDataGrid.ScrollIntoView(_item, _column);
+                this.OwningDataGrid.ScrollIntoView(Item, _column);
             }
 
             // Put current cell into edit mode
@@ -589,7 +641,7 @@ namespace System.Windows.Automation.Peers
 
         void IScrollItemProvider.ScrollIntoView()
         {
-            this.OwningDataGrid.ScrollIntoView(_item, _column);
+            this.OwningDataGrid.ScrollIntoView(Item, _column);
         }
 
         #endregion
@@ -600,7 +652,7 @@ namespace System.Windows.Automation.Peers
         {
             get
             {
-                return this.OwningDataGrid.SelectedCellsInternal.Contains(new DataGridCellInfo(_item, _column));
+                return this.OwningDataGrid.SelectedCellsInternal.Contains(new DataGridCellInfo(Item, _column));
             }
         }
 
@@ -620,7 +672,7 @@ namespace System.Windows.Automation.Peers
             }
 
             // If item is already selected - do nothing
-            DataGridCellInfo currentCellInfo = new DataGridCellInfo(_item, _column);
+            DataGridCellInfo currentCellInfo = new DataGridCellInfo(Item, _column);
             if (this.OwningDataGrid.SelectedCellsInternal.Contains(currentCellInfo))
             {
                 return;
@@ -646,7 +698,7 @@ namespace System.Windows.Automation.Peers
 
             EnsureEnabled();
 
-            DataGridCellInfo currentCellInfo = new DataGridCellInfo(_item, _column);
+            DataGridCellInfo currentCellInfo = new DataGridCellInfo(Item, _column);
             if (this.OwningDataGrid.SelectedCellsInternal.Contains(currentCellInfo))
             {
                 this.OwningDataGrid.SelectedCellsInternal.Remove(currentCellInfo);
@@ -662,7 +714,7 @@ namespace System.Windows.Automation.Peers
 
             EnsureEnabled();
 
-            DataGridCellInfo currentCellInfo = new DataGridCellInfo(_item, _column);
+            DataGridCellInfo currentCellInfo = new DataGridCellInfo(Item, _column);
             this.OwningDataGrid.SelectOnlyThisCell(currentCellInfo);
         }
 
@@ -686,7 +738,7 @@ namespace System.Windows.Automation.Peers
             }
             if (this.OwningDataGrid != null)
             {
-                OwningDataGrid.SetCellAutomationValue(_item, _column, value);
+                OwningDataGrid.SetCellAutomationValue(Item, _column, value);
             }
         }
 
@@ -696,7 +748,7 @@ namespace System.Windows.Automation.Peers
             {
                 if (this.OwningDataGrid != null)
                 {
-                    return OwningDataGrid.GetCellAutomationValue(_item, _column);
+                    return OwningDataGrid.GetCellAutomationValue(Item, _column);
                 }
                 else
                 {
@@ -710,7 +762,7 @@ namespace System.Windows.Automation.Peers
         #region IVirtualizedItemProvider
         void IVirtualizedItemProvider.Realize()
         {
-            OwningDataGrid.ScrollIntoView(_item, _column);
+            OwningDataGrid.ScrollIntoView(Item, _column);
         }
 
         #endregion
@@ -759,7 +811,8 @@ namespace System.Windows.Automation.Peers
         {
             get
             {
-                return (_item == CollectionView.NewItemPlaceholder) || (_item == DataGrid.NewItemPlaceholder);
+                object item = Item;
+                return (item == CollectionView.NewItemPlaceholder) || (item == DataGrid.NewItemPlaceholder);
             }
         }
 
@@ -777,7 +830,7 @@ namespace System.Windows.Automation.Peers
             get
             {
                 DataGrid dataGrid = this.OwningDataGrid;
-                return (dataGrid != null) ? dataGrid.TryFindCell(_item, _column) : null;
+                return (dataGrid != null) ? dataGrid.TryFindCell(Item, _column) : null;
             }
         }
 
@@ -821,7 +874,7 @@ namespace System.Windows.Automation.Peers
 
         internal object Item
         {
-            get { return _item; }
+            get {  return (_item == null) ? null : _item.Target; }
         }
 
         private DataGridItemAutomationPeer OwningItemPeer
@@ -833,7 +886,7 @@ namespace System.Windows.Automation.Peers
                     DataGridAutomationPeer dataGridPeer = FrameworkElementAutomationPeer.CreatePeerForElement(OwningDataGrid) as DataGridAutomationPeer;
                     if (dataGridPeer != null)
                     {
-                        return dataGridPeer.GetExistingPeerByItem(_item, /*checkInWeakRefStorage*/ true) as DataGridItemAutomationPeer;
+                        return dataGridPeer.GetExistingPeerByItem(Item, /*checkInWeakRefStorage*/ true) as DataGridItemAutomationPeer;
                     }
                 }
                 return null;
@@ -861,7 +914,7 @@ namespace System.Windows.Automation.Peers
 
         #region Data
 
-        private object _item;
+        private WeakReference _item;
         private DataGridColumn _column;
 
         #endregion

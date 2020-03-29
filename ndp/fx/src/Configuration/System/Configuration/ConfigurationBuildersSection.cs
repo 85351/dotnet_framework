@@ -28,7 +28,7 @@ namespace System.Configuration
                 ProviderSettings ps = Builders[builderName];
 
                 if (ps == null) {
-                    throw new Exception(SR.GetString(SR.Config_builder_not_found, builderName));
+                    throw new ConfigurationErrorsException(SR.GetString(SR.Config_builder_not_found, builderName));
                 }
 
                 try {
@@ -43,8 +43,8 @@ namespace System.Configuration
                     if (throwOnLoadError) {
                         throw;
                     }
-                    return null;
                 }
+                return null;
             }
 
 
@@ -56,7 +56,7 @@ namespace System.Configuration
                 ProviderSettings ps = Builders[name.Trim()];
 
                 if (ps == null) {
-                    throw new Exception(SR.GetString(SR.Config_builder_not_found, name));
+                    throw new ConfigurationErrorsException(SR.GetString(SR.Config_builder_not_found, name));
                 }
 
                 try {
@@ -91,7 +91,11 @@ namespace System.Configuration
                 cloneParams[key] = pars[key];
             }
 
-            builder.Initialize(ps.Name, cloneParams);
+            try {
+                builder.Initialize(ps.Name, cloneParams);
+            } catch (Exception e) {
+                throw ExceptionUtil.WrapAsConfigException(SR.GetString(SR.ConfigBuilder_init_error, ps.Name), e, null);
+            }
             return builder;
         }
 
@@ -99,12 +103,12 @@ namespace System.Configuration
         {
             Type t = TypeUtil.GetTypeWithReflectionPermission(ps.Type, true);
             if (!typeof(ConfigurationBuilder).IsAssignableFrom(t)) {
-                throw new Exception(SR.GetString(SR.WrongType_of_config_builder));
+                throw new ConfigurationErrorsException("[" + ps.Name + "] - " + SR.GetString(SR.WrongType_of_config_builder));
             }
 
             // Needs to check APTCA bit.  See VSWhidbey 429996.
             if (!TypeUtil.IsTypeAllowedInConfig(t)) {
-                throw new Exception(SR.GetString(SR.Type_from_untrusted_assembly, t.FullName));
+                throw new ConfigurationErrorsException("[" + ps.Name + "] - " + SR.GetString(SR.Type_from_untrusted_assembly, t.FullName));
             }
 
             // Needs to check Assert Fulltrust in order for runtime to work.  See VSWhidbey 429996.

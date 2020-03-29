@@ -137,7 +137,7 @@ namespace System.Windows.Forms {
 
         /// <include file='doc\ToolStripProfessionalRenderer.uex' path='docs/doc[@for="ToolStripProfessionalRenderer.OnRenderOverflowButton"]/*' />
         protected override void OnRenderOverflowButtonBackground(ToolStripItemRenderEventArgs e) {
-            ScaleObjectSizesIfNeeded(); 
+            ScaleObjectSizesIfNeeded(e.ToolStrip.DeviceDpi); 
             
             if (RendererOverride != null) {
                 base.OnRenderOverflowButtonBackground(e);
@@ -411,7 +411,7 @@ namespace System.Windows.Forms {
                             edging = new Rectangle(3, bounds.Height -1, bounds.Width -3, bounds.Height - 1);
 
                         }
-                        ScaleObjectSizesIfNeeded();
+                        ScaleObjectSizesIfNeeded(toolStrip.DeviceDpi);
                         FillWithDoubleGradient(ColorTable.OverflowButtonGradientBegin, ColorTable.OverflowButtonGradientMiddle, ColorTable.OverflowButtonGradientEnd, e.Graphics, edging, iconWellGradientWidth, iconWellGradientWidth, LinearGradientMode.Vertical, /*flipHorizontal=*/false);
                         RenderToolStripCurve(e);
                     }
@@ -426,7 +426,7 @@ namespace System.Windows.Forms {
                 return;
             }
 
-            ScaleObjectSizesIfNeeded();
+            ScaleObjectSizesIfNeeded(e.ToolStrip.DeviceDpi);
 
             Graphics g = e.Graphics;
             Rectangle bounds = e.GripBounds;
@@ -501,7 +501,7 @@ namespace System.Windows.Forms {
 
 
             if (item.IsOnDropDown) {
-                ScaleObjectSizesIfNeeded();
+                ScaleObjectSizesIfNeeded(item.DeviceDpi);
                 
                 bounds = LayoutUtils.DeflateRect(bounds, scaledDropDownMenuItemPaintPadding);
 
@@ -605,7 +605,7 @@ namespace System.Windows.Forms {
                 return;
             }
 
-            ScaleObjectSizesIfNeeded();
+            ScaleObjectSizesIfNeeded(e.ToolStrip.DeviceDpi);
 
             Graphics g = e.Graphics;
             Rectangle bounds = e.AffectedBounds;
@@ -905,7 +905,9 @@ namespace System.Windows.Forms {
 
 
         private void RenderCheckBackground(ToolStripItemImageRenderEventArgs e) {
-            Rectangle bounds = new Rectangle(e.ImageRectangle.Left-2, 1, e.ImageRectangle.Width+4, e.Item.Height -2);
+            // bug# VSO:528418 check box is not centered and not square. Below, position will never be negative as, on a 96% dpi, difference between item height (22) and rectangle height(16) is minimum 6. 
+            Rectangle bounds = DpiHelper.IsScalingRequired ? new Rectangle(e.ImageRectangle.Left-2, (e.Item.Height - e.ImageRectangle.Height )/2- 1, e.ImageRectangle.Width+4, e.ImageRectangle.Height +2) :
+                                new Rectangle(e.ImageRectangle.Left - 2, 1, e.ImageRectangle.Width + 4, e.Item.Height - 2); 
             Graphics g = e.Graphics;
 
             if (!UseSystemColors) {
@@ -1005,7 +1007,7 @@ namespace System.Windows.Forms {
 
 
         private void RenderToolStripBackgroundInternal(ToolStripRenderEventArgs e) {
-            ScaleObjectSizesIfNeeded();
+            ScaleObjectSizesIfNeeded(e.ToolStrip.DeviceDpi);
 
             ToolStrip toolStrip = e.ToolStrip;
             Graphics g = e.Graphics;
@@ -1047,7 +1049,7 @@ namespace System.Windows.Forms {
         }
 
         private void RenderOverflowBackground(ToolStripItemRenderEventArgs e, bool rightToLeft) {
-            ScaleObjectSizesIfNeeded();
+            ScaleObjectSizesIfNeeded(e.Item.DeviceDpi);
 
             Graphics g = e.Graphics;
             ToolStripOverflowButton item = e.Item as ToolStripOverflowButton;
@@ -1396,7 +1398,24 @@ namespace System.Windows.Forms {
             }
         }
 
-        private void ScaleObjectSizesIfNeeded() {
+        private void ScaleObjectSizesIfNeeded(int currentDeviceDpi) {
+            if (DpiHelper.EnableToolStripPerMonitorV2HighDpiImprovements) {
+                if (previousDeviceDpi!=currentDeviceDpi) {
+                    ToolStripRenderer.ScaleArrowOffsetsIfNeeded(currentDeviceDpi);
+                    overflowButtonWidth = DpiHelper.LogicalToDeviceUnits(OVERFLOW_BUTTON_WIDTH, currentDeviceDpi);
+                    overflowArrowWidth = DpiHelper.LogicalToDeviceUnits(OVERFLOW_ARROW_WIDTH, currentDeviceDpi);
+                    overflowArrowHeight = DpiHelper.LogicalToDeviceUnits(OVERFLOW_ARROW_HEIGHT, currentDeviceDpi);
+                    overflowArrowOffsetY = DpiHelper.LogicalToDeviceUnits(OVERFLOW_ARROW_OFFSETY, currentDeviceDpi);
+
+                    gripPadding = DpiHelper.LogicalToDeviceUnits(GRIP_PADDING, currentDeviceDpi);
+                    iconWellGradientWidth = DpiHelper.LogicalToDeviceUnits(ICON_WELL_GRADIENT_WIDTH, currentDeviceDpi);
+                    int scaledSize = DpiHelper.LogicalToDeviceUnits(DROP_DOWN_MENU_ITEM_PAINT_PADDING_SIZE, currentDeviceDpi);
+                    scaledDropDownMenuItemPaintPadding = new Padding(scaledSize + 1, 0, scaledSize, 0);
+                    previousDeviceDpi = currentDeviceDpi;
+                    isScalingInitialized = true;
+                    return;
+                }
+            }
             if (isScalingInitialized) {
                 return;
             }          
