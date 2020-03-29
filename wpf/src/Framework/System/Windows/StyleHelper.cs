@@ -5131,6 +5131,10 @@ namespace System.Windows
             BindingBase binding = bindingExpr.ParentBindingBase;
             DependencyObject container = bindingExpr.TargetElement;
 
+            // if the target has been GC'd, nothing more to do
+            if (container == null)
+                return;
+
             FrameworkElement fe;
             FrameworkContentElement fce;
             Helper.DowncastToFEorFCE(container, out fe, out fce, false);
@@ -5163,6 +5167,10 @@ namespace System.Windows
             BindingExpressionBase bindingExpr = (BindingExpressionBase)sender;
             BindingBase binding = bindingExpr.ParentBindingBase;
             DependencyObject container = bindingExpr.TargetElement;
+
+            // if the target has been GC'd, nothing more to do
+            if (container == null)
+                return;
 
             FrameworkElement fe;
             FrameworkContentElement fce;
@@ -5202,6 +5210,10 @@ namespace System.Windows
             BindingExpressionBase bindingExpr = (BindingExpressionBase)sender;
             BindingBase binding = bindingExpr.ParentBindingBase;
             DependencyObject container = bindingExpr.TargetElement;
+
+            // if the target has been GC'd, nothing more to do
+            if (container == null)
+                return;
 
             FrameworkElement fe;
             FrameworkContentElement fce;

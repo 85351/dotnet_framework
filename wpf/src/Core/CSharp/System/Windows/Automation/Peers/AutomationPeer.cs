@@ -536,6 +536,16 @@ namespace System.Windows.Automation.Peers
             return false;
         }
 
+        // UpdatePeer is called asynchronously.  Between the time the call is
+        // posted (InvalidatePeer) and the time the call is executed (UpdatePeer),
+        // changes to the visual tree and/or automation tree may have eliminated
+        // the need for UpdatePeer, or even made it a mistake.
+        // Subclasses can override this method if they can detect this situation.
+        virtual internal bool IgnoreUpdatePeer()
+        {
+            return false;
+        }
+
         // This is mainly for enabling ITemsControl to keep the Cache of the Item's Proxy Weak Ref to
         // re-use the item peers being passed to clinet and still exist in memory
         virtual internal void AddToParentProxyWeakRefCache()
@@ -1898,7 +1908,10 @@ namespace System.Windows.Automation.Peers
         private static object UpdatePeer(object arg)
         {
             AutomationPeer peer = (AutomationPeer)arg;
-            peer.UpdateSubtree();
+            if (!peer.IgnoreUpdatePeer())
+            {
+                peer.UpdateSubtree();
+            }
             return null;
         }
 

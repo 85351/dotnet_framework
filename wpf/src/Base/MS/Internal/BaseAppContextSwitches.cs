@@ -71,6 +71,29 @@ namespace MS.Internal
         }
 
         #endregion
+
+        /// <summary>
+        /// DDVSO:606492
+        /// Allowing developers to turn off the Invoke added by DDVSO:543980 as there are compat issues with timing during shutdown for some applications.
+        /// Applications that require this switch are most likely mismanaging their Dispatchers.  They should ensure that any Dispatchers created on a 
+        /// worker thread are shut down prior to shutting down the AppDomain or process.  While this switch may help to alleviate specific symptoms of this
+        /// it does not handle all possible side effects of this application bug.
+        /// </summary>
+        #region DoNotInvokeInWeakEventTableShutdownListener
+
+        internal const string SwitchDoNotInvokeInWeakEventTableShutdownListener = "Switch.MS.Internal.DoNotInvokeInWeakEventTableShutdownListener";
+        private static int _doNotInvokeInWeakEventTableShutdownListener;
+
+        public static bool DoNotInvokeInWeakEventTableShutdownListener
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return LocalAppContext.GetCachedSwitchValue(SwitchDoNotInvokeInWeakEventTableShutdownListener, ref _doNotInvokeInWeakEventTableShutdownListener);
+            }
+        }
+
+        #endregion
     }
 
 #pragma warning restore 436

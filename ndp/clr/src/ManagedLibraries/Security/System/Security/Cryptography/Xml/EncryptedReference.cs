@@ -174,12 +174,16 @@ namespace System.Security.Cryptography.Xml
             return referenceElement;
         }
 
-        public override void LoadXml (XmlElement value) {
+        public override void LoadXml(XmlElement value) {
             if (value == null)
                 throw new ArgumentNullException("value");
 
             this.ReferenceType = value.LocalName;
-            this.Uri = Utils.GetAttribute(value, "URI", EncryptedXml.XmlEncNamespaceUrl);
+            string uri = Utils.GetAttribute(value, "URI", EncryptedXml.XmlEncNamespaceUrl);
+            if (!Utils.GetSkipSignatureAttributeEnforcement() && uri == null) {
+                throw new CryptographicException(SecurityResources.GetResourceString("Cryptography_Xml_UriRequired"));
+            }
+            this.Uri = uri;
 
             // Transforms
             XmlNamespaceManager nsm = new XmlNamespaceManager(value.OwnerDocument.NameTable);

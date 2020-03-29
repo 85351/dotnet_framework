@@ -1901,7 +1901,7 @@ namespace System.Windows.Interop
         private void DisposeStylusInputProvider()
         {
             // Dispose the HwndStylusInputProvider BEFORE we destroy the HWND.
-            // This us because the stylus provider has an async channel and
+            // This is because the stylus provider has an async channel and
             // they don't want to process data after the HWND is destroyed.
             if (_stylus != null)
             {
@@ -2916,9 +2916,9 @@ namespace System.Windows.Interop
                             if (!_inRealHwndDispose)
                             {
                                 // DDVSO:460192
-                                // Dispose the stylus provider before the Hwnd so we have a valid Hwnd
-                                // This can only be done here when we're not actually in an Hwnd WM_NCDESTROY
-                                // scenario as we're then guaranteed the HWND is still alive.
+                                // Disposing the stylus provider can only be done here when 
+                                // we're not actually in an Hwnd WM_NCDESTROY scenario as 
+                                // we're then guaranteed that the HWND is still alive.
                                 DisposeStylusInputProvider();
 
                                 _hwndWrapper.Dispose();

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{b92dbc42-43c2-48a3-b5f8-c7d91b2c2944}</ProjectGuid>
+    <ProjectGuid>{9edf39b9-40df-42a2-9ef9-26768c916c07}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>System.Runtime.Remoting</AssemblyName>
@@ -20,23 +20,23 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\bcl\mscorlib.csproj">
-      <Project>{1a036d4f-3229-4c80-81c6-05cdf14a2647}</Project>
+      <Project>{01bc0b31-c49b-4d04-a987-8a3cdaa4447d}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\fx\src\System.csproj">
-      <Project>{6be2c2bf-f37e-4bb5-a1c5-e1ba53d34890}</Project>
+      <Project>{f4d4a199-0778-423c-8e10-03216b942248}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\fx\src\data\System.Data.csproj">
-      <Project>{33646388-02f5-45f6-a2e4-248b48f2e3ce}</Project>
+      <Project>{3c9b6c49-12dd-40e3-8779-99ded6d42ba3}</Project>
       <Name>System.Data</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\fx\src\xsp\system\Web\System.Web.csproj">
-      <Project>{377077e8-f44d-429c-8f36-01ed6bf5b881}</Project>
+      <Project>{e9342d7d-0c8b-4068-9ec3-6dc5ca415e8b}</Project>
       <Name>System.Web</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\fx\src\Xml\System.Xml.csproj">
-      <Project>{185b3b11-76cb-4590-b798-d4ce9b10e555}</Project>
+      <Project>{35533446-2370-45f0-83e8-65cb88ac88e2}</Project>
       <Name>System.Xml</Name>
     </ProjectReference>
   </ItemGroup>

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{bd93a91c-3f09-40bb-8eb8-e513952351ba}</ProjectGuid>
+    <ProjectGuid>{4e253bf5-2880-4804-a9f3-77a8208b37b9}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>System.ComponentModel.DataAnnotations</AssemblyName>
@@ -20,27 +20,27 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\clr\src\bcl\mscorlib.csproj">
-      <Project>{1a036d4f-3229-4c80-81c6-05cdf14a2647}</Project>
+      <Project>{01bc0b31-c49b-4d04-a987-8a3cdaa4447d}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\System.csproj">
-      <Project>{6be2c2bf-f37e-4bb5-a1c5-e1ba53d34890}</Project>
+      <Project>{f4d4a199-0778-423c-8e10-03216b942248}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Configuration\System.Configuration.csproj">
-      <Project>{1801028f-0281-49e9-bfa0-23adadea513a}</Project>
+      <Project>{6e31dde6-3336-492c-a925-b68c1a4dc2a5}</Project>
       <Name>System.Configuration</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Core\System.Core.csproj">
-      <Project>{b705b6d3-a3c3-4a60-9f80-ce016632947e}</Project>
+      <Project>{224c6b7d-0bee-4936-bf87-2dcacc9b6c09}</Project>
       <Name>System.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\data\System.Data.csproj">
-      <Project>{33646388-02f5-45f6-a2e4-248b48f2e3ce}</Project>
+      <Project>{3c9b6c49-12dd-40e3-8779-99ded6d42ba3}</Project>
       <Name>System.Data</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Xml\System.Xml.csproj">
-      <Project>{185b3b11-76cb-4590-b798-d4ce9b10e555}</Project>
+      <Project>{35533446-2370-45f0-83e8-65cb88ac88e2}</Project>
       <Name>System.Xml</Name>
     </ProjectReference>
   </ItemGroup>

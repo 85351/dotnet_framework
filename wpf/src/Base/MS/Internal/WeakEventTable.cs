@@ -261,10 +261,45 @@ namespace MS.Internal
         // do the final cleanup when the Dispatcher or AppDomain is shut down
         private void OnShutDown()
         {
-            Purge(true);
+            if (CheckAccess())
+            {
+                Purge(true);
 
-            // remove the table from thread storage
-            _currentTable = null;
+                // remove the table from thread storage
+                _currentTable = null;
+            }
+            else
+            {
+                // if we're on the wrong thread, try asking the right thread
+                // to do the job.  (DomainUnload arrives on finalizer thread - DDVSO 543980)
+                bool succeeded = false;
+
+                // DDVSO:606492
+                // In some cases, the extra delay from invocation can push applications with a race condition
+                // at shutdown into constant crashing.  Due to this, respect a compat flag that allows these
+                // to skip the invocation.  This causes us to do a partial cleanup (see the Purge call below)
+                // but avoids the significant timing changes that were adversely affecting the application.
+                if (!BaseAppContextSwitches.DoNotInvokeInWeakEventTableShutdownListener)
+                {
+                    try
+                    {
+                        Dispatcher.Invoke((Action)OnShutDown, DispatcherPriority.Send, CancellationToken.None, TimeSpan.FromMilliseconds(300));
+                        succeeded = true;
+                    }
+                    catch (TimeoutException)
+                    {
+                    }
+                }
+
+                // if that didn't work (because Dispatcher was busy or not pumping),
+                // do the work on the wrong thread, but don't touch thread-statics.
+                // This won't do everything, but it will do enough to support
+                // some useful scenarios (such as DevDiv Bugs 121070).
+                if (!succeeded)
+                {
+                    Purge(true);
+                }
+            }
         }
 
         #endregion Private Methods

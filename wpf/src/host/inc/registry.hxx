@@ -47,12 +47,13 @@
     #define RegKey_WPF_Namespaces         RegKey_WPF L"\\Namespaces"
 
 
-#define RegKey_WPF_Hosting                RegKey_WPF L"\\Hosting"
-    #define RegValue_RunUnrestricted                    L"RunUnrestricted"
-    #define RegValue_NoHostTimeoutSeconds               L"NoHostTimeoutSeconds"
-    #define RegValue_DisableSingleVersionOptimization   L"DisableSingleVersionOptimization"
+#define RegKey_WPF_Hosting                                                  RegKey_WPF L"\\Hosting"
+    #define RegValue_RunUnrestricted                                        L"RunUnrestricted"
+    #define RegValue_NoHostTimeoutSeconds                                   L"NoHostTimeoutSeconds"
+    #define RegValue_DisableSingleVersionOptimization                       L"DisableSingleVersionOptimization"
 //  #define RegValue_DisableXbapErrorPage -- defined and used in managed code
-    #define RegValue_AutoShowXbapErrorDetails           L"AutoShowXbapErrorDetails"
+    #define RegValue_AutoShowXbapErrorDetails                               L"AutoShowXbapErrorDetails"
+    #define RegValue_DoNotLaunchVersion3HostedApplicationInVersion4Runtime  L"DoNotLaunchVersion3HostedApplicationInVersion4Runtime"
 
 #define RegKey_WPF_HostVersions           RegKey_WPF_Hosting L"\\Hosts"
 

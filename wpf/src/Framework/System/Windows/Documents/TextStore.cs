@@ -515,7 +515,7 @@ namespace System.Windows.Documents
 
             startPosition = container.CreatePointerAtOffset(startIndex, LogicalDirection.Backward);
             endPosition = container.CreatePointerAtOffset(endIndex, LogicalDirection.Forward);
-
+             
             InsertEmbeddedAtRange(startPosition, endPosition, data, out change);
 #else
             throw new COMException(SR.Get(SRID.TextStore_TS_E_FORMAT), UnsafeNativeMethods.TS_E_FORMAT);
@@ -1116,9 +1116,16 @@ namespace System.Windows.Documents
 
             GetCompositionPositions(view, out start, out end);
 
-            int startOffsetBefore;
-            int endOffsetBefore;
-
+            // DDVSO 515186: The call to MarkCultureProperty or SetText (which calls MarkCultureProperty)
+            // modifies the start and end TextPointers in the case of a multiple characters being replaced by 
+            // input from the IMEPad in a langugage different than that of the current text.
+            // startOffsetBefore, endOffsetBefore and _lastCompositionText are stored in a 
+            // CompositionEventRecord to be later replayed in RaiseCompositionEvents (after releasing the lock).
+            // Store these variables based off of the original start and end TextPointers.
+            int startOffsetBefore = start.Offset;
+            int endOffsetBefore = end.Offset;
+            _lastCompositionText = TextRangeBase.GetTextInternal(start, end);
+            
             if (_previousCompositionStartOffset != -1)
             {
                 startOffsetBefore = _previousCompositionStartOffset;
@@ -1126,27 +1133,16 @@ namespace System.Windows.Documents
             }
             else
             {
-                if (this.TextEditor.AcceptsRichContent && start.CompareTo(end) != 0)
+               if (this.TextEditor.AcceptsRichContent && start.CompareTo(end) != 0)
                 {
                     TextElement startElement = (TextElement)((TextPointer)start).Parent;
                     TextElement endElement = (TextElement)((TextPointer)end).Parent;
                     TextElement commonAncestor = TextElement.GetCommonAncestor(startElement, endElement);
-
-                    // Check if the IME is jump-starting a composition over existing content.
-                    // This is problematic if the existing content spans multiple
-                    // Inlines or the language of the existing content differs from the
-                    // current input language.
-                    // The IME will likely edit just a subset of the composition range.
-                    // But later, in UpdateCompositionText, we will update a larger range
-                    // (the whole composition) which could merge Runs.  And once we
-                    // merge Runs the IME did not originally merge, our recorded character
-                    // offsets are out of synch and very bad things will happen.
-                    // Force any merges now by replacing the content with a single
-                    // Run, before we start caching character offsets.
-
+                    
                     int originalIMECharCount = this.TextContainer.IMECharCount;
                     TextRange range = new TextRange(start, end);
-
+                    string unmergedText = range.Text;
+                    
                     if (commonAncestor is Run)
                     {
                         // A single Run needs to be handled differently from the cases below since the
@@ -1157,25 +1153,30 @@ namespace System.Windows.Documents
                     }
                     else if (commonAncestor is Paragraph || commonAncestor is Span)
                     {
-                        string unmergedText = range.Text;
-                        this.TextEditor.SetText(range, unmergedText, InputLanguageManager.Current.CurrentInputLanguage);
+                        // Check if the IME is jump-starting a composition over existing content.
+                        // This is problematic if the existing content spans multiple
+                        // Inlines or the language of the existing content differs from the
+                        // current input language.
+                        // The IME will likely edit just a subset of the composition range.
+                        // But later, in UpdateCompositionText, we will update a larger range
+                        // (the whole composition) which could merge Runs.  And once we
+                        // merge Runs the IME did not originally merge, our recorded character
+                        // offsets are out of synch and very bad things will happen.
+                        // Force any merges now by replacing the content with a single
+                        // Run, before we start caching character offsets.
 
-                        // It is crucial that from the point of view of the IME the document
-                        // has not changed.  That means the plain text of the content we just
-                        // replaced must not have changed.
-                        Invariant.Assert(range.Text == unmergedText);
+                        this.TextEditor.SetText(range, unmergedText, InputLanguageManager.Current.CurrentInputLanguage);                      
                     }
-
+                    // It is crucial that from the point of view of the IME the document
+                    // has not changed.  That means the plain text of the content we just
+                    // replaced must not have changed.
+                    Invariant.Assert(range.Text == unmergedText);
                     Invariant.Assert(originalIMECharCount == this.TextContainer.IMECharCount);
                 }
-
-                startOffsetBefore = start.Offset;
-                endOffsetBefore = end.Offset;
             }
-
+            
             // Add the composition message into the composition message list.
-            // This composition message list will be handled all together after release the lock.
-            _lastCompositionText = TextRangeBase.GetTextInternal(start, end);
+            // This composition message list will be handled all together after we release the lock.
             this.CompositionEventList.Add(new CompositionEventRecord(CompositionStage.StartComposition, startOffsetBefore, endOffsetBefore, _lastCompositionText));
 
             _previousCompositionStartOffset = start.Offset;
