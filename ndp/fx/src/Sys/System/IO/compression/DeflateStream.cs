@@ -16,7 +16,6 @@ namespace System.IO.Compression {
     public class DeflateStream : Stream {
 
         internal const int DefaultBufferSize = 8192;
-        private const int WindowSizeUpperBound = 47;
 
         internal delegate void AsyncWriteDelegate(byte[] array, int offset, int count, bool isAsync);
 
@@ -25,7 +24,7 @@ namespace System.IO.Compression {
         private Stream _stream;
         private CompressionMode _mode;
         private bool _leaveOpen;
-        private IInflater inflater;
+        private Inflater inflater;
         private IDeflater deflater;        
         private byte[] buffer;
         
@@ -39,29 +38,11 @@ namespace System.IO.Compression {
 
         private enum WorkerType : byte { Managed, ZLib, Unknown };
         private static volatile WorkerType deflaterType = WorkerType.Unknown;
-        private static volatile WorkerType inflaterType = WorkerType.Unknown;
 
 
         public DeflateStream(Stream stream, CompressionMode mode)
             : this(stream, mode, false) {
         }              
-
-        // Since a reader is being taken, CompressionMode.Decompress is implied
-        internal DeflateStream(Stream stream, bool leaveOpen, IFileFormatReader reader)
-        {
-            Debug.Assert(reader != null, "The IFileFormatReader passed to the internal DeflateStream constructor must be non-null");
-            if (stream == null)
-                throw new ArgumentNullException("stream");
-            if (!stream.CanRead)
-                throw new ArgumentException(SR.GetString(SR.NotReadableStream), "stream");
-
-            inflater = CreateInflater(reader);
-            m_CallBack = new AsyncCallback(ReadCallback);
-            _stream = stream;
-            _mode = CompressionMode.Decompress;
-            _leaveOpen = leaveOpen;
-            buffer = new byte[DefaultBufferSize];
-        }
         
         public DeflateStream(Stream stream, CompressionMode mode, bool leaveOpen) {
            
@@ -83,7 +64,7 @@ namespace System.IO.Compression {
                         throw new ArgumentException(SR.GetString(SR.NotReadableStream), "stream");
                     }
 
-                    inflater = CreateInflater();
+                    inflater = new Inflater();
 
                     m_CallBack = new AsyncCallback(ReadCallback); 
                     break;
@@ -158,32 +139,6 @@ namespace System.IO.Compression {
             }
         }
 
-        private static IInflater CreateInflater(IFileFormatReader reader = null) {
-
-            switch (GetInflaterType()) {
-
-                case WorkerType.Managed:
-                    return new Inflater(reader);
-                case WorkerType.ZLib:
-                    // Rather than reading raw data and using a FormatReader to interpret
-                    // headers/footers manually, we instead set the zlib stream to parse
-                    // that information for us.
-                    if (reader == null) {
-                        return new InflaterZlib(ZLibNative.Deflate_DefaultWindowBits);
-                    }
-                    else {
-                        // Since we don't necessarily know what WindowSize the stream was compressed with,
-                        // we use the upper bound of (32..47) as the WindowSize for decompression. This enables
-                        // detection for Zlib and GZip headers
-                        return new InflaterZlib(WindowSizeUpperBound);
-                    }
-                default:
-                    // We do not expect this to ever be thrown.
-                    // But this is better practice than returning null.
-                    throw new SystemException("Program entered an unexpected state.");
-            }
-        }
-
         #if !SILVERLIGHT
         [System.Security.SecuritySafeCritical]
         #endif
@@ -214,26 +169,10 @@ namespace System.IO.Compression {
             return (deflaterType = WorkerType.Managed);
         }
 
-        #if !SILVERLIGHT
-        [System.Security.SecuritySafeCritical]
-        #endif
-        private static WorkerType GetInflaterType() {
-
-            // Let's not worry about race conditions:
-            // Yes, we risk initialising the singleton multiple times.
-            // However, initialising the singleton multiple times has no bad consequences, and is fairly cheap.
-
-            if (WorkerType.Unknown != inflaterType)
-                return inflaterType;
-
-            #if !SILVERLIGHT || FEATURE_NETCORE  // Only skip this for Silverlight, which doesn't ship ZLib.
-
-            if (!LocalAppContextSwitches.DoNotUseNativeZipLibraryForDecompression)
-                return (inflaterType = WorkerType.ZLib);
-
-            #endif
-
-            return (inflaterType = WorkerType.Managed);
+        internal void SetFileFormatReader(IFileFormatReader reader) {
+            if (reader != null) {
+                inflater.SetFileFormatReader(reader);
+            }
         }
 
         internal void SetFileFormatWriter(IFileFormatWriter writer) {
@@ -322,9 +261,11 @@ namespace System.IO.Compression {
                     break;
                 }
                
-                if (inflater.Finished()) {
-                   break;
-                }
+                if (inflater.Finished() ) { 
+                    // if we finished decompressing, we can't have anything left in the outputwindow.
+                    Debug.Assert(inflater.AvailableOutput == 0, "We should have copied all stuff out!");
+                    break;                    
+                }                
 
                 Debug.Assert(inflater.NeedsInput(), "We can only run into this case if we are short of input");
 
@@ -623,11 +564,8 @@ namespace System.IO.Compression {
                         if (deflater != null)
                             deflater.Dispose();
 
-                        if (inflater != null)
-                            inflater.Dispose();
-
                     } finally {
-                        inflater = null;
+
                         deflater = null;
                         base.Dispose(disposing);
                     }

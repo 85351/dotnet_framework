@@ -1420,8 +1420,7 @@ namespace System.Net {
                         if (Logging.On) Logging.PrintError(Logging.HttpListener, this, "HandleAuthentication", SR.GetString(SR.net_log_listener_delegate_exception, exception));
                         GlobalLog.Print("HttpListener#" + ValidationHelper.HashString(this) + "::HandleAuthentication() AuthenticationSchemeSelectorDelegate() returned authenticationScheme:" + authenticationScheme);
                         SendError(requestId, HttpStatusCode.InternalServerError, null);
-                        FreeContext(ref httpContext, memoryBlob);
-
+                        httpContext.Close();
                         return null;
                     }
                 }
@@ -1510,7 +1509,9 @@ namespace System.Net {
                     }
 
                     httpError = HttpStatusCode.Unauthorized;
-                    FreeContext(ref httpContext, memoryBlob);
+                    httpContext.Request.DetachBlob(memoryBlob);
+                    httpContext.Close();
+                    httpContext = null;
                 }
                 else
                 {
@@ -1778,8 +1779,9 @@ namespace System.Net {
                     {
                         GlobalLog.Print("HttpListener#" + ValidationHelper.HashString(this) + "::HandleAuthentication() handshake has failed");
                         if(Logging.On)Logging.PrintWarning(Logging.HttpListener, this, "HandleAuthentication", SR.GetString(SR.net_log_listener_create_valid_identity_failed));
-
-                        FreeContext(ref httpContext, memoryBlob);
+                        httpContext.Request.DetachBlob(memoryBlob);
+                        httpContext.Close();
+                        httpContext = null;
                     }
                 }
 
@@ -1856,8 +1858,8 @@ namespace System.Net {
 
                         GlobalLog.Print("HttpListener#" + ValidationHelper.HashString(this) + "::HandleAuthentication() failed context#" + ValidationHelper.HashString(context) + " for connectionId:" + connectionId + " because of failed HttpWaitForDisconnect");
                         SendError(requestId, HttpStatusCode.InternalServerError, null);
-
-                        FreeContext(ref httpContext, memoryBlob);
+                        httpContext.Request.DetachBlob(memoryBlob);
+                        httpContext.Close();
                         return null;
                     }
                 }
@@ -1907,8 +1909,11 @@ namespace System.Net {
             }
             catch
             {
-                FreeContext(ref httpContext, memoryBlob);
-
+                if (httpContext != null)
+                {
+                    httpContext.Request.DetachBlob(memoryBlob);
+                    httpContext.Close();
+                }
                 if (newContext != null)
                 {
                     if (newContext == context)
@@ -1971,16 +1976,6 @@ namespace System.Net {
                         disconnectResult.FinishOwningDisconnectHandling();
                     }
                 }
-            }
-        }
-
-        private static void FreeContext(ref HttpListenerContext httpContext, RequestContextBase memoryBlob)
-        {
-            if (httpContext != null)
-            {
-                httpContext.Request.DetachBlob(memoryBlob);
-                httpContext.Close();
-                httpContext = null;
             }
         }
 

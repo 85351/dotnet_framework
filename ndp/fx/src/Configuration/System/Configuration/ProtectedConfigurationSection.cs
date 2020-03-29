@@ -9,7 +9,6 @@ namespace System.Configuration
     using System.Collections;
     using System.Collections.Specialized;
     using System.Xml;
-    using System.IO;
     using System.Globalization;
     using System.Security.Permissions;
     using System.Diagnostics.CodeAnalysis;
@@ -70,7 +69,7 @@ namespace System.Configuration
 
         internal static string DecryptSection(string encryptedXml, ProtectedConfigurationProvider provider) {
             XmlDocument doc = new XmlDocument();
-            ProtectedConfigurationProvider.LoadXml(doc, encryptedXml);
+            doc.LoadXml(encryptedXml);
             XmlNode resultNode = provider.Decrypt(doc.DocumentElement);
             return resultNode.OuterXml;
         }
@@ -85,11 +84,11 @@ namespace System.Configuration
                         encryptedXml   // the encrypted xml
                         );
         }
-
+        
         internal static string EncryptSection(string clearXml, ProtectedConfigurationProvider provider) {
             XmlDocument xmlDocument = new XmlDocument();
             xmlDocument.PreserveWhitespace = true;
-            ProtectedConfigurationProvider.LoadXml(xmlDocument, clearXml);
+            xmlDocument.LoadXml(clearXml);
             string sectionName = xmlDocument.DocumentElement.Name;
             XmlNode encNode = provider.Encrypt(xmlDocument.DocumentElement);
             return encNode.OuterXml;

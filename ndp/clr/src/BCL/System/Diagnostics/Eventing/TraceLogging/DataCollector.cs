@@ -282,7 +282,7 @@ namespace System.Diagnostics.Tracing
             this.datas = datasTemp + 1;
 
             *pinsTemp = GCHandle.Alloc(value, GCHandleType.Pinned);
-            datasTemp->DataPointer = pinsTemp->AddrOfPinnedObject();
+            datasTemp->m_Ptr = (long)(ulong)(UIntPtr)(void*)pinsTemp->AddrOfPinnedObject();
             datasTemp->m_Size = size;
         }
 
@@ -296,7 +296,7 @@ namespace System.Diagnostics.Tracing
                     throw new IndexOutOfRangeException(Environment.GetResourceString("EventSource_DataDescriptorsOutOfRange"));
                 }
 
-                datasTemp->DataPointer = (IntPtr) this.scratch;
+                datasTemp->m_Ptr = (long)(ulong)(UIntPtr)this.scratch;
                 this.writingScalars = true;
             }
         }

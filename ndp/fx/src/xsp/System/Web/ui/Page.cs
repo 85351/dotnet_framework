@@ -55,14 +55,13 @@ using System.Xml;
 using System.Web.Routing;
 using System.Web.ModelBinding;
 using System.Web.Security.Cryptography;
-using System.Diagnostics.CodeAnalysis;
 
 
 
-    /// <devdoc>
-    ///    Default ControlBuilder used to parse page files.
-    /// </devdoc>
-    public class FileLevelPageControlBuilder: RootBuilder {
+/// <devdoc>
+///    Default ControlBuilder used to parse page files.
+/// </devdoc>
+public class FileLevelPageControlBuilder: RootBuilder {
 
     private ArrayList _contentBuilderEntries;
     private ControlBuilder _firstControlBuilder;
@@ -5305,10 +5304,9 @@ window.onload = WebForm_RestoreScrollPosition;
         base.Render(writer);
     }
 
-        // !! IMPORTANT !!
-        // If you change this method, also change PrepareCallbackAsync.
-        [SuppressMessage("Microsoft.Security.Xml", "CA3004 ReviewCodeForInformationDisclosureVulnerabilities", Justification = "Developer-controlled contents are implicitly trusted.")]
-        private void PrepareCallback(string callbackControlID) {
+    // !! IMPORTANT !!
+    // If you change this method, also change PrepareCallbackAsync.
+    private void PrepareCallback(string callbackControlID) {
         Response.Cache.SetNoStore();
         try {
             string param = _requestValueCollection[callbackParameterID];
@@ -5337,11 +5335,10 @@ window.onload = WebForm_RestoreScrollPosition;
         return;
     }
 
-        // TAP version of PrepareCallback.
-        // !! IMPORTANT !!
-        // If you change this method, also change PrepareCallback.
-        [SuppressMessage("Microsoft.Security.Xml", "CA3004 ReviewCodeForInformationDisclosureVulnerabilities", Justification = "Developer-controlled contents are implicitly trusted.")]
-        private async Task PrepareCallbackAsync(string callbackControlID) {
+    // TAP version of PrepareCallback.
+    // !! IMPORTANT !!
+    // If you change this method, also change PrepareCallback.
+    private async Task PrepareCallbackAsync(string callbackControlID) {
         Response.Cache.SetNoStore();
         try {
             string param = _requestValueCollection[callbackParameterID];
@@ -5373,9 +5370,7 @@ window.onload = WebForm_RestoreScrollPosition;
         return;
     }
 
-
-        [SuppressMessage("Microsoft.Security.Xml", "CA3004 ReviewCodeForInformationDisclosureVulnerabilities", Justification = "Developer-controlled contents are implicitly trusted.")]
-        private void RenderCallback() {
+    private void RenderCallback() {
         bool needsCallbackLoadScript = !String.IsNullOrEmpty(_requestValueCollection[callbackLoadScriptID]);
         try {
             string index = null;

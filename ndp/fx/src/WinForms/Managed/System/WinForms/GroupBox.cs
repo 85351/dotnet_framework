@@ -623,7 +623,7 @@ namespace System.Windows.Forms {
 
                 int boxTop = FontHeight / 2;
 
-                if (SystemInformation.HighContrast && AccessibilityImprovements.Level1) {
+                if (SystemInformation.HighContrast && !LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                     Color boxColor;
                     if (Enabled) {
                         boxColor = ForeColor;

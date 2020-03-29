@@ -237,7 +237,7 @@ namespace System.Windows.Forms {
         /// </summary>
         /// <returns></returns>
         protected override AccessibleObject CreateAccessibilityInstance() {
-            if (AccessibilityImprovements.Level1) {
+            if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                 return new MonthCalendarAccessibleObject(this);
             }
             else {
@@ -2291,7 +2291,7 @@ namespace System.Windows.Forms {
             DateTime start = selectionStart = DateTimePicker.SysTimeToDateTime(nmmcsc.stSelStart);
             DateTime end = selectionEnd = DateTimePicker.SysTimeToDateTime(nmmcsc.stSelEnd);
 
-            if (AccessibilityImprovements.Level1) {
+            if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                 AccessibilityNotifyClients(AccessibleEvents.NameChange, -1);
                 AccessibilityNotifyClients(AccessibleEvents.ValueChange, -1);
             }
@@ -2335,7 +2335,7 @@ namespace System.Windows.Forms {
             if (mcCurView != (NativeMethods.MONTCALENDAR_VIEW_MODE)nmmcvm.uNewView) {
                 mcOldView = mcCurView;
                 mcCurView = (NativeMethods.MONTCALENDAR_VIEW_MODE)nmmcvm.uNewView;
-                if (AccessibilityImprovements.Level1) {
+                if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                     AccessibilityNotifyClients(AccessibleEvents.ValueChange, -1);
                     AccessibilityNotifyClients(AccessibleEvents.NameChange, -1);
                 }
@@ -2351,7 +2351,7 @@ namespace System.Windows.Forms {
             DateTime start = selectionStart = DateTimePicker.SysTimeToDateTime(nmmcsc.stSelStart);
             DateTime end = selectionEnd = DateTimePicker.SysTimeToDateTime(nmmcsc.stSelEnd);
 
-            if (AccessibilityImprovements.Level1) {
+            if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                 AccessibilityNotifyClients(AccessibleEvents.NameChange, -1);
                 AccessibilityNotifyClients(AccessibleEvents.ValueChange, -1);
             }
@@ -2396,7 +2396,7 @@ namespace System.Windows.Forms {
                         WmDateBold(ref m);
                         break;
                     case NativeMethods.MCN_VIEWCHANGE:
-                        if (AccessibilityImprovements.Level1) {
+                        if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                             WmCalViewChanged(ref m);
                         }
                         break;

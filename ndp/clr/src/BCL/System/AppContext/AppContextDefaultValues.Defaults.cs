@@ -17,8 +17,6 @@ namespace System
         internal static readonly string SwitchBlockLongPaths = "Switch.System.IO.BlockLongPaths";
         internal static readonly string SwitchDoNotAddrOfCspParentWindowHandle = "Switch.System.Security.Cryptography.DoNotAddrOfCspParentWindowHandle";
         internal static readonly string SwitchSetActorAsReferenceWhenCopyingClaimsIdentity = "Switch.System.Security.ClaimsIdentity.SetActorAsReferenceWhenCopyingClaimsIdentity";
-        internal static readonly string SwitchIgnorePortablePDBsInStackTraces = "Switch.System.Diagnostics.IgnorePortablePDBsInStackTraces";
-        internal static readonly string SwitchUseNewMaxArraySize = "Switch.System.Runtime.Serialization.UseNewMaxArraySize";
 
         // This is a partial method. Platforms can provide an implementation of it that will set override values
         // from whatever mechanism is available on that platform. If no implementation is provided, the compiler is going to remove the calls
@@ -59,11 +57,6 @@ namespace System
                             AppContext.DefineSwitchDefault(SwitchDoNotAddrOfCspParentWindowHandle, true);
                         }
 
-                        if (version <= 40701)
-                        {
-                            AppContext.DefineSwitchDefault(SwitchIgnorePortablePDBsInStackTraces, true);
-                        }
-
                         break;
                     }
                 case "WindowsPhone":
@@ -76,7 +69,6 @@ namespace System
                             AppContext.DefineSwitchDefault(SwitchUseLegacyPathHandling, true);
                             AppContext.DefineSwitchDefault(SwitchBlockLongPaths, true);
                             AppContext.DefineSwitchDefault(SwitchDoNotAddrOfCspParentWindowHandle, true);
-                            AppContext.DefineSwitchDefault(SwitchIgnorePortablePDBsInStackTraces, true);
                         }
                         break;
                     }

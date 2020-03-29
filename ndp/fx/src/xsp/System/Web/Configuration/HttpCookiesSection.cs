@@ -22,15 +22,12 @@ namespace System.Web.Configuration {
             new ConfigurationProperty("requireSSL", typeof(bool), false, ConfigurationPropertyOptions.None);
         private static readonly ConfigurationProperty _propDomain =
             new ConfigurationProperty("domain", typeof(string), String.Empty, ConfigurationPropertyOptions.None);
-        private static readonly ConfigurationProperty _propSameSite =
-            new ConfigurationProperty("sameSite", typeof(SameSiteMode), SameSiteMode.None, ConfigurationPropertyOptions.None);
 
                 /*         <!--
                 httpCookies Attributes:
                   httpOnlyCookies="[true|false]" - enables output of the "HttpOnly" cookie attribute
                   requireSSL="[true|false]" - enables output of the "secure" cookie attribute as described in RFC 2109
                   domain="[domain]" - enables output of the "domain" cookie attribute set to the specified value
-                  sameSite="[None|Lax|Strict]"
                 -->
                 <httpCookies
                     httpOnlyCookies="false"
@@ -43,7 +40,6 @@ namespace System.Web.Configuration {
             _properties.Add(_propHttpOnlyCookies);
             _properties.Add(_propRequireSSL);
             _properties.Add(_propDomain);
-            _properties.Add(_propSameSite);
         }
 
         public HttpCookiesSection() {
@@ -83,16 +79,6 @@ namespace System.Web.Configuration {
             }
             set {
                 base[_propDomain] = value;
-            }
-        }
-
-        [ConfigurationProperty("sameSite", DefaultValue = SameSiteMode.None)]
-        public SameSiteMode SameSite {
-            get {
-                return (SameSiteMode)base[_propSameSite];
-            }
-            set {
-                base[_propSameSite] = value;
             }
         }
     }

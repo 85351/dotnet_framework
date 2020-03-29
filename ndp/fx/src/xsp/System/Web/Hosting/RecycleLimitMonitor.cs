@@ -52,7 +52,6 @@ namespace System.Web.Hosting {
 
     public class RecycleLimitMonitor : MarshalByRefObject {
         private static readonly string _name = "System.Web.Hosting.RecycleLimitMonitor.RecycleLimitMonitorSingleton";
-        private static readonly string _pbLimit = _name + "+pbLimit";
 
         private static object _singletonLock = new object();
         private static RecycleLimitMonitorSingleton _defaultDomainSingleton = null;
@@ -147,7 +146,6 @@ namespace System.Web.Hosting {
                 lock (_singletonLock) {
                     if (_defaultDomainSingleton == null) {
                         AppDomain defaultDomain = appManager.GetDefaultAppDomain();
-                        defaultDomain.SetData(_pbLimit, AspNetMemoryMonitor.ProcessPrivateBytesLimit);
                         defaultDomain.DoCallBack(new CrossAppDomainDelegate(RecycleLimitMonitorSingleton.EnsureCreated));
 
                         // Keep a proxy reference for later use
@@ -213,11 +211,7 @@ namespace System.Web.Hosting {
                 if (AppDomain.CurrentDomain.IsDefaultAppDomain() && _singleton == null) {
                     lock (_singletonLock) {
                         if (_singleton == null) {
-                            var pbLimit = AppDomain.CurrentDomain.GetData(RecycleLimitMonitor._pbLimit);
-                            if (pbLimit == null) {
-                                return;
-                            }
-                            _singleton = new RecycleLimitMonitorSingleton((long)pbLimit);
+                            _singleton = new RecycleLimitMonitorSingleton(AspNetMemoryMonitor.ProcessPrivateBytesLimit);
                             AppDomain.CurrentDomain.SetData(RecycleLimitMonitor._name, _singleton);
                         }
                     }

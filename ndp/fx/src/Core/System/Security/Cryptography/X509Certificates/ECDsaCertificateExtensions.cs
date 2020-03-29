@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft Corporation.  All rights reserved.
-using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
@@ -24,12 +21,10 @@ namespace System.Security.Cryptography.X509Certificates
             //Check cert for private key and confirm it is ECDSA cert
             if (!certificate.HasPrivateKey || !IsECDsa(certificate)) { return null; }
 
-            CngKeyHandleOpenOptions openOptions;
-
             using (SafeCertContextHandle certificateContext = X509Native.GetCertificateContext(certificate))
-            using (SafeNCryptKeyHandle privateKeyHandle = X509Native.TryAcquireCngPrivateKey(certificateContext, out openOptions))
+            using (SafeNCryptKeyHandle privateKeyHandle = X509Native.TryAcquireCngPrivateKey(certificateContext))
             {           
-                CngKey key = CngKey.Open(privateKeyHandle, openOptions);
+                CngKey key = CngKey.Open(privateKeyHandle, CngKeyHandleOpenOptions.None);
                 return new ECDsaCng(key);
             }
         }
@@ -65,112 +60,6 @@ namespace System.Security.Cryptography.X509Certificates
             }
             GC.KeepAlive(safeCertContext);
             return new ECDsaCng(key);
-        }
-
-        [SecuritySafeCritical]
-        public static X509Certificate2 CopyWithPrivateKey(this X509Certificate2 certificate, ECDsa privateKey)
-        {
-            if (certificate == null)
-                throw new ArgumentNullException(nameof(certificate));
-            if (privateKey == null)
-                throw new ArgumentNullException(nameof(privateKey));
-
-            if (certificate.HasPrivateKey)
-                throw new InvalidOperationException(SR.GetString(SR.Cryptography_Cert_AlreadyHasPrivateKey));
-
-            using (ECDsa publicKey = GetECDsaPublicKey(certificate))
-            {
-                if (publicKey == null)
-                    throw new ArgumentException(SR.GetString(SR.Cryptography_PrivateKey_WrongAlgorithm));
-
-                if (!IsSameKey(publicKey, privateKey))
-                {
-                    throw new ArgumentException(SR.GetString(SR.Cryptography_PrivateKey_DoesNotMatch), nameof(privateKey));
-                }
-            }
-
-            ECDsaCng ecdsaCng = privateKey as ECDsaCng;
-            X509Certificate2 newCert = null;
-
-            if (ecdsaCng != null)
-            {
-                newCert = CertificateExtensionsCommon.CopyWithPersistedCngKey(certificate, ecdsaCng.Key);
-            }
-
-            // No CAPI option for ECDSA
-
-            if (newCert == null)
-            {
-                ECParameters parameters = privateKey.ExportParameters(true);
-
-                using (PinAndClear.Track(parameters.D))
-                using (ecdsaCng = new ECDsaCng())
-                {
-                    ecdsaCng.ImportParameters(parameters);
-
-                    newCert = CertificateExtensionsCommon.CopyWithEphemeralCngKey(certificate, ecdsaCng.Key);
-                }
-            }
-
-            Debug.Assert(newCert != null);
-            Debug.Assert(!ReferenceEquals(certificate, newCert));
-            Debug.Assert(!certificate.HasPrivateKey);
-            Debug.Assert(newCert.HasPrivateKey);
-            return newCert;
-        }
-
-        private static bool IsSameKey(ECDsa a, ECDsa b)
-        {
-            ECParameters aParameters = a.ExportParameters(false);
-            ECParameters bParameters = b.ExportParameters(false);
-
-            if (aParameters.Curve.CurveType != bParameters.Curve.CurveType)
-                return false;
-
-            if (!aParameters.Q.X.SequenceEqual(bParameters.Q.X) ||
-                !aParameters.Q.Y.SequenceEqual(bParameters.Q.Y))
-            {
-                return false;
-            }
-
-            ECCurve aCurve = aParameters.Curve;
-            ECCurve bCurve = bParameters.Curve;
-
-            if (aCurve.IsNamed)
-            {
-                // On Windows we care about FriendlyName, on Unix we care about Value
-                return (aCurve.Oid.Value == bCurve.Oid.Value && aCurve.Oid.FriendlyName == bCurve.Oid.FriendlyName);
-            }
-
-            if (!aCurve.IsExplicit)
-            {
-                // Implicit curve, always fail.
-                return false;
-            }
-
-            // Ignore Cofactor (which is derivable from the prime or polynomial and Order)
-            // Ignore Seed and Hash (which are entirely optional, and about how A and B were built)
-            if (!aCurve.G.X.SequenceEqual(bCurve.G.X) ||
-                !aCurve.G.Y.SequenceEqual(bCurve.G.Y) ||
-                !aCurve.Order.SequenceEqual(bCurve.Order) ||
-                !aCurve.A.SequenceEqual(bCurve.A) ||
-                !aCurve.B.SequenceEqual(bCurve.B))
-            {
-                return false;
-            }
-
-            if (aCurve.IsPrime)
-            {
-                return aCurve.Prime.SequenceEqual(bCurve.Prime);
-            }
-
-            if (aCurve.IsCharacteristic2)
-            {
-                return aCurve.Polynomial.SequenceEqual(bCurve.Polynomial);
-            }
-
-            Debug.Fail($"Missing match criteria for curve type {aCurve.CurveType}");
-            return false;
         }
 
         /// <summary>

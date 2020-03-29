@@ -755,10 +755,6 @@ namespace System.Net {
         }
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
-        "Microsoft.Design", 
-        "CA1031:DoNotCatchGeneralExceptionTypes", 
-        Justification = "We need to ensure that this class initializes in any condition.")]
 #if !FEATURE_PAL
     [SuppressUnmanagedCodeSecurity]
 #if DEBUG
@@ -767,27 +763,8 @@ namespace System.Net {
     internal sealed class SafeLoadLibrary : SafeHandleZeroOrMinusOneIsInvalid {
 #endif
         private const string KERNEL32 = "kernel32.dll";
-        private const string AddDllDirectory = "AddDllDirectory";
-        private const uint LOAD_LIBRARY_SEARCH_SYSTEM32 = 0x00000800;
 
         public static readonly SafeLoadLibrary Zero = new SafeLoadLibrary(false);
-
-        // KB2533623 introduced the LOAD_LIBRARY_SEARCH_SYSTEM32 flag. It also introduced
-        // the AddDllDirectory function. We test for presence of AddDllDirectory as  
-        // indirect evidence of support for the LOAD_LIBRARY_SEARCH_SYSTEM32 flag. 
-        private static uint _flags = 0;
-
-        static SafeLoadLibrary() {
-            try {
-                IntPtr hKernel32 = UnsafeNclNativeMethods.SafeNetHandles.GetModuleHandleW(KERNEL32);
-
-                if (hKernel32 != IntPtr.Zero &&
-                    UnsafeNclNativeMethods.GetProcAddress(hKernel32, AddDllDirectory) != IntPtr.Zero) {
-                    _flags = LOAD_LIBRARY_SEARCH_SYSTEM32;
-                }
-            }
-            catch { /* noop to ensure this class can initialize */ }
-        }
 
         private SafeLoadLibrary() : base(true) {
         }
@@ -797,7 +774,7 @@ namespace System.Net {
 
         public unsafe static SafeLoadLibrary LoadLibraryEx(string library) {
 
-            SafeLoadLibrary result = UnsafeNclNativeMethods.SafeNetHandles.LoadLibraryExW(library, null, _flags);
+            SafeLoadLibrary result = UnsafeNclNativeMethods.SafeNetHandles.LoadLibraryExW(library, null, 0);
             if (result.IsInvalid) {
                 result.SetHandleAsInvalid();
             }
@@ -813,6 +790,7 @@ namespace System.Net {
         protected override bool ReleaseHandle() {
             return UnsafeNclNativeMethods.SafeNetHandles.FreeLibrary(handle);
         }
+
     }
 
     ///////////////////////////////////////////////////////////////

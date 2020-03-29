@@ -29,18 +29,19 @@ namespace System.Windows.Forms.ButtonInternal {
 
             Rectangle r = Control.ClientRectangle;
 
+            Brush backbrush = null;
             if (state == CheckState.Indeterminate) {
-                Brush backbrush = CreateDitherBrush(colors.highlight, colors.buttonFace);
-                try {
-                    PaintButtonBackground(e, r, backbrush);
-                }
-                finally {
+                backbrush = CreateDitherBrush(colors.highlight, colors.buttonFace);
+            }
+
+            try {
+                PaintButtonBackground(e, r, backbrush);
+            }
+            finally {
+                if (backbrush != null) {
                     backbrush.Dispose();
                     backbrush = null;
                 }
-            }
-            else {
-                Control.PaintBackground(e, r, IsHighContrastHighlighted2() ? SystemColors.Highlight : Control.BackColor, r.Location);
             }
 
             if (Control.IsDefault) {
@@ -48,7 +49,7 @@ namespace System.Windows.Forms.ButtonInternal {
             }
 
             PaintImage(e, layout);
-            PaintField(e, layout, colors, state != CheckState.Indeterminate && IsHighContrastHighlighted2() ? SystemColors.HighlightText : colors.windowText, true);
+            PaintField(e, layout, colors, colors.windowText, true);
 
             DrawDefaultBorder(g, r, colors.options.highContrast ? colors.windowText : colors.buttonShadow, this.Control.IsDefault);
 
@@ -69,26 +70,26 @@ namespace System.Windows.Forms.ButtonInternal {
 
             Rectangle r = Control.ClientRectangle;
 
+            Brush backbrush = null;
             if (state == CheckState.Indeterminate) {
-                Brush backbrush = CreateDitherBrush(colors.highlight, colors.buttonFace);
-                try {
-                    PaintButtonBackground(e, r, backbrush);
-                }
-                finally {
+                backbrush = CreateDitherBrush(colors.highlight, colors.buttonFace);
+            }
+
+            try {
+                PaintButtonBackground(e, r, backbrush);
+            }
+            finally {
+                if (backbrush != null) {
                     backbrush.Dispose();
                     backbrush = null;
                 }
             }
-            else {
-                Control.PaintBackground(e, r, IsHighContrastHighlighted2() ? SystemColors.Highlight : Control.BackColor, r.Location);
-            }
-
             if (Control.IsDefault) {
                 r.Inflate(-1, -1);
             }
 
             PaintImage(e, layout);
-            PaintField(e, layout, colors, IsHighContrastHighlighted2() ? SystemColors.HighlightText : colors.windowText, true);
+            PaintField(e, layout, colors, colors.windowText, true);
 
             DrawDefaultBorder(g, r, colors.options.highContrast ? colors.windowText : colors.buttonShadow, this.Control.IsDefault);
 

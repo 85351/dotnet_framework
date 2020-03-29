@@ -7,10 +7,8 @@
 namespace System.Windows.Forms
 {
     using System;
-    using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
-    using System.Security.Permissions;
-
+    
     /// <include file='doc\DataGridViewEditingControl.uex' path='docs/doc[@for="IDataGridViewEditingControl"]/*' />
     public interface IDataGridViewEditingControl
     {
@@ -67,27 +65,5 @@ namespace System.Windows.Forms
 
         /// <include file='doc\DataGridViewEditingControl.uex' path='docs/doc[@for="IDataGridViewEditingControl.PrepareEditingControlForEdit"]/*' />
         void PrepareEditingControlForEdit(bool selectAll);
-    }
-
-    /// <include file='doc\DataGridViewEditingControl.uex' path='docs/doc[@for="DataGridViewEditingControlAccessibleObject"]/*' />
-    /// <devdoc>
-    ///    Implements a custom AccessibleObject that fixes editing control's accessibility ancestor chain.
-    /// </devdoc>
-    [System.Runtime.InteropServices.ComVisible(true)]
-    internal class DataGridViewEditingControlAccessibleObject : Control.ControlAccessibleObject
-    {
-        public DataGridViewEditingControlAccessibleObject(Control ownerControl) : base(ownerControl)
-        {
-            Debug.Assert(ownerControl is IDataGridViewEditingControl, "ownerControl must implement IDataGridViewEditingControl");
-        }
-
-        public override AccessibleObject Parent
-        {
-            [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
-            get
-            {
-                return (Owner as IDataGridViewEditingControl)?.EditingControlDataGridView?.CurrentCell?.AccessibilityObject;
-            }
-        }
     }
 }

@@ -55,7 +55,7 @@ namespace System.Windows.Forms {
         }
 
         protected override AccessibleObject CreateAccessibilityInstance() {
-            if (AccessibilityImprovements.Level1) {
+            if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                 return new ToolStripDropDownButtonAccessibleObject(this);
             }
             else {
@@ -179,13 +179,7 @@ namespace System.Windows.Forms {
                     ToolStripDropDownButton.ToolStripDropDownButtonInternalLayout layout = InternalLayout as ToolStripDropDownButtonInternalLayout;
                     Rectangle dropDownArrowRect = (layout != null) ? layout.DropDownArrowRect :Rectangle.Empty;
 
-                    Color arrowColor;
-                    if (Selected && !Pressed && AccessibilityImprovements.Level2 && SystemInformation.HighContrast) {
-                        arrowColor = Enabled ? SystemColors.HighlightText : SystemColors.ControlDark;
-                    }
-                    else {
-                        arrowColor =  Enabled ? SystemColors.ControlText : SystemColors.ControlDark;
-                    }
+                    Color arrowColor =  Enabled ? SystemColors.ControlText : SystemColors.ControlDark;
                     renderer.DrawArrow(new ToolStripArrowRenderEventArgs(g, this,dropDownArrowRect, arrowColor, ArrowDirection.Down)); 
                 }
             }

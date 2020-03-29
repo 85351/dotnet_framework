@@ -293,7 +293,7 @@ namespace System.Xaml
         // Determine if two Public Key Tokens are the same.
         //
 #if !REACHFRAMEWORK
-#if PRESENTATIONFRAMEWORK || SYSTEM_XAML || PRESENTATION_CORE
+#if PRESENTATIONFRAMEWORK || SYSTEM_XAML
         internal
 #else
         private

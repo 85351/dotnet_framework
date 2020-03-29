@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.TextFormatting;
@@ -202,38 +201,13 @@ namespace System.Windows.Controls
         /// <summary>
         /// Create and return visual node for the line. 
         /// </summary>
-        internal TextBoxLineDrawingVisual CreateVisual(Geometry selectionGeometry)
+        internal TextBoxLineDrawingVisual CreateVisual()
         {
             TextBoxLineDrawingVisual visual = new TextBoxLineDrawingVisual();
 
             // Calculate shift in line offset to render trailing spaces or avoid clipping text.
             double delta = CalculateXOffsetShift();
             DrawingContext ctx = visual.RenderOpen();
-
-            if (selectionGeometry != null)
-            {
-                var uiScope = _owner?.Host?.TextContainer?.TextSelection?.TextEditor?.UiScope;
-
-                if (uiScope != null)
-                {
-                    Brush selectionBrush = uiScope.GetValue(TextBoxBase.SelectionBrushProperty) as Brush;
-
-                    if (selectionBrush != null)
-                    {
-                        double selectionBrushOpacity = (double)uiScope.GetValue(TextBoxBase.SelectionOpacityProperty);
-
-                        ctx.PushOpacity(selectionBrushOpacity);
-
-                        // We use a Pen created from the brush used for the selection with a default thickness.
-                        // This fixes issues where the geometries for the independent selection do not overlap
-                        // and gaps can be seen to the background of the control between selection geometries.
-                        ctx.DrawGeometry(selectionBrush, new Pen() { Brush = selectionBrush }, selectionGeometry);
-
-                        ctx.Pop();
-                    }
-                }
-            }
-
             _line.Draw(ctx, new Point(delta, 0), ((_lineProperties.FlowDirection == FlowDirection.RightToLeft) ? InvertAxes.Horizontal : InvertAxes.None));
             ctx.Close();
 
@@ -267,7 +241,7 @@ namespace System.Windows.Controls
         internal List<Rect> GetRangeBounds(int cp, int cch, double xOffset, double yOffset)
         {
             List<Rect> rectangles = new List<Rect>();
-
+            
             // Adjust x offset for trailing spaces
             double delta = CalculateXOffsetShift();
             double adjustedXOffset = xOffset + delta;
@@ -351,9 +325,9 @@ namespace System.Windows.Controls
         /// <summary>
         /// Calculated width of the line.
         /// </summary>
-        internal double Width
-        {
-            get
+        internal double Width 
+        { 
+            get 
             {
                 if (IsWidthAdjusted)
                 {
@@ -364,7 +338,7 @@ namespace System.Windows.Controls
                 {
                     return _line.Width;
                 }
-            }
+            } 
         }
 
         /// <summary>
@@ -439,55 +413,21 @@ namespace System.Windows.Controls
                 endOfRunPosition = position.CreatePointer(4096);
             }
 
-            var highlights = position.TextContainer.Highlights;
-
             // Factor in any speller error squiggles on the run.
-            TextDecorationCollection highlightDecorations = highlights.GetHighlightValue(position, LogicalDirection.Forward, typeof(SpellerHighlightLayer)) as TextDecorationCollection;
+            TextDecorationCollection highlightDecorations = position.TextContainer.Highlights.GetHighlightValue(position, LogicalDirection.Forward, typeof(SpellerHighlightLayer)) as TextDecorationCollection;
+            TextRunProperties properties;
 
-            TextRunProperties properties = _lineProperties.DefaultTextRunProperties;
-
-            if (highlightDecorations != null)
+            if (highlightDecorations == null)
+            {
+                properties = _lineProperties.DefaultTextRunProperties;
+            }
+            else
             {
                 if (_spellerErrorProperties == null)
                 {
-                    _spellerErrorProperties = new TextProperties((TextProperties)properties, highlightDecorations);
+                    _spellerErrorProperties = new TextProperties((TextProperties)_lineProperties.DefaultTextRunProperties, highlightDecorations);
                 }
                 properties = _spellerErrorProperties;
-            }
-
-            var textEditor = position.TextContainer.TextSelection?.TextEditor;
-
-            // DDVSO:405199
-            // Apply selection highlighting if needed
-            if ((textEditor?.TextView?.RendersOwnSelection == true)
-                && highlights.GetHighlightValue(position, LogicalDirection.Forward, typeof(TextSelection)) != DependencyProperty.UnsetValue)
-            {
-                // We need to create a new TextProperties instance here since we are going to change the Foreground and Background.
-                var selectionProps = new TextProperties((TextProperties)properties, highlightDecorations);
-
-                // The UiScope that owns this line should be the source for text/highlight properties
-                var uiScope = textEditor?.UiScope;
-
-                if (uiScope != null)
-                {
-                    // All selection properties are taken from TextBoxBase
-                    bool isSelectionActive = (bool)uiScope.GetValue(TextBoxBase.IsSelectionActiveProperty);
-                    bool isInactiveSelectionHighlightEnabled = (bool)uiScope.GetValue(TextBoxBase.IsInactiveSelectionHighlightEnabledProperty);
-
-                    Brush selectionTextBrush = SystemColors.HighlightTextBrush;
-
-                    // If we have an inactive selection and we allow the highlight, set the appropriate brush for the text here.
-                    if (!isSelectionActive && isInactiveSelectionHighlightEnabled)
-                    {
-                        selectionTextBrush = SystemColors.InactiveSelectionHighlightTextBrush;
-                    }
-
-                    // Background should not be drawn since the selection is drawn below us
-                    selectionProps.SetBackgroundBrush(null);
-                    selectionProps.SetForegroundBrush(selectionTextBrush);
-                }
-
-                properties = selectionProps;
             }
 
             // Get character buffer for the text run.
@@ -512,13 +452,13 @@ namespace System.Windows.Controls
         private Rect GetBoundsFromPosition(int cp, int cch, out FlowDirection flowDirection)
         {
             Rect rect;
-
+            
             // Adjust x offset for trailing spaces
             double delta = CalculateXOffsetShift();
             IList<TextBounds> textBounds = _line.GetTextBounds(cp, cch);
             Invariant.Assert(textBounds != null && textBounds.Count == 1, "Expecting exactly one TextBounds for a single text position.");
-
-            IList<TextRunBounds> runBounds = textBounds[0].TextRunBounds;
+            
+            IList<TextRunBounds> runBounds = textBounds[0].TextRunBounds;            
             if (runBounds != null)
             {
                 Invariant.Assert(runBounds.Count == 1, "Expecting exactly one TextRunBounds for a single text position.");
@@ -600,7 +540,7 @@ namespace System.Windows.Controls
                 return (HasLineBreak || EndOfParagraph);
             }
         }
-
+        
         #endregion Private Properties
 
         //-------------------------------------------------------------------

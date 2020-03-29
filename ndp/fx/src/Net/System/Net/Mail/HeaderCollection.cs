@@ -101,16 +101,16 @@ namespace System.Net.Mime
         public override void Set(string name, string value) {
             if(Logging.On)Logging.PrintInfo(Logging.Web, this, "Set", name.ToString() + "=" + value.ToString());
             if (name == null)
-                throw new ArgumentNullException(nameof(name));
+                throw new ArgumentNullException("name");
 
             if (value == null)
-                throw new ArgumentNullException(nameof(value));
+                throw new ArgumentNullException("value");
 
             if (name == string.Empty)
-                throw new ArgumentException(SR.GetString(SR.net_emptystringcall, nameof(name)), nameof(name));
+                throw new ArgumentException(SR.GetString(SR.net_emptystringcall,"name"), "name");
 
             if (value == string.Empty)
-                throw new ArgumentException(SR.GetString(SR.net_emptystringcall, nameof(value)), nameof(value));
+                throw new ArgumentException(SR.GetString(SR.net_emptystringcall,"value"), "name");
 
             if (!MimeBasePart.IsAscii(name,false)) {
                 throw new FormatException(SR.GetString(SR.InvalidHeaderName));
@@ -136,16 +136,16 @@ namespace System.Net.Mime
         public override void Add(string name, string value) {
             if(Logging.On)Logging.PrintInfo(Logging.Web, this, "Add", name.ToString() + "=" + value.ToString());
             if (name == null)
-                throw new ArgumentNullException(nameof(name));
+                throw new ArgumentNullException("name");
 
             if (value == null)
-                throw new ArgumentNullException(nameof(value));
+                throw new ArgumentNullException("value");
 
             if (name == string.Empty)
-                throw new ArgumentException(SR.GetString(SR.net_emptystringcall, nameof(name)), nameof(name));
+                throw new ArgumentException(SR.GetString(SR.net_emptystringcall,"name"), "name");
 
             if (value == string.Empty)
-                throw new ArgumentException(SR.GetString(SR.net_emptystringcall, nameof(value)), nameof(value));
+                throw new ArgumentException(SR.GetString(SR.net_emptystringcall,"value"), "name");
 
             MailBnfHelper.ValidateHeaderName(name);
             

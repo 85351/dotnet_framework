@@ -180,13 +180,6 @@ namespace System.Windows.Forms {
             }
         }
 
-        internal override ToolStripItem GetNextItem(ToolStripItem start, ArrowDirection direction, bool rtlAware) {
-            ToolStripItem nextItem = base.GetNextItem(start, direction, rtlAware);
-            if (nextItem is MdiControlStrip.SystemMenuItem && AccessibilityImprovements.Level2) {
-                nextItem = base.GetNextItem(nextItem, direction, rtlAware);
-            }
-            return nextItem;
-        }
 
         protected virtual void OnMenuActivate(EventArgs e) {
             if (IsHandleCreated) {

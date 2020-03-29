@@ -44,7 +44,7 @@
 #endif
 
 #ifndef _BID_EXTERNAL_DLL_NAME
-  #define _BID_EXTERNAL_DLL_NAME        BID_T("<NotFound>")
+  #define _BID_EXTERNAL_DLL_NAME        BID_T("BidLab.dll")
 #endif
 
 #ifndef _BID_EXTERNAL_DLL_LOOKUP

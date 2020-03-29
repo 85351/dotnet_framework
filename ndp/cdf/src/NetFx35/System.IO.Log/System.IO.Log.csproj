@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{56b1e6ae-5e35-4fea-a94d-820aff64284d}</ProjectGuid>
+    <ProjectGuid>{93f0e170-1240-47c1-806c-97a65b958676}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>System.IO.Log</AssemblyName>
@@ -20,27 +20,27 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\clr\src\bcl\mscorlib.csproj">
-      <Project>{74ef8966-be63-49d5-84bc-6c2cb0724069}</Project>
+      <Project>{1a036d4f-3229-4c80-81c6-05cdf14a2647}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\WCF\SMDiagnostics\SMDiagnostics.csproj">
-      <Project>{ddade962-e061-4073-b99c-bc0849031e11}</Project>
+      <Project>{c3020ad2-a9e9-4ad3-9ccd-b01c1d65a93e}</Project>
       <Name>SMDiagnostics</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\fx\src\System.csproj">
-      <Project>{df88a904-fb7a-40a0-8bc0-4e757ca35923}</Project>
+      <Project>{6be2c2bf-f37e-4bb5-a1c5-e1ba53d34890}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\fx\src\Configuration\System.Configuration.csproj">
-      <Project>{563c9efb-3f3c-4866-a6b0-325e40057312}</Project>
+      <Project>{1801028f-0281-49e9-bfa0-23adadea513a}</Project>
       <Name>System.Configuration</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\System.ServiceModel.Internals\System.ServiceModel.Internals.csproj">
-      <Project>{818221e0-c161-409c-9b1b-171c6ec54b27}</Project>
+      <Project>{d237e2ae-d3c0-457f-9f18-72bd3b38a5b4}</Project>
       <Name>System.ServiceModel.Internals</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\fx\src\Xml\System.Xml.csproj">
-      <Project>{44ffba6a-a240-4b9c-a1ef-f44bd42f8b8f}</Project>
+      <Project>{185b3b11-76cb-4590-b798-d4ce9b10e555}</Project>
       <Name>System.Xml</Name>
     </ProjectReference>
   </ItemGroup>

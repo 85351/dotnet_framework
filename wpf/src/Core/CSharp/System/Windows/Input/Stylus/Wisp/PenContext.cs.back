@@ -31,7 +31,7 @@ namespace System.Windows.Input
         [SecurityCritical]
         internal PenContext(IPimcContext2 pimcContext, IntPtr hwnd, 
                                 PenContexts contexts, bool supportInRange, bool isIntegrated,
-                                int id, IntPtr commHandle, int tabletDeviceId, UInt32 wispContextKey)
+                                int id, IntPtr commHandle, int tabletDeviceId)
         {
             _contexts = contexts;
             _pimcContext = new SecurityCriticalDataClass<IPimcContext2>(pimcContext);
@@ -41,7 +41,6 @@ namespace System.Windows.Input
             _hwnd = new SecurityCriticalData<IntPtr>(hwnd);
             _supportInRange = supportInRange;
             _isIntegrated = isIntegrated;
-            WispContextKey = wispContextKey;
             UpdateScreenMeasurementsPending = false;
         }
 
@@ -587,10 +586,6 @@ namespace System.Windows.Input
             _queuedInRangeCount--;
         }
 
-        /// <summary>
-        /// The GIT key for a WISP context COM object.
-        /// </summary>
-        internal UInt32 WispContextKey { get; private set; }
 
         /////////////////////////////////////////////////////////////////////
 

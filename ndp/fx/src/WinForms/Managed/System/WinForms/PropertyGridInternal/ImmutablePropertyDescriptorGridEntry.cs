@@ -34,7 +34,7 @@ namespace System.Windows.Forms.PropertyGridInternal {
         : base(ownerGrid, peParent, propInfo, hide) {
         }
 
-        internal override bool IsPropertyReadOnly {
+        protected override bool IsPropertyReadOnly {
             get {
                 return ShouldRenderReadOnly;
             }

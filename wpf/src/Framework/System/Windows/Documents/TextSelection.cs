@@ -1805,11 +1805,11 @@ namespace System.Windows.Documents
         {
             ITextContainer textContainer = ((ITextSelection)this).Start.TextContainer;
 
-            // DDVSO:405199
-            // If we are using the adorner, then we should not instantiate highlight layers
-            // for TextContainer or PasswordTextContainer.
-            if (FrameworkAppContextSwitches.UseAdornerForTextboxSelectionRendering
-                && (textContainer is TextContainer || textContainer is PasswordTextContainer))
+            // Only fixed documents use the highlight layer for selection. In all other cases,
+            // selection is rendered on the adorner layer. Since we split up individual runs
+            // fed in to TextFormatter at highlight boundaries, using the highlight layer for
+            // selection can affect measure.
+            if (textContainer is TextContainer || textContainer is PasswordTextContainer)
             {
                 return;
             }

@@ -193,14 +193,13 @@ namespace System.Security.Cryptography.Pkcs {
 
 
             CspParameters parameters = new CspParameters();
-            if (X509Utils.GetPrivateKeyInfo(X509Utils.GetCertContext(signer.Certificate), ref parameters))
-            {
+            if (X509Utils.GetPrivateKeyInfo(X509Utils.GetCertContext(signer.Certificate), ref parameters) == false)
+                throw new CryptographicException(SafeGetLastWin32Error());
 
-                KeyContainerPermission kp = new KeyContainerPermission(KeyContainerPermissionFlags.NoFlags);
-                KeyContainerPermissionAccessEntry entry = new KeyContainerPermissionAccessEntry(parameters, KeyContainerPermissionFlags.Open | KeyContainerPermissionFlags.Sign);
-                kp.AccessEntries.Add(entry);
-                kp.Demand();
-            }
+            KeyContainerPermission kp = new KeyContainerPermission(KeyContainerPermissionFlags.NoFlags);
+            KeyContainerPermissionAccessEntry entry = new KeyContainerPermissionAccessEntry(parameters, KeyContainerPermissionFlags.Open | KeyContainerPermissionFlags.Sign);
+            kp.AccessEntries.Add(entry);
+            kp.Demand();
 
             if (m_safeCryptMsgHandle == null || m_safeCryptMsgHandle.IsInvalid) {
                 // First signer.
@@ -295,8 +294,7 @@ namespace System.Security.Cryptography.Pkcs {
 
             SafeCryptMsgHandle safeCryptMsgHandle = null;
             CAPI.CMSG_SIGNED_ENCODE_INFO signedEncodeInfo = new CAPI.CMSG_SIGNED_ENCODE_INFO(Marshal.SizeOf(typeof(CAPI.CMSG_SIGNED_ENCODE_INFO)));
-            SafeCryptProvHandle safeCryptProvHandle;
-            CAPI.CMSG_SIGNER_ENCODE_INFO signerEncodeInfo = PkcsUtils.CreateSignerEncodeInfo(signer, silent, out safeCryptProvHandle);
+            CAPI.CMSG_SIGNER_ENCODE_INFO signerEncodeInfo = PkcsUtils.CreateSignerEncodeInfo(signer, silent);
 
             byte[] encodedMessage = null;
             try {
@@ -355,7 +353,6 @@ namespace System.Security.Cryptography.Pkcs {
             finally {
                 // Don't forget to free all the resource still held inside signerEncodeInfo.
                 signerEncodeInfo.Dispose();
-                safeCryptProvHandle.Dispose();
             }
 
             // Re-open to decode.
@@ -369,8 +366,7 @@ namespace System.Security.Cryptography.Pkcs {
 
         [SecuritySafeCritical]
         private void CoSign (CmsSigner signer, bool silent) {
-            SafeCryptProvHandle safeCryptProvHandle;
-            CAPI.CMSG_SIGNER_ENCODE_INFO signerEncodeInfo = PkcsUtils.CreateSignerEncodeInfo(signer, silent, out safeCryptProvHandle);
+            CAPI.CMSG_SIGNER_ENCODE_INFO signerEncodeInfo = PkcsUtils.CreateSignerEncodeInfo(signer, silent);
 
             try {
                 SafeLocalAllocHandle pSignerEncodeInfo = CAPI.LocalAlloc(CAPI.LPTR, new IntPtr(Marshal.SizeOf(typeof(CAPI.CMSG_SIGNER_ENCODE_INFO))));
@@ -394,7 +390,6 @@ namespace System.Security.Cryptography.Pkcs {
             finally {
                 // and don't forget to dispose of resources allocated for the structure.
                 signerEncodeInfo.Dispose();
-                safeCryptProvHandle.Dispose();
             }
 
             // Finally, add certs to bag of certs.

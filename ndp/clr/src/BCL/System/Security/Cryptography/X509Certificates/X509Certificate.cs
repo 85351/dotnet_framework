@@ -47,8 +47,7 @@ namespace System.Security.Cryptography.X509Certificates {
         MachineKeySet = 0x02,
         Exportable    = 0x04,
         UserProtected = 0x08,
-        PersistKeySet = 0x10,
-        EphemeralKeySet = 0x20,
+        PersistKeySet = 0x10
     }
 
     [Serializable]
@@ -71,14 +70,6 @@ namespace System.Security.Cryptography.X509Certificates {
         [System.Security.SecurityCritical] // auto-generated
         private SafeCertContextHandle m_safeCertContext;
         private bool m_certContextCloned = false;
-
-        internal const X509KeyStorageFlags KeyStorageFlagsAll =
-            X509KeyStorageFlags.UserKeySet |
-            X509KeyStorageFlags.MachineKeySet |
-            X509KeyStorageFlags.Exportable |
-            X509KeyStorageFlags.UserProtected |
-            X509KeyStorageFlags.PersistKeySet |
-            X509KeyStorageFlags.EphemeralKeySet;
 
         //
         // public constructors

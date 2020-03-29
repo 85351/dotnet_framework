@@ -294,10 +294,9 @@ namespace System.Globalization {
                                 120000));
             }
             Contract.EndContractBlock();
-
-            int y, m, d;
-            time.GetDatePart(out y, out m, out d);
-
+            int y = GetDatePart(time.Ticks, DatePartYear);
+            int m = GetDatePart(time.Ticks, DatePartMonth);
+            int d = GetDatePart(time.Ticks, DatePartDay);
             int i = m - 1 + months;
             if (i >= 0)
             {
@@ -343,7 +342,7 @@ namespace System.Globalization {
 
         public override int GetDayOfMonth(DateTime time)
         {
-            return time.Day;
+            return (GetDatePart(time.Ticks, DatePartDay));
         }
 
         // Returns the day-of-week part of the specified DateTime. The returned value
@@ -363,7 +362,7 @@ namespace System.Globalization {
 
         public override int GetDayOfYear(DateTime time)
         {
-            return time.DayOfYear;
+            return (GetDatePart(time.Ticks, DatePartDayOfYear));
         }
 
         // Returns the number of days in the month given by the year and
@@ -426,7 +425,7 @@ namespace System.Globalization {
 
         public override int GetMonth(DateTime time)
         {
-            return time.Month;
+            return (GetDatePart(time.Ticks, DatePartMonth));
         }
 
         // Returns the number of months in the specified year and era.
@@ -455,7 +454,7 @@ namespace System.Globalization {
 
         public override int GetYear(DateTime time)
         {
-            return time.Year;
+            return (GetDatePart(time.Ticks, DatePartYear));
         }
 
         // Checks whether a given day in the specified era is a leap day. This method returns true if

@@ -1473,7 +1473,7 @@ namespace System.Deployment.Internal.CodeSigning
                 // Time stamp it if requested.
                 if (timeStampUrl != null && timeStampUrl.Length != 0)
                 {
-                    TimestampSignedLicenseDom(licenseDom, timeStampUrl, useSha256);
+                    TimestampSignedLicenseDom(licenseDom, timeStampUrl);
                 }
 
                 // Wrap it inside a RelData element.
@@ -1483,124 +1483,40 @@ namespace System.Deployment.Internal.CodeSigning
             }
         }
 
-        private static string ObtainRFC3161Timestamp(string timeStampUrl, string signatureValue, bool useSha256)
+        private static void TimestampSignedLicenseDom(XmlDocument licenseDom, string timeStampUrl)
         {
-            byte[] sigValueBytes = Convert.FromBase64String(signatureValue);
-            string timestamp = String.Empty;
+            Win32.CRYPT_DATA_BLOB timestampBlob = new Win32.CRYPT_DATA_BLOB();
 
-            string algId = useSha256 ? Win32.szOID_NIST_sha256 : Win32.szOID_OIWSEC_sha1;
-
-            unsafe
-            {
-                IntPtr ppTsContext = IntPtr.Zero;
-                IntPtr ppTsSigner = IntPtr.Zero;
-                IntPtr phStore = IntPtr.Zero;
-
-                try
-                {
-                    byte[] nonce = new byte[24];
-
-                    using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(nonce);
-                    }
-
-                    Win32.CRYPT_TIMESTAMP_PARA para = new Win32.CRYPT_TIMESTAMP_PARA()
-                    {
-                        fRequestCerts = true,
-                        pszTSAPolicyId = IntPtr.Zero,
-                    };
-
-                    fixed (byte* pbNonce = nonce)
-                    {
-                        para.Nonce.cbData = (uint)nonce.Length;
-                        para.Nonce.pbData = (IntPtr)pbNonce;
-
-                        if (!Win32.CryptRetrieveTimeStamp(
-                            timeStampUrl,
-                            0,
-                            60 * 1000,  // 1 minute timeout
-                            algId,
-                            ref para,
-                            sigValueBytes,
-                            sigValueBytes.Length,
-                            ref ppTsContext,
-                            ref ppTsSigner,
-                            ref phStore))
-                        {
-                            throw new CryptographicException(Marshal.GetLastWin32Error());
-                        }
-                    }
-
-                    var timestampContext = (Win32.CRYPT_TIMESTAMP_CONTEXT)Marshal.PtrToStructure(ppTsContext, typeof(Win32.CRYPT_TIMESTAMP_CONTEXT));
-                    byte[] encodedBytes = new byte[(int)timestampContext.cbEncoded];
-                    Marshal.Copy(timestampContext.pbEncoded, encodedBytes, 0, (int)timestampContext.cbEncoded);
-                    timestamp = Convert.ToBase64String(encodedBytes);
-                }
-                finally
-                {
-                    if (ppTsContext != IntPtr.Zero)
-                        Win32.CryptMemFree(ppTsContext);
-
-                    if (ppTsSigner != IntPtr.Zero)
-                        Win32.CertFreeCertificateContext(ppTsSigner);
-
-                    if (phStore != IntPtr.Zero)
-                        Win32.CertCloseStore(phStore, 0);
-                }
-            }
-
-            return timestamp;
-        }
-
-        private static void TimestampSignedLicenseDom(XmlDocument licenseDom, string timeStampUrl, bool useSha256)
-        {
             XmlNamespaceManager nsm = new XmlNamespaceManager(licenseDom.NameTable);
             nsm.AddNamespace("r", LicenseNamespaceUri);
             nsm.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
             nsm.AddNamespace("as", AuthenticodeNamespaceUri);
 
-            string timestamp = String.Empty;
+            byte[] licenseXml = Encoding.UTF8.GetBytes(licenseDom.OuterXml);
 
-            try
+            unsafe
             {
-                // Try RFC3161 first
-                XmlElement signatureValueNode = licenseDom.SelectSingleNode("r:license/r:issuer/ds:Signature/ds:SignatureValue", nsm) as XmlElement;
-                string signatureValue = signatureValueNode.InnerText;
-                timestamp = ObtainRFC3161Timestamp(timeStampUrl, signatureValue, useSha256);
-            }
-            // Catch all exceptions to ensure fallback to old code (non-RFC3161)
-            catch
-            {
-                Win32.CRYPT_DATA_BLOB timestampBlob = new Win32.CRYPT_DATA_BLOB();
-
-                byte[] licenseXml = Encoding.UTF8.GetBytes(licenseDom.OuterXml);
-
-                unsafe
+                fixed (byte* pbLicense = licenseXml)
                 {
-                    fixed (byte* pbLicense = licenseXml)
-                    {
-                        Win32.CRYPT_DATA_BLOB licenseBlob = new Win32.CRYPT_DATA_BLOB();
-                        IntPtr pvLicense = new IntPtr(pbLicense);
-                        licenseBlob.cbData = (uint)licenseXml.Length;
-                        licenseBlob.pbData = pvLicense;
+                    Win32.CRYPT_DATA_BLOB licenseBlob = new Win32.CRYPT_DATA_BLOB();
+                    IntPtr pvLicense = new IntPtr(pbLicense);
+                    licenseBlob.cbData = (uint)licenseXml.Length;
+                    licenseBlob.pbData = pvLicense;
 
-                        int hr = Win32.CertTimestampAuthenticodeLicense(ref licenseBlob, timeStampUrl, ref timestampBlob);
-                        if (hr != Win32.S_OK)
-                        {
-                            throw new CryptographicException(hr);
-                        }
+                    int hr = Win32.CertTimestampAuthenticodeLicense(ref licenseBlob, timeStampUrl, ref timestampBlob);
+                    if (hr != Win32.S_OK)
+                    {
+                        throw new CryptographicException(hr);
                     }
                 }
-
-                byte[] timestampSignature = new byte[timestampBlob.cbData];
-                Marshal.Copy(timestampBlob.pbData, timestampSignature, 0, timestampSignature.Length);
-                Win32.HeapFree(Win32.GetProcessHeap(), 0, timestampBlob.pbData);
-                timestamp = Encoding.UTF8.GetString(timestampSignature);
             }
 
+            byte[] timestampSignature = new byte[timestampBlob.cbData];
+            Marshal.Copy(timestampBlob.pbData, timestampSignature, 0, timestampSignature.Length);
+            Win32.HeapFree(Win32.GetProcessHeap(), 0, timestampBlob.pbData);
+
             XmlElement asTimestamp = licenseDom.CreateElement("as", "Timestamp", AuthenticodeNamespaceUri);
-            asTimestamp.InnerText = timestamp;
+            asTimestamp.InnerText = Encoding.UTF8.GetString(timestampSignature);
 
             XmlElement dsObject = licenseDom.CreateElement("Object", SignedXml.XmlDsigNamespaceUrl);
             dsObject.AppendChild(asTimestamp);

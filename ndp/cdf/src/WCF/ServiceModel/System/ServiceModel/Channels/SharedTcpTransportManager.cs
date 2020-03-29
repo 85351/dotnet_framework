@@ -94,9 +94,7 @@ namespace System.ServiceModel.Channels
             {
                 lock (ThisLock)
                 {
-                    var localListener = this.listener;
-
-                    if (localListener == null)
+                    if (listener == null)
                     {
                         // The listener has been stopped.
                         throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new CommunicationObjectAbortedException(
@@ -105,7 +103,7 @@ namespace System.ServiceModel.Channels
 
                     if (!demuxerCreated)
                     {
-                        CreateConnectionDemuxer(localListener);
+                        CreateConnectionDemuxer();
                         demuxerCreated = true;
                     }
                 }
@@ -114,9 +112,9 @@ namespace System.ServiceModel.Channels
             return this.ConnectionBufferSize;
         }
 
-        void CreateConnectionDemuxer(SharedConnectionListener sharedListener)
+        void CreateConnectionDemuxer()
         {
-            IConnectionListener connectionListener = new BufferedConnectionListener(sharedListener, MaxOutputDelay, ConnectionBufferSize);
+            IConnectionListener connectionListener = new BufferedConnectionListener(listener, MaxOutputDelay, ConnectionBufferSize);
             if (DiagnosticUtility.ShouldUseActivity)
             {
                 connectionListener = new TracingConnectionListener(connectionListener, this.ListenUri);
@@ -129,7 +127,6 @@ namespace System.ServiceModel.Channels
                 OnGetSingletonMessageHandler,
                 OnHandleServerSessionPreamble,
                 OnDemuxerError);
-
             connectionDemuxer.StartDemuxing(this.GetOnViaCallback());
         }
 
@@ -155,25 +152,24 @@ namespace System.ServiceModel.Channels
 
         protected void CleanUp(bool aborting, TimeSpan timeout)
         {
-            // We need to be able to call Stop/Abort without acquiring ThisLock.  Otherwise there's a deadlock with OnDuplicatedVia()
-
-            SharedConnectionListener currentListener = Interlocked.Exchange<SharedConnectionListener>(ref this.listener, null);
-
-            if (currentListener != null)
-            {
-                if (!aborting)
-                {
-                    currentListener.Stop(timeout);
-                }
-                else
-                {
-                    currentListener.Abort();
-                }
-            }
-
             lock (ThisLock)
             {
-                if (connectionDemuxer != null && demuxerCreated)
+                if (listener != null)
+                {
+                    if (!aborting)
+                    {
+                        listener.Stop(timeout);
+                    }
+                    else
+                    {
+                        listener.Abort();
+                    }
+
+                    // The listener will be closed by the demuxer.
+                    listener = null;
+                }
+
+                if (connectionDemuxer != null)
                 {
                     connectionDemuxer.Dispose();
                 }

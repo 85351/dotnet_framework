@@ -541,11 +541,12 @@ namespace System.IO {
             if (dataInitialised != 0)
                 __Error.WinIOError(dataInitialised, fullPath);
 
-            return DateTime.FromFileTimeUtc(data.ftCreationTime.ToTicks());
+            long dt = ((long)(data.ftCreationTimeHigh) << 32) | ((long)data.ftCreationTimeLow);
+            return DateTime.FromFileTimeUtc(dt);
         }
 
         [ResourceExposure(ResourceScope.Machine)]
-        [ResourceConsumption(ResourceScope.Machine)]
+        [ResourceConsumption(ResourceScope.Machine)]      
         public static void SetLastAccessTime(String path, DateTime lastAccessTime)
         {
             SetLastAccessTimeUtc(path, lastAccessTime.ToUniversalTime());
@@ -605,7 +606,8 @@ namespace System.IO {
             if (dataInitialised != 0)
                 __Error.WinIOError(dataInitialised, fullPath);
 
-            return DateTime.FromFileTimeUtc(data.ftLastAccessTime.ToTicks());
+            long dt = ((long)(data.ftLastAccessTimeHigh) << 32) | ((long)data.ftLastAccessTimeLow);
+            return DateTime.FromFileTimeUtc(dt);
         }
 
         [ResourceExposure(ResourceScope.Machine)]
@@ -669,7 +671,8 @@ namespace System.IO {
             if (dataInitialised != 0)
                 __Error.WinIOError(dataInitialised, fullPath);
 
-            return DateTime.FromFileTimeUtc(data.ftLastWriteTime.ToTicks());
+            long dt = ((long)data.ftLastWriteTimeHigh << 32) | ((long)data.ftLastWriteTimeLow);
+            return DateTime.FromFileTimeUtc(dt);
         }
 
         [System.Security.SecuritySafeCritical]
@@ -1371,7 +1374,7 @@ namespace System.IO {
                 int oldMode = Win32Native.SetErrorMode(Win32Native.SEM_FAILCRITICALERRORS);
                 try {
                     bool error = false;
-                    SafeFindHandle handle = Win32Native.FindFirstFile(tempPath, ref findData);
+                    SafeFindHandle handle = Win32Native.FindFirstFile(tempPath,findData);
                     try {
                         if (handle.IsInvalid) {
                             error = true;
@@ -1409,11 +1412,11 @@ namespace System.IO {
                 }
 
                 // Copy the information to data
-                data.PopulateFrom(ref findData);
+                data.PopulateFrom(findData);
             }
             else
-            {
-
+            {   
+                                  
                  // For floppy drives, normally the OS will pop up a dialog saying
                 // there is no disk in drive A:, please insert one.  We don't want that.
                 // SetErrorMode will let us disable this, but we should set the error

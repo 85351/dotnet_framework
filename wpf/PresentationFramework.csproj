@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{0dcdc11f-4e79-435b-b0fa-162de3818ebe}</ProjectGuid>
+    <ProjectGuid>{e465f6c5-e91b-4532-8e5e-c2a552c49a5a}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>PresentationFramework</AssemblyName>
@@ -20,35 +20,35 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\ndp\clr\src\bcl\mscorlib.csproj">
-      <Project>{74ef8966-be63-49d5-84bc-6c2cb0724069}</Project>
+      <Project>{1a036d4f-3229-4c80-81c6-05cdf14a2647}</Project>
       <Name>mscorlib</Name>
     </ProjectReference>
     <ProjectReference Include="src\PresentationCore.csproj">
-      <Project>{01c1478d-0ee1-41d9-b3fe-3955676c722e}</Project>
+      <Project>{bf0457ce-e41a-431b-9c2f-215dc2a7804d}</Project>
       <Name>PresentationCore</Name>
     </ProjectReference>
     <ProjectReference Include="..\ndp\fx\src\System.csproj">
-      <Project>{df88a904-fb7a-40a0-8bc0-4e757ca35923}</Project>
+      <Project>{6be2c2bf-f37e-4bb5-a1c5-e1ba53d34890}</Project>
       <Name>System</Name>
     </ProjectReference>
     <ProjectReference Include="..\ndp\fx\src\Configuration\System.Configuration.csproj">
-      <Project>{563c9efb-3f3c-4866-a6b0-325e40057312}</Project>
+      <Project>{1801028f-0281-49e9-bfa0-23adadea513a}</Project>
       <Name>System.Configuration</Name>
     </ProjectReference>
     <ProjectReference Include="..\ndp\fx\src\Core\System.Core.csproj">
-      <Project>{a7837c2f-d859-47c5-9575-cda85eb40aee}</Project>
+      <Project>{b705b6d3-a3c3-4a60-9f80-ce016632947e}</Project>
       <Name>System.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\ndp\clr\src\managedlibraries\security\System.Security.csproj">
-      <Project>{e3e69a14-5289-49a3-beb3-1504d2c91c9d}</Project>
+      <Project>{f9899a8a-7dc8-495a-b9e6-b6b0ca22d981}</Project>
       <Name>System.Security</Name>
     </ProjectReference>
     <ProjectReference Include="..\ndp\fx\src\Xml\System.Xml.csproj">
-      <Project>{44ffba6a-a240-4b9c-a1ef-f44bd42f8b8f}</Project>
+      <Project>{185b3b11-76cb-4590-b798-d4ce9b10e555}</Project>
       <Name>System.Xml</Name>
     </ProjectReference>
     <ProjectReference Include="src\WindowsBase.csproj">
-      <Project>{307099a0-3bb6-4090-ab2d-156908693081}</Project>
+      <Project>{c3a0fc98-9b5b-43a5-a552-8a1693415682}</Project>
       <Name>WindowsBase</Name>
     </ProjectReference>
   </ItemGroup>

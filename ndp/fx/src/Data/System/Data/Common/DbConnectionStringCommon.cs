@@ -587,11 +587,10 @@ namespace System.Data.Common {
         const string SqlPasswordString = "Sql Password";
         const string ActiveDirectoryPasswordString = "Active Directory Password";
         const string ActiveDirectoryIntegratedString = "Active Directory Integrated";
-        const string ActiveDirectoryInteractiveString = "Active Directory Interactive";
 
         internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 5, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 4, "SqlAuthenticationMethod enum has changed, update needed");
 
             bool isSuccess = false;
 
@@ -610,12 +609,8 @@ namespace System.Data.Common {
                 result = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
                 isSuccess = true;
             }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryInteractiveString))
+            else
             {
-                result = SqlAuthenticationMethod.ActiveDirectoryInteractive;
-                isSuccess = true;
-            }
-            else {
                 result = DbConnectionStringDefaults.Authentication;
             }
             return isSuccess;
@@ -681,11 +676,10 @@ namespace System.Data.Common {
         }
 
         internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value) {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 5, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 4, "SqlAuthenticationMethod enum has changed, update needed");
             return value == SqlAuthenticationMethod.SqlPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
-                || value == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 
@@ -701,8 +695,6 @@ namespace System.Data.Common {
                     return ActiveDirectoryPasswordString;
                 case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
                     return ActiveDirectoryIntegratedString;
-                case SqlAuthenticationMethod.ActiveDirectoryInteractive:
-                    return ActiveDirectoryInteractiveString;
                 default:
                     return null;
             }
@@ -897,7 +889,6 @@ namespace System.Data.Common {
 		internal const int    ConnectRetryInterval           = 10;
         internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
         internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
-        internal const string EnclaveAttestationUrl          = "";
         internal const PoolBlockingPeriod PoolBlockingPeriod = SqlClient.PoolBlockingPeriod.Auto;
     }
 
@@ -966,7 +957,6 @@ namespace System.Data.Common {
 		internal const string Authentication                 = "Authentication";
 		internal const string Certificate                    = "Certificate";
 		internal const string ColumnEncryptionSetting        = "Column Encryption Setting";
-        internal const string EnclaveAttestationUrl          = "Enclave Attestation Url";
         internal const string PoolBlockingPeriod             = "PoolBlockingPeriod";
         
         // common keywords (OleDb, OracleClient, SqlClient)

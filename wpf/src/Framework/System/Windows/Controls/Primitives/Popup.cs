@@ -115,10 +115,7 @@ namespace System.Windows.Controls.Primitives
             UIElement oldChild = (UIElement) e.OldValue;
             UIElement newChild = (UIElement) e.NewValue;
 
-            // If the Popup is open, change the PopupRoot's child to show the new content.
-            // Also change if the PopupRoot has a non-null child, to enable that
-            // child to participate elsewhere in the visual tree (DDVSO 161345).
-            if ((popup._popupRoot.Value != null) && (popup.IsOpen || popup._popupRoot.Value.Child != null))
+            if ((popup._popupRoot.Value != null) && popup.IsOpen)
             {
                 popup._popupRoot.Value.Child = newChild;
             }

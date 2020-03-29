@@ -35,11 +35,6 @@ namespace System.Activities.XamlIntegration
             return Load(stream, new ActivityXamlServicesSettings());
         }
 
-        [SuppressMessage("Microsoft.Security.Xml", "CA3053:UseXmlSecureResolver", 
-            Justification = @"For the call to XmlReader.Create() below, CA3053 recommends setting the 
-XmlReaderSettings.XmlResolver property to either null or an instance of XmlSecureResolver. 
-But after setting this property to null, a warning of CA3053 still shows up in FxCop. 
-So we suppress this error until the reporting for CA3053 has been updated to fix this issue.")]
         public static Activity Load(Stream stream, ActivityXamlServicesSettings settings)
         {
             if (stream == null)
@@ -52,7 +47,7 @@ So we suppress this error until the reporting for CA3053 has been updated to fix
                 throw FxTrace.Exception.ArgumentNull("settings");
             }
 
-            using (XmlReader xmlReader = XmlReader.Create(stream, new XmlReaderSettings { XmlResolver = null }))
+            using (XmlReader xmlReader = XmlReader.Create(stream))
             {
                 return Load(xmlReader, settings);
             }
@@ -67,12 +62,7 @@ So we suppress this error until the reporting for CA3053 has been updated to fix
 
             return Load(fileName, new ActivityXamlServicesSettings());
         }
-
-        [SuppressMessage("Microsoft.Security.Xml", "CA3053:UseXmlSecureResolver", 
-            Justification = @"For the call to XmlReader.Create() below, CA3053 recommends setting the 
-XmlReaderSettings.XmlResolver property to either null or an instance of XmlSecureResolver. 
-But after setting this property to null, a warning of CA3053 still shows up in FxCop. 
-So we suppress this error until the reporting for CA3053 has been updated to fix this issue.")]
+        
         public static Activity Load(string fileName, ActivityXamlServicesSettings settings)
         {
             if (fileName == null)
@@ -85,7 +75,7 @@ So we suppress this error until the reporting for CA3053 has been updated to fix
                 throw FxTrace.Exception.ArgumentNull("settings");
             }
 
-            using (XmlReader xmlReader = XmlReader.Create(fileName, new XmlReaderSettings { XmlResolver = null }))
+            using (XmlReader xmlReader = XmlReader.Create(fileName))
             {
                 return Load(xmlReader, settings);
             }
@@ -101,11 +91,6 @@ So we suppress this error until the reporting for CA3053 has been updated to fix
             return Load(textReader, new ActivityXamlServicesSettings());
         }
 
-        [SuppressMessage("Microsoft.Security.Xml", "CA3053:UseXmlSecureResolver", 
-            Justification = @"For the call to XmlReader.Create() below, CA3053 recommends setting the 
-XmlReaderSettings.XmlResolver property to either null or an instance of XmlSecureResolver. 
-But after setting this property to null, a warning of CA3053 still shows up in FxCop. 
-So we suppress this error until the reporting for CA3053 has been updated to fix this issue.")]
         public static Activity Load(TextReader textReader, ActivityXamlServicesSettings settings)
         {
             if (textReader == null)
@@ -118,7 +103,7 @@ So we suppress this error until the reporting for CA3053 has been updated to fix
                 throw FxTrace.Exception.ArgumentNull("settings");
             }
 
-            using (XmlReader xmlReader = XmlReader.Create(textReader, new XmlReaderSettings { XmlResolver = null }))
+            using (XmlReader xmlReader = XmlReader.Create(textReader))
             {
                 return Load(xmlReader, settings);
             }
@@ -192,11 +177,6 @@ So we suppress this error until the reporting for CA3053 has been updated to fix
             return result;
         }
 
-        [SuppressMessage("Microsoft.Security.Xml", "CA3053:UseXmlSecureResolver", 
-            Justification = @"For the call to XmlReader.Create() below, CA3053 recommends setting the 
-XmlReaderSettings.XmlResolver property to either null or an instance of XmlSecureResolver. 
-But after setting this property to null, a warning of CA3053 still shows up in FxCop. 
-So we suppress this error until the reporting for CA3053 has been updated to fix this issue.")]
         public static XamlReader CreateReader(Stream stream)
         {
             if (stream == null)
@@ -204,7 +184,7 @@ So we suppress this error until the reporting for CA3053 has been updated to fix
                 throw FxTrace.Exception.ArgumentNull("stream");
             }
 
-            return CreateReader(new XamlXmlReader(XmlReader.Create(stream, new XmlReaderSettings { XmlResolver = null }), dynamicActivityReaderSchemaContext), dynamicActivityReaderSchemaContext);
+            return CreateReader(new XamlXmlReader(XmlReader.Create(stream), dynamicActivityReaderSchemaContext), dynamicActivityReaderSchemaContext);
         }
 
         public static XamlReader CreateReader(XamlReader innerReader)
@@ -526,11 +506,6 @@ So we suppress this error until the reporting for CA3053 has been updated to fix
             Justification = "Passing XamlAccessLevel to XamlLoadPermission is okay.")]
         [SuppressMessage(FxCop.Category.Security, FxCop.Rule.SecureAsserts,
             Justification = "We are asserting to get private access to the componentType only so that we can initialize it.")]
-        [SuppressMessage("Microsoft.Security.Xml", "CA3053:UseXmlSecureResolver", 
-            Justification = @"For the call to XmlReader.Create() below, CA3053 recommends setting the 
-XmlReaderSettings.XmlResolver property to either null or an instance of XmlSecureResolver. 
-But after setting this property to null, a warning of CA3053 still shows up in FxCop. 
-So we suppress this error until the reporting for CA3053 has been updated to fix this issue.")]
         [Fx.Tag.SecurityNote(Critical = "Critical because it Asserts XamlLoadPermission(XamlAccessLevel.PrivateAccessTo(type).")]
         [SecurityCritical]
         static void InitializeComponentFromXamlResource(Type componentType, string resource, object componentInstance, XamlSchemaContext schemaContext)
@@ -541,7 +516,7 @@ So we suppress this error until the reporting for CA3053 has been updated to fix
             XamlObjectWriter objectWriter = null;
             try
             {
-                xmlReader = XmlReader.Create(initializeXaml, new XmlReaderSettings { XmlResolver = null });
+                xmlReader = XmlReader.Create(initializeXaml);
                 XamlXmlReaderSettings readerSettings = new XamlXmlReaderSettings();
                 readerSettings.LocalAssembly = componentType.Assembly;
                 readerSettings.AllowProtectedMembersOnRoot = true;

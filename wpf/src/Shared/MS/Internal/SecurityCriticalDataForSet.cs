@@ -27,8 +27,6 @@ using System.Security ;
     using MS.Internal.PresentationFramework;
 #elif PRESENTATIONUI
     using MS.Internal.PresentationUI;
-#elif UIAUTOMATIONTYPES
-    using MS.Internal.UIAutomationTypes;
 #elif DRT
     using MS.Internal.Drt;
 #elif SYSTEM_XAML

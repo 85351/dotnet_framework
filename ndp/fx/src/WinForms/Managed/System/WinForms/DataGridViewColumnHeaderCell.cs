@@ -844,11 +844,6 @@ namespace System.Windows.Forms
                         }
                     }
 
-                    if (IsHighlighted())
-                    {
-                        state = (int)HeaderItemState.Pressed;
-                    }
-
                     // Microsoft: even though XP provides support for theming the sort glyph, 
                     // we rely on our own implementation for painting the sort glyph
                     if (this.DataGridView.RightToLeftInternal)
@@ -890,8 +885,7 @@ namespace System.Windows.Forms
             {
                 if (paint && DataGridViewCell.PaintBackground(paintParts) && backgroundBounds.Width > 0 && backgroundBounds.Height > 0)
                 {
-                    br = this.DataGridView.GetCachedBrush((DataGridViewCell.PaintSelectionBackground(paintParts) && cellSelected) || IsHighlighted() ? 
-                        cellStyle.SelectionBackColor : cellStyle.BackColor);
+                    br = this.DataGridView.GetCachedBrush((DataGridViewCell.PaintSelectionBackground(paintParts) && cellSelected) ? cellStyle.SelectionBackColor : cellStyle.BackColor);
                     if (br.Color.A == 255)
                     {
                         g.FillRectangle(br, backgroundBounds);
@@ -1186,14 +1180,6 @@ namespace System.Windows.Forms
             }
 
             return contentBounds;
-        }
-
-        private bool IsHighlighted()
-        {
-            return this.DataGridView.SelectionMode == DataGridViewSelectionMode.FullRowSelect && 
-                this.DataGridView.CurrentCell != null && this.DataGridView.CurrentCell.Selected &&
-                this.DataGridView.CurrentCell.OwningColumn == this.OwningColumn &&
-                AccessibilityImprovements.Level2;
         }
 
         /// <include file='doc\DataGridViewColumnHeaderCell.uex' path='docs/doc[@for="DataGridViewColumnHeaderCell.SetValue"]/*' />

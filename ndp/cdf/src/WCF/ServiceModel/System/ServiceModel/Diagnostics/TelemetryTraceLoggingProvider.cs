@@ -18,9 +18,7 @@ namespace System.ServiceModel
 
         public string HostType { get; set; }
 
-        public string EndpointsV2 { get; set; }
-
-        public string Version { get; set; }
+        public string Endpoints { get; set; }
     }
 
     /// <summary>
@@ -69,8 +67,7 @@ namespace System.ServiceModel
                                     {
                                         ServiceId = telemetryHelper.GetServiceId(description),
                                         HostType = telemetryHelper.GetHostType(),
-                                        EndpointsV2 = telemetryHelper.GetEndpoints(description),
-                                        Version = telemetryHelper.GetAssemblyVersion()
+                                        Endpoints = telemetryHelper.GetEndpoints(description)
                                     });
                 }
             }

@@ -10,7 +10,6 @@ using Microsoft.Build.Tasks;
 using Microsoft.Build.Utilities;
 
 using FrameworkName=System.Runtime.Versioning.FrameworkName;
-using System.Diagnostics.CodeAnalysis;
 
 namespace System.Web.Compilation {
 
@@ -267,7 +266,6 @@ namespace System.Web.Compilation {
         /// Check whether an assembly has dependencies to a framework assembly of a higher version,
         /// report the issue as a warning or error.
         /// </summary>
-        [SuppressMessage("Microsoft.Security.Web", "CA3011:ReviewCodeForDllInjectionVulnerabilities", Justification = "Developer-controlled contents are implicitly trusted.")]
         private static void CheckOutOfRangeDependencies(string assemblyName) {
 
             string dependencies = null;

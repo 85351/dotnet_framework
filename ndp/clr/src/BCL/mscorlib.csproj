@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
-    <ProjectGuid>{74ef8966-be63-49d5-84bc-6c2cb0724069}</ProjectGuid>
+    <ProjectGuid>{1a036d4f-3229-4c80-81c6-05cdf14a2647}</ProjectGuid>
     <OutputPath>.</OutputPath>
     <OutputType>Library</OutputType>
     <AssemblyName>mscorlib</AssemblyName>

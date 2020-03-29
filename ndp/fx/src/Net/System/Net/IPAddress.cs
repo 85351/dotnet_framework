@@ -410,7 +410,6 @@ namespace System.Net {
                 if (m_ScopeId!=value) {
                     m_Address = value;
                     m_ScopeId = value;
-                    m_ToString = null;
                 }
             }
         }

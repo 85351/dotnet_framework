@@ -94,25 +94,6 @@ namespace System.Windows.Forms
             }
         }
 
-        /// <summary>
-        /// Creates a new AccessibleObject for this DataGridViewComboBoxCell instance.
-        /// The AccessibleObject instance returned by this method supports ControlType UIA property.
-        /// However the new object is only available in applications that are recompiled to target 
-        /// .NET Framework 4.7.2 or opt-in into this feature using a compatibility switch. 
-        /// </summary>
-        /// <returns>
-        /// AccessibleObject for this DataGridViewComboBoxCell instance.
-        /// </returns>
-        protected override AccessibleObject CreateAccessibilityInstance()
-        {
-            if (AccessibilityImprovements.Level2)
-            {
-                return new DataGridViewComboBoxCellAccessibleObject(this);
-            }
-
-            return base.CreateAccessibilityInstance();
-        }
-
         /// <include file='doc\DataGridViewComboBoxCell.uex' path='docs/doc[@for="DataGridViewComboBoxCell.AutoComplete"]/*' />
         [DefaultValue(true)]
         public virtual bool AutoComplete
@@ -2296,7 +2277,7 @@ namespace System.Windows.Forms
                                         DataGridViewComboBoxCellRenderer.DrawDropDownButton(g, dropRect, ComboBoxState.Normal);
                                     }
 
-                                    if (SystemInformation.HighContrast && AccessibilityImprovements.Level1)
+                                    if (SystemInformation.HighContrast && !LocalAppContextSwitches.UseLegacyAccessibilityFeatures)
                                     {
                                         // In the case of ComboBox style, background is not filled in, 
                                         // in the case of DrawReadOnlyButton uses theming API to render CP_READONLY COMBOBOX part that renders the background,
@@ -3244,31 +3225,6 @@ namespace System.Windows.Forms
                     visualStyleRenderer.SetParameters(ComboBoxReadOnlyButton.ClassName, ComboBoxReadOnlyButton.Part, (int)state);
                 }
                 visualStyleRenderer.DrawBackground(g, bounds);
-            }
-        }
-
-        /// <include file='doc\DataGridViewComboBoxCell.uex' path='docs/doc[@for="DataGridViewComboBoxCellAccessibleObject"]/*' />
-        protected class DataGridViewComboBoxCellAccessibleObject : DataGridViewCellAccessibleObject
-        {
-
-            /// <include file='doc\DataGridViewComboBoxCell.uex' path='docs/doc[@for="DataGridViewComboBoxCellAccessibleObject.DataGridViewComboBoxCellAccessibleObject"]/*' />
-            public DataGridViewComboBoxCellAccessibleObject(DataGridViewCell owner) : base(owner)
-            {
-            }
-
-            internal override bool IsIAccessibleExSupported()
-            {
-                return true;
-            }
-
-            internal override object GetPropertyValue(int propertyID)
-            {
-                if (propertyID == NativeMethods.UIA_ControlTypePropertyId)
-                {
-                    return NativeMethods.UIA_ComboBoxControlTypeId;
-                }
-
-                return base.GetPropertyValue(propertyID);
             }
         }
     }

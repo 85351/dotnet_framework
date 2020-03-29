@@ -79,7 +79,6 @@ namespace System.Data.SqlClient {
             ConnectRetryInterval,
 
             ColumnEncryptionSetting,
-            EnclaveAttestationUrl,
 
             // keep the count value last
             KeywordsCount
@@ -129,7 +128,6 @@ namespace System.Data.SqlClient {
         private bool _userInstance					= DbConnectionStringDefaults.UserInstance;
         private SqlAuthenticationMethod _authentication     = DbConnectionStringDefaults.Authentication;
         private SqlConnectionColumnEncryptionSetting _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
-        private string _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
         private PoolBlockingPeriod _poolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
 
         static SqlConnectionStringBuilder() {
@@ -172,7 +170,6 @@ namespace System.Data.SqlClient {
             validKeywords[(int)Keywords.ConnectRetryInterval]           = DbConnectionStringKeywords.ConnectRetryInterval;
             validKeywords[(int)Keywords.Authentication]                 = DbConnectionStringKeywords.Authentication;
             validKeywords[(int)Keywords.ColumnEncryptionSetting]        = DbConnectionStringKeywords.ColumnEncryptionSetting;
-            validKeywords[(int)Keywords.EnclaveAttestationUrl]          = DbConnectionStringKeywords.EnclaveAttestationUrl;
             _validKeywords = validKeywords;
 
             Dictionary<string, Keywords> hash = new Dictionary<string, Keywords>(KeywordsCount + SqlConnectionString.SynonymCount, StringComparer.OrdinalIgnoreCase);
@@ -214,7 +211,6 @@ namespace System.Data.SqlClient {
             hash.Add(DbConnectionStringKeywords.ConnectRetryInterval,				Keywords.ConnectRetryInterval);
             hash.Add(DbConnectionStringKeywords.Authentication,						Keywords.Authentication);
             hash.Add(DbConnectionStringKeywords.ColumnEncryptionSetting,			Keywords.ColumnEncryptionSetting);
-            hash.Add(DbConnectionStringKeywords.EnclaveAttestationUrl,			    Keywords.EnclaveAttestationUrl);
 
             hash.Add(DbConnectionStringSynonyms.APP,								Keywords.ApplicationName);
             hash.Add(DbConnectionStringSynonyms.Async,								Keywords.AsynchronousProcessing);
@@ -285,7 +281,6 @@ namespace System.Data.SqlClient {
 
                     case Keywords.Authentication:					Authentication = ConvertToAuthenticationType(keyword, value); break;
                     case Keywords.ColumnEncryptionSetting:			ColumnEncryptionSetting = ConvertToColumnEncryptionSetting(keyword, value); break;
-                    case Keywords.EnclaveAttestationUrl:			EnclaveAttestationUrl = ConvertToString(value); break;
                     case Keywords.AsynchronousProcessing:			AsynchronousProcessing = ConvertToBoolean(value); break;
                     case Keywords.PoolBlockingPeriod:               PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value); break;
 #pragma warning disable 618 // Obsolete ConnectionReset
@@ -480,18 +475,6 @@ namespace System.Data.SqlClient {
 
                  SetColumnEncryptionSettingValue(value);
                 _columnEncryptionSetting = value;
-            }
-        }
-        
-        [DisplayName(DbConnectionStringKeywords.EnclaveAttestationUrl)]
-        [ResCategoryAttribute(Res.DataCategory_Security)]
-        [ResDescriptionAttribute(Res.TCE_DbConnectionString_EnclaveAttestationUrl)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public string EnclaveAttestationUrl {
-            get { return _enclaveAttestationUrl; }
-            set {
-                SetValue(DbConnectionStringKeywords.EnclaveAttestationUrl, value);
-                _enclaveAttestationUrl = value;
             }
         }
         
@@ -987,7 +970,6 @@ namespace System.Data.SqlClient {
             case Keywords.ConnectRetryInterval:				return ConnectRetryInterval;
             case Keywords.Authentication:					return Authentication;
             case Keywords.ColumnEncryptionSetting:			return ColumnEncryptionSetting;
-            case Keywords.EnclaveAttestationUrl:			return EnclaveAttestationUrl;
             default:
                 Debug.Assert(false, "unexpected keyword");
                 throw ADP.KeywordNotSupported(_validKeywords[(int)index]);
@@ -1158,9 +1140,6 @@ namespace System.Data.SqlClient {
                 break;
             case Keywords.ColumnEncryptionSetting:
                 _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
-                break;
-            case Keywords.EnclaveAttestationUrl:
-                _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
                 break;
             default:
                 Debug.Assert(false, "unexpected keyword");

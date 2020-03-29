@@ -11,7 +11,6 @@ using System;
 using System.Collections.Specialized;
 using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
-using System.ComponentModel.DataAnnotations.Util;
 
 namespace System.ComponentModel.DataAnnotations {
     internal static class AppSettings {
@@ -28,10 +27,9 @@ namespace System.ComponentModel.DataAnnotations {
                         }
                         catch (ConfigurationErrorsException) { }
                         finally {
-                            if (settings == null || !Boolean.TryParse(settings["dataAnnotations:dataTypeAttribute:disableRegEx"], out _disableRegEx)) {
-                                //VSO480141 Disable RegEx by default for DataAnotationAttributes in .NET 4.7.2 
-                                _disableRegEx = BinaryCompatibility.Current.TargetsAtLeastFramework472;
-                            }
+                            if (settings == null || !Boolean.TryParse(settings["dataAnnotations:dataTypeAttribute:disableRegEx"], out _disableRegEx))
+                                _disableRegEx = false;
+
                             _settingsInitialized = true;
                         }
                     }

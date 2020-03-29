@@ -36,13 +36,6 @@ namespace System.Windows.Input
             : base(tabletInfo)
         {
             _penThread = penThread;
-
-            // DDVSO:514949
-            // Constructing a WispTabletDevice means we will actually use this tablet for input purposes.
-            // Lock the tablet and underlying WISP tablet at this point.
-            // This is balanced in DisposeOrDeferDisposal.
-            _penThread.WorkerAcquireTabletLocks(tabletInfo.PimcTablet.Value, tabletInfo.WispTabletKey);
-
             int count = tabletInfo.StylusDevicesInfo.Length;
 
             WispStylusDevice[] styluses = new WispStylusDevice[count];
@@ -136,6 +129,7 @@ namespace System.Windows.Input
             return null;  // Nothing to add
         }
 
+
         /////////////////////////////////////////////////////////////////////
         /// <summary>
         ///     Returns the element that input from this device is sent to.
@@ -226,7 +220,7 @@ namespace System.Windows.Input
                                         hwnd, contexts,
                                         supportInRange, isIntegrated, result.ContextId,
                                         result.CommHandle != null ? result.CommHandle.Value : IntPtr.Zero,
-                                        Id, result.WispContextKey);
+                                        Id);
             return penContext;
         }
 
@@ -389,10 +383,6 @@ namespace System.Windows.Input
 
                 if (tablet != null)
                 {
-                    // DDVSO:514949
-                    // Balance calls in PenThreadWorker.GetTabletInfoHelper and CPimcTablet::Init.
-                    PenThread.WorkerReleaseTabletLocks(tablet, _tabletInfo.WispTabletKey);
-                    
                     Marshal.ReleaseComObject(tablet);
                 }
 
@@ -455,18 +445,6 @@ namespace System.Windows.Input
             set
             {
                 _queuedEventCount = value;
-            }
-        }
-
-        /// <summary>
-        /// The GIT key for the WISP tablet COM object.
-        /// </summary>
-        internal UInt32 WispTabletKey
-        {
-            [SecurityCritical]
-            get
-            {
-                return _tabletInfo.WispTabletKey;
             }
         }
 

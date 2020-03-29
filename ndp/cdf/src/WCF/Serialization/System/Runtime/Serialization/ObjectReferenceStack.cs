@@ -59,12 +59,12 @@ namespace System.Runtime.Serialization
                 {
                     if (isReferenceArray == null)
                     {
-                        isReferenceArray = new bool[objectArray.Length];
+                        isReferenceArray = new bool[InitialArraySize];
                     }
-                    else if (count >= isReferenceArray.Length)
+                    else if (count == isReferenceArray.Length)
                     {
 
-                        Array.Resize<bool>(ref isReferenceArray, objectArray.Length);
+                        Array.Resize<bool>(ref isReferenceArray, isReferenceArray.Length * 2);
                     }
                     isReferenceArray[count - 1] = true;
                 }

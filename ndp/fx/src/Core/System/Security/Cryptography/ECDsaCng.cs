@@ -153,12 +153,7 @@ namespace System.Security.Cryptography {
                             break;
                     }
 
-                    CngKeyCreationParameters creationParameters = new CngKeyCreationParameters()
-                    {
-                        ExportPolicy = CngExportPolicies.AllowPlaintextExport,
-                    };
-
-                    m_key = CngKey.Create(algorithm, null, creationParameters);
+                    m_key = CngKey.Create(algorithm);
                 }
 
                 return m_key;

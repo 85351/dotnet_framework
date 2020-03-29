@@ -147,7 +147,7 @@ namespace System.Windows.Forms {
                     state = ToolBarState.Disabled;
                 }
                 if (item is ToolStripButton && ((ToolStripButton)item).Checked) {
-                    if (((ToolStripButton)item).Selected && AccessibilityImprovements.Level1) {
+                    if (((ToolStripButton)item).Selected && !LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                         state = ToolBarState.Hot; // we'd prefer HotChecked here, but Color Theme uses the same color as Checked
                     }
                     else {
@@ -400,11 +400,11 @@ namespace System.Windows.Forms {
                         // VSO 382373 - Legacy behavior is to always paint the menu item background.
                         // The correct behavior is to only paint the background if the menu item is
                         // enabled.
-                        if (!AccessibilityImprovements.Level1 || item.Enabled) {
+                        if (LocalAppContextSwitches.UseLegacyAccessibilityFeatures || item.Enabled) {
                             g.FillRectangle(SystemBrushes.Highlight, fillRect);
                         }
 
-                        if (AccessibilityImprovements.Level1) {
+                        if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                             Color borderColor = ToolStripManager.VisualStylesEnabled ?
                                 SystemColors.Highlight : ProfessionalColors.MenuItemBorder;
 

@@ -93,26 +93,6 @@ namespace System
             }
         }
 
-        private static int _ignorePortablePDBsInStackTraces;
-        public static bool IgnorePortablePDBsInStackTraces
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return GetCachedSwitchValue(AppContextDefaultValues.SwitchIgnorePortablePDBsInStackTraces, ref _ignorePortablePDBsInStackTraces);
-            }
-        }
-
-        private static int _useNewMaxArraySize;
-        public static bool UseNewMaxArraySize
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return GetCachedSwitchValue(AppContextDefaultValues.SwitchUseNewMaxArraySize, ref _useNewMaxArraySize);
-            }
-        }
-
         //
         // Implementation details
         //

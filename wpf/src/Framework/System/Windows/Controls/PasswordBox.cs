@@ -1250,16 +1250,6 @@ namespace System.Windows.Controls
 
                     caretElement.InvalidateVisual();
                 }
-
-                // DDVSO:405199
-                // If the TextBox is rendering its own selection we need to invalidate arrange here
-                // in order to ensure the selection is updated.
-                var textBoxView = passwordBox?.RenderScope as TextBoxView;
-
-                if ((textBoxView as ITextView)?.RendersOwnSelection == true)
-                {
-                    textBoxView.InvalidateArrange();
-                }
             }
         }
 

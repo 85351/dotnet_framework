@@ -253,20 +253,6 @@ namespace System.Security.Cryptography.Pkcs {
             }
         }
 
-        [SecuritySafeCritical]
-        public byte[] GetSignature()
-        {
-            byte[] ret = new byte[m_cmsgSignerInfo.EncryptedHash.cbData];
-            Marshal.Copy(m_cmsgSignerInfo.EncryptedHash.pbData, ret, 0, ret.Length);
-            return ret;
-        }
-
-        public Oid SignatureAlgorithm {
-            get {
-                return new Oid(m_cmsgSignerInfo.HashEncryptionAlgorithm.pszObjId);
-            }
-        }
-
         //
         // Internal methods.
         //
@@ -301,8 +287,7 @@ namespace System.Security.Cryptography.Pkcs {
 
             // Create CMSG_SIGNER_ENCODE_INFO structure.
             SafeLocalAllocHandle pSignerEncodeInfo = CAPI.LocalAlloc(CAPI.LPTR, new IntPtr(Marshal.SizeOf(typeof(CAPI.CMSG_SIGNER_ENCODE_INFO))));
-            SafeCryptProvHandle safeCryptProvHandle;
-            CAPI.CMSG_SIGNER_ENCODE_INFO signerEncodeInfo = PkcsUtils.CreateSignerEncodeInfo(signer, out safeCryptProvHandle);
+            CAPI.CMSG_SIGNER_ENCODE_INFO signerEncodeInfo = PkcsUtils.CreateSignerEncodeInfo(signer);
 
             try {
                 // Marshal to unmanaged memory.
@@ -326,7 +311,6 @@ namespace System.Security.Cryptography.Pkcs {
 
                 // and don't forget to dispose of resources allocated for the structure.
                 signerEncodeInfo.Dispose();
-                safeCryptProvHandle.Dispose();
             }
 
             // Finally, add certs to bag of certs.

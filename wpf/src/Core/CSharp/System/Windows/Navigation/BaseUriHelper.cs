@@ -18,7 +18,6 @@ using System.IO.Packaging;
 using System.Globalization;
 using System.Net;
 using System.Security;
-using System.Text;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Media;
@@ -242,10 +241,16 @@ namespace System.Windows.Navigation
                 asmName.Version = new Version(assemblyVersion);
             }
 
-            byte[] keyToken = ParseAssemblyKey(assemblyKey);
-
-            if (keyToken != null)
+            if (!String.IsNullOrEmpty(assemblyKey))
             {
+                int byteCount = assemblyKey.Length / 2;
+                byte[] keyToken = new byte[byteCount];
+                for (int i = 0; i < byteCount; i++)
+                {
+                    string byteString = assemblyKey.Substring(i * 2, 2);
+                    keyToken[i] = byte.Parse(byteString, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                }
+
                 asmName.SetPublicKeyToken(keyToken);
             }
 
@@ -472,92 +477,6 @@ namespace System.Windows.Navigation
                 _resourceAssembly = value;
             }
         }
-        
-        // If the Uri provided is a pack Uri calling out an assembly and the assembly name matches that from assemblyInfo
-        // this method will append the version taken from assemblyInfo, provided the Uri does not already have a version,
-        // if the Uri provided the public Key token we must also verify that it matches the one in assemblyInfo.
-        // We only add the version if the Uri is missing both the version and the key, otherwise returns null.
-        // If the Uri is not a pack Uri, or we can't extract the information we need this method returns null.
-        static internal Uri AppendAssemblyVersion(Uri uri, Assembly assemblyInfo)
-        {
-            Uri source = null;
-            Uri baseUri = null;
-
-            // assemblyInfo.GetName does not work in PartialTrust, so do this instead.
-            AssemblyName currAssemblyName = new AssemblyName(assemblyInfo.FullName);
-            string version = currAssemblyName.Version?.ToString();
-            
-            if (uri != null && !string.IsNullOrEmpty(version))
-            {
-                if (uri.IsAbsoluteUri)
-                {
-                    if (IsPackApplicationUri(uri))
-                    {
-                        // Extract the relative Uri and keep the base Uri so we can
-                        // put them back together after we append the version.
-                        source = new Uri(uri.AbsolutePath, UriKind.Relative);
-                        baseUri = new Uri(uri.GetLeftPart(UriPartial.Authority), UriKind.Absolute);
-                    }
-                }
-                else
-                {
-                    source = uri;
-                }
-
-
-                if (source != null)
-                {
-                    string appendedUri;
-                    string assemblyName;
-                    string assemblyVersion;
-                    string assemblyKey;
-                    string partName;
-
-                    BaseUriHelper.GetAssemblyNameAndPart(source, out partName, out assemblyName, out assemblyVersion, out assemblyKey);
-
-                    bool assemblyKeyProvided = !string.IsNullOrEmpty(assemblyKey);
-
-                    // Make sure we:
-                    //      1) Successfully extracted the assemblyName from the Uri.
-                    //      2) No assembly version was already provided in the Uri.
-                    //      3) The assembly short name matches the name in assemblyInfo.
-                    //      4) If a public key token was provided in the Uri, verify
-                    //          that it matches the token in ----semblyInfo.
-                    if (!string.IsNullOrEmpty(assemblyName) && string.IsNullOrEmpty(assemblyVersion) &&
-                        assemblyName.Equals(currAssemblyName.Name, StringComparison.Ordinal) &&
-                        (!assemblyKeyProvided || AssemblyMatchesKeyString(currAssemblyName, assemblyKey)))
-                    {
-                        StringBuilder uriStringBuilder = new StringBuilder();
-
-                        uriStringBuilder.Append('/');
-                        uriStringBuilder.Append(assemblyName);
-                        uriStringBuilder.Append(COMPONENT_DELIMITER);
-                        uriStringBuilder.Append(VERSION);
-                        uriStringBuilder.Append(version);
-                        if (assemblyKeyProvided)
-                        {
-                            uriStringBuilder.Append(COMPONENT_DELIMITER);
-                            uriStringBuilder.Append(assemblyKey);
-                        }
-                        uriStringBuilder.Append(COMPONENT);
-                        uriStringBuilder.Append('/');
-                        uriStringBuilder.Append(partName);
-
-                        appendedUri = uriStringBuilder.ToString();
-
-                        if (baseUri != null)
-                        {
-                            return new Uri(baseUri, appendedUri);
-                        }
-
-                        return new Uri(appendedUri, UriKind.Relative);
-                    }
-                }
-
-            }
-            
-            return null;
-        }
 
         #endregion internal properties and methods
 
@@ -671,32 +590,6 @@ namespace System.Windows.Navigation
             }
 
             return baseUri;
-        }
-        
-        private static bool AssemblyMatchesKeyString(AssemblyName asmName, string assemblyKey)
-        {
-            byte[] parsedKeyToken = ParseAssemblyKey(assemblyKey);
-            byte[] assemblyKeyToken = asmName.GetPublicKeyToken();
-
-            return SafeSecurityHelper.IsSameKeyToken(assemblyKeyToken, parsedKeyToken);
-        }
-
-        private static byte[] ParseAssemblyKey(string assemblyKey)
-        {
-            if (!string.IsNullOrEmpty(assemblyKey))
-            {
-                int byteCount = assemblyKey.Length / 2;
-                byte[] keyToken = new byte[byteCount];
-                for (int i = 0; i < byteCount; i++)
-                {
-                    string byteString = assemblyKey.Substring(i * 2, 2);
-                    keyToken[i] = byte.Parse(byteString, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-                }
-
-                return keyToken;
-            }
-
-            return null;
         }
 
         #endregion

@@ -296,10 +296,6 @@ namespace System.Activities.Presentation.FreeFormEditing
 
             protected override string GetItemStatusCore()
             {
-                if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures2)
-                {
-                    return String.Empty;
-                }
                 UIElement sourceDesigner = VirtualizedContainerService.TryGetVirtualizedElement(FreeFormPanel.GetSourceConnectionPoint(this.Owner).ParentDesigner);
                 string sourceId = sourceDesigner.GetValue(AutomationProperties.ItemStatusProperty) as string;
                 UIElement destinationDesigner = VirtualizedContainerService.TryGetVirtualizedElement(FreeFormPanel.GetDestinationConnectionPoint(this.Owner).ParentDesigner);

@@ -13,8 +13,6 @@ namespace MS.Internal.PresentationCore
 namespace MS.Internal.PresentationFramework
 #elif REACHFRAMEWORK
 namespace MS.Internal.ReachFramework
-#elif UIAUTOMATIONTYPES
-namespace MS.Internal.UIAutomationTypes
 #else
 namespace Microsoft.Internal
 #endif

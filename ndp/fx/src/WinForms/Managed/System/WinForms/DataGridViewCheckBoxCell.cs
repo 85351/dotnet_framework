@@ -1923,7 +1923,7 @@ namespace System.Windows.Forms
             }
 
             internal override bool IsIAccessibleExSupported() {
-                if (AccessibilityImprovements.Level1) {
+                if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                     return true;
                 }
                 else {
@@ -1947,12 +1947,8 @@ namespace System.Windows.Forms
                 if (propertyID == NativeMethods.UIA_IsTogglePatternAvailablePropertyId) {
                     return (Object)IsPatternSupported(NativeMethods.UIA_TogglePatternId);
                 }
-                else if (propertyID == NativeMethods.UIA_ControlTypePropertyId && AccessibilityImprovements.Level2)
-                {
-                    return NativeMethods.UIA_CheckBoxControlTypeId;
-                }
 
-                return base.GetPropertyValue(propertyID);
+                return null;
             }
 
             internal override bool IsPatternSupported(int patternId) {
@@ -1960,7 +1956,7 @@ namespace System.Windows.Forms
                     return true;
                 }
 
-                return base.IsPatternSupported(patternId);
+                return false;
             }
 
             internal override void Toggle() {

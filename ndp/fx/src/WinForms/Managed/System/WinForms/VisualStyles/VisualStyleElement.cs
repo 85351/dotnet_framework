@@ -134,8 +134,7 @@ namespace System.Windows.Forms.VisualStyles {
 
             public static class RadioButton {
                 private static readonly int part = 2;
-                // in Win10 RS3 a new part was added to BUTTONPARTS enum in vsstyle.h  - BP_RADIOBUTTON_HCDISABLED = 8
-                internal static readonly int HighContrastDisabledPart = 8;
+
 
                 private static VisualStyleElement uncheckednormal;
     
@@ -236,8 +235,6 @@ namespace System.Windows.Forms.VisualStyles {
 
             public static class CheckBox {
                 private static readonly int part = 3;
-                // in Win10 RS3 a new part was added to BUTTONPARTS enum in vsstyle.h  - BP_CHECKBOX_HCDISABLED = 9
-                internal static readonly int HighContrastDisabledPart = 9;
 
                 private static VisualStyleElement uncheckednormal;
     
@@ -386,8 +383,6 @@ namespace System.Windows.Forms.VisualStyles {
 
             public static class GroupBox {
                 private static readonly int part = 4;
-                // in Win10 RS3 a new part was added to BUTTONPARTS enum in vsstyle.h  - BP_GROUPBOX_HCDISABLED = 10
-                internal static readonly int HighContrastDisabledPart = 10;
 
                 private static VisualStyleElement normal;
     

@@ -780,7 +780,6 @@ namespace System.ServiceModel.Dispatcher
             ManualResetEvent wait = new ManualResetEvent(false);
             int waitCount = 0;
             RequestReplyCorrelator.Key requestCorrelatorKey;
-            readonly object thisLock = new object();
 
             internal SyncDuplexRequest(DuplexChannelBinder parent)
             {
@@ -802,7 +801,7 @@ namespace System.ServiceModel.Dispatcher
 
             public void Abort()
             {
-                this.SetWaitHandle();
+                this.wait.Set();
             }
 
             internal Message WaitForReply(TimeSpan timeout)
@@ -830,31 +829,15 @@ namespace System.ServiceModel.Dispatcher
                     this.parent.RequestCompleting(this);
                 }
                 this.reply = reply;
-                this.SetWaitHandle();
+                this.wait.Set();
                 this.CloseWaitHandle();
-            }
-
-            void SetWaitHandle()
-            {
-                lock (thisLock)
-                {
-                    if (this.waitCount < 2)
-                    {
-                        this.wait.Set();
-                    }
-                }
             }
 
             void CloseWaitHandle()
             {
-                lock (this.thisLock)
+                if (Interlocked.Increment(ref this.waitCount) == 2)
                 {
-                    this.waitCount++;
-
-                    if (this.waitCount == 2)
-                    {
-                        this.wait.Close();
-                    }
+                    this.wait.Close();
                 }
             }
         }

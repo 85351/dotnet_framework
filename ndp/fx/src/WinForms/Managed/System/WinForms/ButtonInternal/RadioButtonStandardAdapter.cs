@@ -28,7 +28,6 @@ namespace System.Windows.Forms.ButtonInternal {
 
                 PaintImage(e, layout);
                 DrawCheckBox(e, layout);
-                AdjustFocusRectangle(layout);
                 PaintField(e, layout, colors, colors.windowText, true);
             }
         }

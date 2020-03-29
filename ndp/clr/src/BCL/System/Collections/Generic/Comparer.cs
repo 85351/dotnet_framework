@@ -19,12 +19,18 @@ namespace System.Collections.Generic
     [TypeDependencyAttribute("System.Collections.Generic.ObjectComparer`1")] 
     public abstract class Comparer<T> : IComparer, IComparer<T>
     {
-        static readonly Comparer<T> defaultComparer = CreateComparer(); 
+        static volatile Comparer<T> defaultComparer;    
 
         public static Comparer<T> Default {
             get {
                 Contract.Ensures(Contract.Result<Comparer<T>>() != null);
-                return defaultComparer;
+
+                Comparer<T> comparer = defaultComparer;
+                if (comparer == null) {
+                    comparer = CreateComparer();
+                    defaultComparer = comparer;
+                }
+                return comparer;
             }
         }
 

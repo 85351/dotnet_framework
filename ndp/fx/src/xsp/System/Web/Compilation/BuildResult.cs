@@ -46,9 +46,8 @@ using System.Web.Hosting;
 using System.Web.Util;
 using System.Web.UI;
 using System.Web.Configuration;
-using System.Diagnostics.CodeAnalysis;
 
-    internal enum BuildResultTypeCode {
+internal enum BuildResultTypeCode {
     Invalid=-1,
     BuildResultCompiledAssembly = 1,
     BuildResultCompiledType = 2,
@@ -537,8 +536,7 @@ internal abstract class BuildResultCompiledAssemblyBase: BuildResult {
         }
     }
 
-        [SuppressMessage("Microsoft.Security.Xml", "CA3003 ReviewCodeForFileCanonicalizationVulnerabilities", Justification = "Developer-controlled contents are implicitly trusted.")]
-        internal static bool AssemblyIsInCodegenDir(Assembly a) {
+    internal static bool AssemblyIsInCodegenDir(Assembly a) {
         string path = Util.GetAssemblyCodeBase(a);
         FileInfo f = new FileInfo(path);
         string assemblyDir = FileUtil.RemoveTrailingDirectoryBackSlash(f.Directory.FullName);
@@ -879,7 +877,7 @@ internal class BuildResultCompiledType : BuildResultCompiledAssemblyBase, ITyped
         // If the fast factory is not available, just call CreateInstance
         // 
         if (_instObj == null) {
-            return HttpRuntime.CreatePublicInstanceByWebObjectActivator(ResultType);
+            return HttpRuntime.CreatePublicInstance(ResultType);
         }
 
         // Call it to instantiate the object

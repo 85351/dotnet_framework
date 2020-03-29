@@ -3349,8 +3349,6 @@ namespace System.Windows.Forms {
                     }
 
                     DpiHelper.InitializeDpiHelperForWinforms();
-
-                    AccessibilityImprovements.ValidateLevels();
                 }
 
                 Form oldForm = currentForm;

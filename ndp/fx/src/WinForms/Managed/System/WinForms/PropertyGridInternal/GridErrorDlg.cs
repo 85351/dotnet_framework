@@ -125,7 +125,7 @@ namespace System.Windows.Forms.PropertyGridInternal {
 
             details.Visible = !details.Visible;
 
-            if (AccessibilityImprovements.Level1) {
+            if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                 AccessibilityNotifyClients(AccessibleEvents.StateChange, -1);
                 AccessibilityNotifyClients(AccessibleEvents.NameChange, -1);
                 details.TabStop = !details.TabStop;
@@ -360,7 +360,7 @@ namespace System.Windows.Forms.PropertyGridInternal {
             } 
         }
         protected override AccessibleObject CreateAccessibilityInstance() {
-            if (AccessibilityImprovements.Level1) {
+            if (!LocalAppContextSwitches.UseLegacyAccessibilityFeatures) {
                 return new DetailsButtonAccessibleObject(this);
             }
             else {

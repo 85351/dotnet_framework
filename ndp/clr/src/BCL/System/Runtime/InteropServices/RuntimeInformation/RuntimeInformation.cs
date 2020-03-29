@@ -64,7 +64,7 @@ namespace System.Runtime.InteropServices
                         Microsoft.Win32.Win32Native.SYSTEM_INFO sysInfo;
                         Microsoft.Win32.Win32Native.GetNativeSystemInfo(out sysInfo);
 
-                        s_osArch = GetArchitecture(sysInfo.wProcessorArchitecture);
+                        s_osArch = GetArchitecture(sysInfo.dwOemId);
                     }
                 }
 
@@ -85,7 +85,7 @@ namespace System.Runtime.InteropServices
                         Microsoft.Win32.Win32Native.SYSTEM_INFO sysInfo = default(Microsoft.Win32.Win32Native.SYSTEM_INFO);
                         Microsoft.Win32.Win32Native.GetSystemInfo(ref sysInfo);
 
-                        s_processArch = GetArchitecture(sysInfo.wProcessorArchitecture);
+                        s_processArch = GetArchitecture(sysInfo.dwOemId);
                     }
                 }
 
@@ -94,8 +94,10 @@ namespace System.Runtime.InteropServices
             }
         }
 
-        private static Architecture GetArchitecture(ushort wProcessorArchitecture)
+        private static Architecture GetArchitecture(int dwOemId)
         {
+            // dwOemId is a union of 2 ushorts. The first half contains the processor Architecture info
+            ushort wProcessorArchitecture = (ushort)(dwOemId >> 16);
             Architecture arch = Architecture.X86;
 
             switch(wProcessorArchitecture)

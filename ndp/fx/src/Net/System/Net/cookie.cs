@@ -1606,11 +1606,6 @@ namespace System.Net {
 
             return value.Length == 2? string.Empty: value.Substring(1, value.Length-2);
         }
-        
-        internal bool EndofHeader()
-        {
-            return m_tokenizer.Eof;
-        }
     }
 
 

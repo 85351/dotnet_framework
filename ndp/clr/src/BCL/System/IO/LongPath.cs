@@ -335,7 +335,8 @@ namespace System.IO {
             if (dataInitialised != 0)
                 __Error.WinIOError(dataInitialised, fullPath);
 
-            DateTime dtLocal = DateTime.FromFileTimeUtc(data.ftCreationTime.ToTicks()).ToLocalTime();
+            long dt = ((long)(data.ftCreationTimeHigh) << 32) | ((long)data.ftCreationTimeLow);
+            DateTime dtLocal = DateTime.FromFileTimeUtc(dt).ToLocalTime();
             return new DateTimeOffset(dtLocal).ToLocalTime();
         }
 
@@ -355,7 +356,8 @@ namespace System.IO {
             if (dataInitialised != 0)
                 __Error.WinIOError(dataInitialised, fullPath);
 
-            DateTime dtLocal = DateTime.FromFileTimeUtc(data.ftLastAccessTime.ToTicks()).ToLocalTime();
+            long dt = ((long)(data.ftLastAccessTimeHigh) << 32) | ((long)data.ftLastAccessTimeLow);
+            DateTime dtLocal = DateTime.FromFileTimeUtc(dt).ToLocalTime();
             return new DateTimeOffset(dtLocal).ToLocalTime();
         }
 
@@ -375,7 +377,8 @@ namespace System.IO {
             if (dataInitialised != 0)
                 __Error.WinIOError(dataInitialised, fullPath);
 
-            DateTime dtLocal = DateTime.FromFileTimeUtc(data.ftLastWriteTime.ToTicks()).ToLocalTime();
+            long dt = ((long)data.ftLastWriteTimeHigh << 32) | ((long)data.ftLastWriteTimeLow);
+            DateTime dtLocal = DateTime.FromFileTimeUtc(dt).ToLocalTime();
             return new DateTimeOffset(dtLocal).ToLocalTime();
         }
 
@@ -748,7 +751,7 @@ namespace System.IO {
                 }
 
                 // Open a Find handle
-                using (SafeFindHandle hnd = Win32Native.FindFirstFile(searchPath, ref data))
+                using (SafeFindHandle hnd = Win32Native.FindFirstFile(searchPath, data))
                 {
                     if (hnd.IsInvalid)
                     {
@@ -762,7 +765,7 @@ namespace System.IO {
                         if (isDir)
                         {
                             // Skip ".", "..".
-                            if (data.IsRelativeDirectory)
+                            if (data.cFileName.Equals(".") || data.cFileName.Equals(".."))
                                 continue;
 
                             // Recurse for all directories, unless they are 
@@ -862,8 +865,7 @@ namespace System.IO {
                                 }
                             }
                         }
-                    } while (Win32Native.FindNextFile(hnd, ref data));
-
+                    } while (Win32Native.FindNextFile(hnd, data));
                     // Make sure we quit with a sensible error.
                     hr = Marshal.GetLastWin32Error();
                 }

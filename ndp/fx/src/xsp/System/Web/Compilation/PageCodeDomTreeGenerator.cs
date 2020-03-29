@@ -137,24 +137,24 @@ internal class PageCodeDomTreeGenerator : TemplateControlCodeDomTreeGenerator {
                     new CodeThisReferenceExpression(), "Server"),
                 "ScriptTimeout");
             setScriptTimeout.Right = new CodePrimitiveExpression(DebugScriptTimeout);
-            InitMethod.Statements.Add(setScriptTimeout);
+            _ctor.Statements.Add(setScriptTimeout);
 
         }
 
         if (Parser.TransactionMode != 0 /*TransactionOption.Disabled*/) {
-            InitMethod.Statements.Add(new CodeAssignStatement(
+            _ctor.Statements.Add(new CodeAssignStatement(
                 new CodePropertyReferenceExpression(new CodeThisReferenceExpression(), "TransactionMode"),
                 new CodePrimitiveExpression(Parser.TransactionMode)));
         }
 
         if (Parser.AspCompatMode) {
-            InitMethod.Statements.Add(new CodeAssignStatement(
+            _ctor.Statements.Add(new CodeAssignStatement(
                 new CodePropertyReferenceExpression(new CodeThisReferenceExpression(), "AspCompatMode"),
                 new CodePrimitiveExpression(Parser.AspCompatMode)));
         }
 
         if (Parser.AsyncMode) {
-            InitMethod.Statements.Add(new CodeAssignStatement(
+            _ctor.Statements.Add(new CodeAssignStatement(
                 new CodePropertyReferenceExpression(new CodeThisReferenceExpression(), "AsyncMode"),
                 new CodePrimitiveExpression(Parser.AsyncMode)));
         }
@@ -308,7 +308,7 @@ internal class PageCodeDomTreeGenerator : TemplateControlCodeDomTreeGenerator {
                 // Add the statement to the "true" clause
                 outputCacheSettingsCondition.TrueStatements.Add(assignOutputCacheSettings);
 
-                InitMethod.Statements.Add(outputCacheSettingsCondition);
+                _ctor.Statements.Add(outputCacheSettingsCondition);
             }
         }
     }

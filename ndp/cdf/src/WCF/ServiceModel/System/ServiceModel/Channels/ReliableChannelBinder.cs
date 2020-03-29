@@ -3338,6 +3338,13 @@ namespace System.ServiceModel.Channels
                 }
             }
 
+            bool CompleteOutput(IAsyncResult result)
+            {
+                this.EndOutput(this.binder, this.channel, this.maskingMode, result);
+                this.Cleanup();
+                return true;
+            }
+
             bool CompleteTryGetChannel(IAsyncResult result)
             {
                 bool timedOut = !this.binder.synchronizer.EndTryGetChannel(result,
@@ -3363,9 +3370,7 @@ namespace System.ServiceModel.Channels
 
                 if (result.CompletedSynchronously)
                 {
-                    this.EndOutput(this.binder, this.channel, this.maskingMode, result);
-                    this.Cleanup();
-                    return true;
+                    return this.CompleteOutput(result);
                 }
                 else
                 {
@@ -3387,9 +3392,7 @@ namespace System.ServiceModel.Channels
 
                     try
                     {
-                        this.EndOutput(this.binder, this.channel, this.maskingMode, result);
-                        complete = true;
-                        this.Cleanup();
+                        complete = this.CompleteOutput(result);
                     }
 #pragma warning suppress 56500 // covered by FxCOP
                     catch (Exception e)
@@ -3399,18 +3402,18 @@ namespace System.ServiceModel.Channels
                             throw;
                         }
 
-                        if (!complete)
-                        {
-                            this.Cleanup();
-                        }
-                        
+                        this.Cleanup();
+                        complete = true;
                         if (!this.binder.HandleException(e, this.maskingMode, this.autoAborted))
                         {
                             completeException = e;
                         }
                     }
 
-                    this.Complete(false, completeException);
+                    if (complete)
+                    {
+                        this.Complete(false, completeException);
+                    }
                 }
             }
 

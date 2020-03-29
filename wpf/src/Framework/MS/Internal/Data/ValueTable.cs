@@ -74,61 +74,25 @@ namespace MS.Internal.Data
                 ValueTableKey key = new ValueTableKey(item, pd);
                 object value = _table[key];
 
-                Action FetchAndCacheValue = () =>
-                {
-                    // if there's no entry, fetch the value and cache it
-                    if (value == null)
-                    {
-                        if (SystemDataHelper.IsDataSetCollectionProperty(pd))
-                        {
-                            // intercept GetValue calls for certain ADO properties
-                            value = SystemDataHelper.GetValue(item, pd, !FrameworkAppContextSwitches.DoNotUseFollowParentWhenBindingToADODataRelation);
-                        }
-                        else if (isXLinqCollectionProperty)
-                        {
-                            // interpose our own value for special XLinq properties
-                            value = new XDeferredAxisSource(item, pd);
-                        }
-                        else
-                        {
-                            value = pd.GetValue(item);
-                        }
-
-                        if (value == null)
-                        {
-                            value = CachedNull;     // distinguish a null value from no entry
-                        }
-
-                        // for DataSet properties, store a weak reference to avoid
-                        // a memory leak (DDVSO 297912)
-                        if (SystemDataHelper.IsDataSetCollectionProperty(pd))
-                        {
-                            value = new WeakReference(value);
-                        }
-
-                        _table[key] = value;
-                    }
-
-                    if (SystemDataHelper.IsDataSetCollectionProperty(pd))
-                    {
-                        // we stored a weak reference - decode it now
-                        WeakReference wr = value as WeakReference;
-                        if (wr != null)
-                        {
-                            value = wr.Target;
-                        }
-                    }
-                };
-
-                FetchAndCacheValue();
-
+                // if there's no entry, fetch the value and cache it
                 if (value == null)
                 {
-                    // we can only get here if we cached a weak reference
-                    // whose target has since been GC'd.  Repeating the call
-                    // will refetch the value from the item, and is guaranteed
-                    // to set value to non-null.
-                    FetchAndCacheValue();
+                    if (isXLinqCollectionProperty)
+                    {
+                        // interpose our own value for special XLinq properties
+                        value = new XDeferredAxisSource(item, pd);
+                    }
+                    else
+                    {
+                        value = pd.GetValue(item);
+                    }
+
+                    if (value == null)
+                    {
+                        value = CachedNull;     // distinguish a null value from no entry
+                    }
+
+                    _table[key] = value;
                 }
 
                 // decode null, if necessary

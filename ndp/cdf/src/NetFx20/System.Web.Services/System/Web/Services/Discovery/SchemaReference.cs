@@ -137,7 +137,6 @@ namespace System.Web.Services.Discovery {
         /// </devdoc>
         public override object ReadDocument(Stream stream) {
             XmlTextReader reader = new XmlTextReader(this.Url, stream);
-            reader.DtdProcessing = DtdProcessing.Ignore;
             reader.XmlResolver = null;
             return XmlSchema.Read(reader, null);
         }

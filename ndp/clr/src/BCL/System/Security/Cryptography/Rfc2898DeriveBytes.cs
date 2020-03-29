@@ -28,7 +28,7 @@ namespace System.Security.Cryptography {
     {
         private byte[] m_buffer;
         private byte[] m_salt;
-        private HMAC m_hmac;  // The pseudo-random generator function used in PBKDF2
+        private HMACSHA1 m_hmacsha1;  // The pseudo-random generator function used in PBKDF2
         private byte[] m_password;
         private CspParameters m_cspParams = new CspParameters();
 
@@ -37,7 +37,7 @@ namespace System.Security.Cryptography {
         private int m_startIndex;
         private int m_endIndex;
 
-        private int m_blockSize;
+        private const int BlockSize = 20;
 
         //
         // public constructors
@@ -45,26 +45,13 @@ namespace System.Security.Cryptography {
 
         public Rfc2898DeriveBytes(string password, int saltSize) : this(password, saltSize, 1000) {}
 
-        public Rfc2898DeriveBytes(string password, int saltSize, int iterations)
-            : this(password, saltSize, iterations, HashAlgorithmName.SHA1)
-        {
-        }
-
         // This method needs to be safe critical, because in debug builds the C# compiler will include null
         // initialization of the _safeProvHandle field in the method.  Since SafeProvHandle is critical, a
         // transparent reference triggers an error using PasswordDeriveBytes.
         [SecuritySafeCritical]
-        public Rfc2898DeriveBytes(string password, int saltSize, int iterations, HashAlgorithmName hashAlgorithm) {
-            if (saltSize < 0)
+        public Rfc2898DeriveBytes(string password, int saltSize, int iterations) {
+            if (saltSize < 0) 
                 throw new ArgumentOutOfRangeException("saltSize", Environment.GetResourceString("ArgumentOutOfRange_NeedNonNegNum"));
-            if (string.IsNullOrEmpty(hashAlgorithm.Name))
-                throw new ArgumentException(Environment.GetResourceString("Cryptography_HashAlgorithmNameNullOrEmpty"), nameof(hashAlgorithm));
-
-            HMAC hmac = HMAC.Create("HMAC" + hashAlgorithm.Name);
-
-            if (hmac == null)
-                throw new CryptographicException(Environment.GetResourceString("Cryptography_UnknownHashAlgorithm", hashAlgorithm.Name));
-
             Contract.EndContractBlock();
 
             byte[] salt = new byte[saltSize];
@@ -73,47 +60,23 @@ namespace System.Security.Cryptography {
             Salt = salt;
             IterationCount = iterations;
             m_password = new UTF8Encoding(false).GetBytes(password);
-            hmac.Key = m_password;
-            m_hmac = hmac;
-            // m_blockSize is in bytes, HashSize is in bits. 
-            m_blockSize = hmac.HashSize >> 3;
-
+            m_hmacsha1 = new HMACSHA1(m_password);
             Initialize();
         }
 
         public Rfc2898DeriveBytes(string password, byte[] salt) : this(password, salt, 1000) {}
 
-        public Rfc2898DeriveBytes(string password, byte[] salt, int iterations) : this (password, salt, iterations, HashAlgorithmName.SHA1) {}
-
-        public Rfc2898DeriveBytes(string password, byte[] salt, int iterations, HashAlgorithmName hashAlgorithm)
-            : this(new UTF8Encoding(false).GetBytes(password), salt, iterations, hashAlgorithm) {
-        }
-
-        public Rfc2898DeriveBytes(byte[] password, byte[] salt, int iterations) : this(password, salt, iterations, HashAlgorithmName.SHA1) { }
+        public Rfc2898DeriveBytes(string password, byte[] salt, int iterations) : this (new UTF8Encoding(false).GetBytes(password), salt, iterations) {}
 
         // This method needs to be safe critical, because in debug builds the C# compiler will include null
         // initialization of the _safeProvHandle field in the method.  Since SafeProvHandle is critical, a
         // transparent reference triggers an error using PasswordDeriveBytes.
         [SecuritySafeCritical]
-        public Rfc2898DeriveBytes(byte[] password, byte[] salt, int iterations, HashAlgorithmName hashAlgorithm) {
-            if (string.IsNullOrEmpty(hashAlgorithm.Name))
-                throw new ArgumentException(Environment.GetResourceString("Cryptography_HashAlgorithmNameNullOrEmpty"), nameof(hashAlgorithm));
-
-            HMAC hmac = HMAC.Create("HMAC" + hashAlgorithm.Name);
-
-            if (hmac == null)
-                throw new CryptographicException(Environment.GetResourceString("Cryptography_UnknownHashAlgorithm", hashAlgorithm.Name));
-
-            Contract.EndContractBlock();
-
+        public Rfc2898DeriveBytes(byte[] password, byte[] salt, int iterations) {
             Salt = salt;
             IterationCount = iterations;
             m_password = password;
-            hmac.Key = password;
-            m_hmac = hmac;
-            // m_blockSize is in bytes, HashSize is in bits. 
-            m_blockSize = hmac.HashSize >> 3;
-
+            m_hmacsha1 = new HMACSHA1(password);
             Initialize();
         }
 
@@ -153,9 +116,6 @@ namespace System.Security.Cryptography {
             if (cb <= 0)
                 throw new ArgumentOutOfRangeException("cb", Environment.GetResourceString("ArgumentOutOfRange_NeedPosNum"));
             Contract.EndContractBlock();
-
-            Contract.Assert(m_blockSize > 0);
-
             byte[] password = new byte[cb];
 
             int offset = 0;
@@ -177,14 +137,14 @@ namespace System.Security.Cryptography {
             while(offset < cb) {
                 byte[] T_block = Func();
                 int remainder = cb - offset;
-                if(remainder > m_blockSize) {
-                    Buffer.InternalBlockCopy(T_block, 0, password, offset, m_blockSize);
-                    offset += m_blockSize;
+                if(remainder > BlockSize) {
+                    Buffer.InternalBlockCopy(T_block, 0, password, offset, BlockSize);
+                    offset += BlockSize;
                 } else {
                     Buffer.InternalBlockCopy(T_block, 0, password, offset, remainder);
                     offset += remainder;
-                    Buffer.InternalBlockCopy(T_block, remainder, m_buffer, m_startIndex, m_blockSize - remainder);
-                    m_endIndex += (m_blockSize - remainder);
+                    Buffer.InternalBlockCopy(T_block, remainder, m_buffer, m_startIndex, BlockSize - remainder);
+                    m_endIndex += (BlockSize - remainder);
                     return password;
                 }
             }
@@ -199,8 +159,8 @@ namespace System.Security.Cryptography {
             base.Dispose(disposing);
 
             if (disposing) {
-                if (m_hmac != null) {
-                    ((IDisposable)m_hmac).Dispose();
+                if (m_hmacsha1 != null) {
+                    ((IDisposable)m_hmacsha1).Dispose();
                 }
 
                 if (m_buffer != null) {
@@ -215,7 +175,7 @@ namespace System.Security.Cryptography {
         private void Initialize() {
             if (m_buffer != null)
                 Array.Clear(m_buffer, 0, m_buffer.Length);
-            m_buffer = new byte[m_blockSize];
+            m_buffer = new byte[BlockSize];
             m_block = 1;
             m_startIndex = m_endIndex = 0;
         }
@@ -226,21 +186,21 @@ namespace System.Security.Cryptography {
         private byte[] Func () {
             byte[] INT_block = Utils.Int(m_block);
 
-            m_hmac.TransformBlock(m_salt, 0, m_salt.Length, null, 0);
-            m_hmac.TransformBlock(INT_block, 0, INT_block.Length, null, 0);
-            m_hmac.TransformFinalBlock(EmptyArray<Byte>.Value, 0, 0);
-            byte[] temp = m_hmac.HashValue;
-            m_hmac.Initialize();
+            m_hmacsha1.TransformBlock(m_salt, 0, m_salt.Length, null, 0);
+            m_hmacsha1.TransformBlock(INT_block, 0, INT_block.Length, null, 0);
+            m_hmacsha1.TransformFinalBlock(EmptyArray<Byte>.Value, 0, 0);
+            byte[] temp = m_hmacsha1.HashValue;
+            m_hmacsha1.Initialize();
 
             byte[] ret = temp;
             for (int i = 2; i <= m_iterations; i++) {
-                m_hmac.TransformBlock(temp, 0, temp.Length, null, 0);
-                m_hmac.TransformFinalBlock(EmptyArray<Byte>.Value, 0, 0);
-                temp = m_hmac.HashValue;
-                for (int j = 0; j < m_blockSize; j++) {
+                m_hmacsha1.TransformBlock(temp, 0, temp.Length, null, 0);
+                m_hmacsha1.TransformFinalBlock(EmptyArray<Byte>.Value, 0, 0);
+                temp = m_hmacsha1.HashValue;
+                for (int j = 0; j < BlockSize; j++) {
                     ret[j] ^= temp[j];
                 }
-                m_hmac.Initialize();
+                m_hmacsha1.Initialize();
             }
 
             // increment the block count.

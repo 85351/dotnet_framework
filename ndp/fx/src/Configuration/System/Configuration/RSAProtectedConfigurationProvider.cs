@@ -17,14 +17,13 @@ namespace System.Configuration
     using System.Runtime.InteropServices;
     using Microsoft.Win32;
     using System.Security.Permissions;
-    using System.Diagnostics.CodeAnalysis;
 
     [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
     public sealed class RsaProtectedConfigurationProvider : ProtectedConfigurationProvider
     {
         // Note: this name has to match the name used in RegiisUtility 
         const string DefaultRsaKeyContainerName = "NetFrameworkConfigurationKey";
-
+        
         public override XmlNode Decrypt(XmlNode encryptedNode)
         {
             XmlDocument                 xmlDocument = new XmlDocument();
@@ -32,7 +31,7 @@ namespace System.Configuration
             RSACryptoServiceProvider    rsa         = GetCryptoServiceProvider(false, true);
 
             xmlDocument.PreserveWhitespace = true;
-            ProtectedConfigurationProvider.LoadXml(xmlDocument, encryptedNode.OuterXml);
+            xmlDocument.LoadXml(encryptedNode.OuterXml);
             exml = new FipsAwareEncryptedXml(xmlDocument);
             exml.AddKeyNameMapping(_KeyName, rsa);
             exml.DecryptDocument();
@@ -55,7 +54,7 @@ namespace System.Configuration
             // Encrypt the node with the new key
             xmlDocument = new XmlDocument();
             xmlDocument.PreserveWhitespace = true;
-            ProtectedConfigurationProvider.LoadXml(xmlDocument, "<foo>" + node.OuterXml + "</foo>");
+            xmlDocument.LoadXml("<foo>"+ node.OuterXml+ "</foo>");
             exml = new EncryptedXml(xmlDocument);
             inputElement = xmlDocument.DocumentElement;
 
@@ -238,7 +237,6 @@ namespace System.Configuration
             throw new ConfigurationErrorsException(SR.GetString(SR.Config_invalid_boolean_attribute, valueName));
         }
 
-        [SuppressMessage("Microsoft.Cryptographic.Standard", "CA5353:TripleDESCannotBeUsed", Justification = @"AES is the default. For legacy compat, 3DES must be explicitly opted into.")]
         private SymmetricAlgorithm GetSymAlgorithmProvider() {
             SymmetricAlgorithm symAlg;
 

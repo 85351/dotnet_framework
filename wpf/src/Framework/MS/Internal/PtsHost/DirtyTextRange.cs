@@ -29,13 +29,12 @@ namespace MS.Internal.PtsHost
         //      positionsAdded - Number of characters added.
         //      positionsRemoved - Number of characters removed.
         // ------------------------------------------------------------------
-        internal DirtyTextRange(int startIndex, int positionsAdded, int positionsRemoved, bool fromHighlightLayer = false)
+        internal DirtyTextRange(int startIndex, int positionsAdded, int positionsRemoved)
         {
             StartIndex = startIndex;
             PositionsAdded = positionsAdded;
             PositionsRemoved = positionsRemoved;
-            FromHighlightLayer = fromHighlightLayer;
-    }
+        }
 
         // ------------------------------------------------------------------
         // Constructor
@@ -48,7 +47,6 @@ namespace MS.Internal.PtsHost
 
             PositionsAdded = 0;
             PositionsRemoved = 0;
-            FromHighlightLayer = false;
 
             switch (change.TextChange)
             {
@@ -70,22 +68,16 @@ namespace MS.Internal.PtsHost
         // ------------------------------------------------------------------
         // Index of the starting position of the change.
         // ------------------------------------------------------------------
-        internal int StartIndex { get; set; }
+        internal int StartIndex;
 
         // ------------------------------------------------------------------
         // Number of characters added.
         // ------------------------------------------------------------------
-        internal int PositionsAdded { get; set; }
+        internal int PositionsAdded;
 
         // ------------------------------------------------------------------
         // Number of characters removed.
         // ------------------------------------------------------------------
-        internal int PositionsRemoved { get; set; }
-
-        /// <summary>
-        /// DDVSO:405199
-        /// If this dirty text range is caused by a highlight layer change.
-        /// </summary>
-        internal bool FromHighlightLayer { get; set; }
+        internal int PositionsRemoved;
     }
 }

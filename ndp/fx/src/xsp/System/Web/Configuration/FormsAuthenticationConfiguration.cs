@@ -35,8 +35,7 @@
                     slidingExpiration="true"
                     defaultUrl="default.aspx"
                     cookieless="UseDeviceProfile"
-                    enableCrossAppRedirects="false"
-                    cookieSameSite="[None|Lax|Strict]" >
+                    enableCrossAppRedirects="false" >
 
                 <!--
                 credentials Attributes:
@@ -184,12 +183,6 @@ namespace System.Web.Configuration {
                                         TicketCompatibilityMode.Framework20,
                                         ConfigurationPropertyOptions.None);
 
-        private static readonly ConfigurationProperty _propCookieSameSite = 
-            new ConfigurationProperty("cookieSameSite", 
-                                        typeof(SameSiteMode), 
-                                        SameSiteMode.None, 
-                                        ConfigurationPropertyOptions.None);
-
         static FormsAuthenticationConfiguration() {
             // Property initialization
             _properties = new ConfigurationPropertyCollection();
@@ -206,7 +199,6 @@ namespace System.Web.Configuration {
             _properties.Add(_propDomain);
             _properties.Add(_propEnableCrossAppRedirects);
             _properties.Add(_propTicketCompatibilityMode);
-            _properties.Add(_propCookieSameSite);
         }
 
         public FormsAuthenticationConfiguration() {
@@ -369,16 +361,6 @@ namespace System.Web.Configuration {
             }
             set {
                 base[_propTicketCompatibilityMode] = value;
-            }
-        }
-
-        [ConfigurationProperty("cookieSameSite")]
-        public SameSiteMode CookieSameSite {
-            get {
-                return (SameSiteMode)base[_propCookieSameSite];
-            }
-            set {
-                base[_propCookieSameSite] = value;
             }
         }
 

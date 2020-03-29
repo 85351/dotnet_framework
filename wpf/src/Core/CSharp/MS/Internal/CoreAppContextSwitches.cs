@@ -7,7 +7,6 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using System.Windows;
 
 namespace MS.Internal
 {
@@ -139,29 +138,17 @@ namespace MS.Internal
 
         // DDVSO:444529
         // Switch to disable new Accessibility features that may affect compat.
+        internal const string UseLegacyAccessibilityFeaturesSwitchName = "Switch.UseLegacyAccessibilityFeatures";
+        private static int _useLegacyAccessibilityFeatures;
         public static bool UseLegacyAccessibilityFeatures
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return AccessibilitySwitches.UseLegacyAccessibilityFeatures;
+                return LocalAppContext.GetCachedSwitchValue(UseLegacyAccessibilityFeaturesSwitchName, ref _useLegacyAccessibilityFeatures);
             }
         }
 
-        #endregion
-
-        #region UseLegacyAccessibilityFeatures2
-
-        // Switch to disable new Accessibility features that may affect compat.
-        public static bool UseLegacyAccessibilityFeatures2
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return AccessibilitySwitches.UseLegacyAccessibilityFeatures2;
-            }
-        }
-        
         #endregion
 
         #region ShouldRenderEvenWhenNoDisplayDevicesAreAvailable and ShouldNotRenderInNonInteractiveWindowStation

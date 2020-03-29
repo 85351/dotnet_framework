@@ -19,8 +19,6 @@ namespace MS.Internal.UIAutomationClient
 namespace MS.Internal.UIAutomationClientSideProviders
 #elif WINDOWSFORMSINTEGRATION
 namespace MS.Internal.WinFormsIntegration
-#elif UIAUTOMATIONTYPES
-namespace MS.Internal.UIAutomationTypes
 #elif DRT
 namespace MS.Internal.Drt
 #else

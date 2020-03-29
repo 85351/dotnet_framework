@@ -648,10 +648,7 @@ namespace System.Net {
                     Cookie cookie = parser.Get();
                     GlobalLog.Print("CookieContainer#" + ValidationHelper.HashString(this) + "::CookieCutter() CookieParser returned cookie:" + ValidationHelper.ToString(cookie));
                     if (cookie == null) {
-                        if (parser.EndofHeader()) {
-                            break;
-                        }
-                        continue;
+                        break;
                     }
 
                     //Parser marks invalid cookies this way

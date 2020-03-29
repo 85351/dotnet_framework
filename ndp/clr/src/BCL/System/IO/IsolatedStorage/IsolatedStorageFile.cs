@@ -2455,12 +2455,14 @@ namespace System.IO.IsolatedStorage {
                         "IsolatedStorage_Operation"));
             }
 
+            
+    
             String[] list = new String[10];
             int listSize = 0;
             Win32Native.WIN32_FIND_DATA data = new Win32Native.WIN32_FIND_DATA();
-
+                    
             // Open a Find handle 
-            SafeFindHandle hnd = Win32Native.FindFirstFile(Path.AddLongPathPrefix(fullPath), ref data);
+            SafeFindHandle hnd = Win32Native.FindFirstFile(Path.AddLongPathPrefix(fullPath), data);
             if (hnd.IsInvalid) {
                 // Calls to GetLastWin32Error overwrites HResult.  Store HResult.
                 hr = Marshal.GetLastWin32Error();
@@ -2474,10 +2476,12 @@ namespace System.IO.IsolatedStorage {
             do {
                 bool includeThis;  // Should this file/directory be included in the output?
                 if (file)
-                    includeThis = data.IsFile;
+                    includeThis = (0==(data.dwFileAttributes & Win32Native.FILE_ATTRIBUTE_DIRECTORY));
                 else {
+                    includeThis = (0!=(data.dwFileAttributes & Win32Native.FILE_ATTRIBUTE_DIRECTORY));
                     // Don't add "." nor ".."
-                    includeThis = data.IsNormalDirectory;
+                    if (includeThis && (data.cFileName.Equals(".") || data.cFileName.Equals(".."))) 
+                        includeThis = false;
                 }
                 
                 if (includeThis) {
@@ -2487,8 +2491,8 @@ namespace System.IO.IsolatedStorage {
                     }
                     list[listSize++] = data.cFileName;
                 }
-
-            } while (Win32Native.FindNextFile(hnd, ref data));
+     
+            } while (Win32Native.FindNextFile(hnd, data));
             
             // Make sure we quit with a sensible error.
             hr = Marshal.GetLastWin32Error();

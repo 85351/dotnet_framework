@@ -1,6 +1,4 @@
 ﻿// Copyright (c) Microsoft Corporation.  All rights reserved.
-using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
@@ -102,10 +100,8 @@ namespace System.Security.Cryptography.X509Certificates
                 return null;
             }
 
-            CngKeyHandleOpenOptions openOptions;
-
             using (SafeCertContextHandle certificateContext = X509Native.GetCertificateContext(certificate))
-            using (SafeNCryptKeyHandle privateKeyHandle = X509Native.TryAcquireCngPrivateKey(certificateContext, out openOptions))
+            using (SafeNCryptKeyHandle privateKeyHandle = X509Native.TryAcquireCngPrivateKey(certificateContext))
             {
                 if (privateKeyHandle == null)
                 {
@@ -116,75 +112,9 @@ namespace System.Security.Cryptography.X509Certificates
                     return clone;
                 }
 
-                CngKey key = CngKey.Open(privateKeyHandle, openOptions);
+                CngKey key = CngKey.Open(privateKeyHandle, CngKeyHandleOpenOptions.None);
                 return new DSACng(key);
             }
-        }
-
-        [SecuritySafeCritical]
-        public static X509Certificate2 CopyWithPrivateKey(this X509Certificate2 certificate, DSA privateKey)
-        {
-            if (certificate == null)
-                throw new ArgumentNullException(nameof(certificate));
-            if (privateKey == null)
-                throw new ArgumentNullException(nameof(privateKey));
-
-            if (certificate.HasPrivateKey)
-                throw new InvalidOperationException(SR.GetString(SR.Cryptography_Cert_AlreadyHasPrivateKey));
-
-            using (DSA publicKey = GetDSAPublicKey(certificate))
-            {
-                if (publicKey == null)
-                    throw new ArgumentException(SR.GetString(SR.Cryptography_PrivateKey_WrongAlgorithm));
-
-                DSAParameters currentParameters = publicKey.ExportParameters(false);
-                DSAParameters newParameters = privateKey.ExportParameters(false);
-
-                if (!currentParameters.G.SequenceEqual(newParameters.G) ||
-                    !currentParameters.P.SequenceEqual(newParameters.P) ||
-                    !currentParameters.Q.SequenceEqual(newParameters.Q) ||
-                    !currentParameters.Y.SequenceEqual(newParameters.Y))
-                {
-                    throw new ArgumentException(SR.GetString(SR.Cryptography_PrivateKey_DoesNotMatch), nameof(privateKey));
-                }
-            }
-
-            DSACng dsaCng = privateKey as DSACng;
-            X509Certificate2 newCert = null;
-
-            if (dsaCng != null)
-            {
-                newCert = CertificateExtensionsCommon.CopyWithPersistedCngKey(certificate, dsaCng.Key);
-            }
-
-            if (newCert == null)
-            {
-                DSACryptoServiceProvider dsaCsp = privateKey as DSACryptoServiceProvider;
-
-                if (dsaCsp != null)
-                {
-                    newCert = CertificateExtensionsCommon.CopyWithPersistedCapiKey(certificate, dsaCsp.CspKeyContainerInfo);
-                }
-            }
-
-            if (newCert == null)
-            {
-                DSAParameters parameters = privateKey.ExportParameters(true);
-
-                using (PinAndClear.Track(parameters.X))
-                using (dsaCng = new DSACng())
-                {
-                    dsaCng.ImportParameters(parameters);
-
-                    newCert = CertificateExtensionsCommon.CopyWithEphemeralCngKey(certificate, dsaCng.Key);
-                }
-            }
-
-            Debug.Assert(newCert != null);
-            Debug.Assert(!ReferenceEquals(certificate, newCert));
-            Debug.Assert(!certificate.HasPrivateKey);
-            Debug.Assert(newCert.HasPrivateKey);
-            return newCert;
         }
 
         private static bool IsDSA(X509Certificate2 certificate)

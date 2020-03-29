@@ -31,7 +31,7 @@ namespace System.IO.Compression
     using System;
     using System.Diagnostics;
 
-    internal class Inflater : IInflater {
+    internal class Inflater {
         // const tables used in decoding:
 
         // Extra bits for length code 257 - 285.  
@@ -89,21 +89,12 @@ namespace System.IO.Compression
 
         IFileFormatReader formatReader;  // class to decode header and footer (e.g. gzip)
 
-        public Inflater() : this(null) {
-        }
-
-        internal Inflater(IFileFormatReader reader)
-        {
+        public Inflater() {           
             output = new OutputWindow();
-            input = new InputBuffer();
+            input  = new InputBuffer();
 
             codeList = new byte[HuffmanTree.MaxLiteralTreeElements + HuffmanTree.MaxDistTreeElements];
             codeLengthTreeCodeLength = new byte[HuffmanTree.NumberOfCodeLengthTreeElements];
-            if (reader != null)
-            {
-                formatReader = reader;
-                hasFormatReader = true;
-            }
             Reset();
         }
 
@@ -655,8 +646,6 @@ namespace System.IO.Compression
             state = InflaterState.DecodeTop;
             return true;
         }
-
-        public void Dispose() { }
     }
 }
 

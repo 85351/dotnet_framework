@@ -40,8 +40,6 @@ namespace System.Configuration {
             _lineOffset = lineOffset;
             _lineNumberIsConstant = lineNumberIsConstant;
 
-            DtdProcessing = DtdProcessing.Ignore;
-
             Debug.Assert(!_lineNumberIsConstant || _lineOffset > 0, 
                         "!_lineNumberIsConstant || _lineOffset > 0");
         }

@@ -29,7 +29,7 @@ namespace System.Web.Configuration
 
                 if (!providerType.IsAssignableFrom(t))
                     throw new ArgumentException(SR.GetString(SR.Provider_must_implement_type, providerType.ToString()));
-                provider = (ProviderBase)HttpRuntime.CreatePublicInstanceByWebObjectActivator(t);
+                provider = (ProviderBase)HttpRuntime.CreatePublicInstance(t);
 
                 // Because providers modify the parameters collection (i.e. delete stuff), pass in a clone of the collection
                 NameValueCollection pars = providerSettings.Parameters;
@@ -37,8 +37,6 @@ namespace System.Web.Configuration
                 foreach (string key in pars)
                     cloneParams[key] = pars[key];
                 provider.Initialize(providerSettings.Name, cloneParams);
-
-                TelemetryLogger.LogProvider(t);
             } catch (Exception e) {
                 if (e is ConfigurationException)
                     throw;
@@ -60,15 +58,13 @@ namespace System.Web.Configuration
 
                 if (!providerType.IsAssignableFrom(t))
                     throw new ArgumentException(SR.GetString(SR.Provider_must_implement_type, providerType.ToString()));
-                provider = (ProviderBase)HttpRuntime.CreatePublicInstanceByWebObjectActivator(t);
+                provider = (ProviderBase)HttpRuntime.CreatePublicInstance(t);
 
                 // Because providers modify the parameters collection (i.e. delete stuff), pass in a clone of the collection
                 NameValueCollection cloneParams = new NameValueCollection(providerSettings.Count, StringComparer.Ordinal);
                 foreach (string key in providerSettings)
                     cloneParams[key] = providerSettings[key];
                 provider.Initialize(pnName, cloneParams);
-
-                TelemetryLogger.LogProvider(t);
             }
             catch (Exception e) {
                 if (e is ConfigurationException)

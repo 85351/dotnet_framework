@@ -127,11 +127,6 @@ namespace System.Net {
         [DllImport(KERNEL32, CallingConvention = CallingConvention.Winapi, SetLastError = true)]
         internal extern static IntPtr GetProcAddress(SafeLoadLibrary hModule, string entryPoint);
 
-        [System.Security.SecurityCritical]
-        [DllImport(KERNEL32, CallingConvention = CallingConvention.Winapi, SetLastError = true)]
-        internal extern static IntPtr GetProcAddress(IntPtr hModule, string entryPoint);
-
-
         [Flags]
         internal enum FileCompletionNotificationModes : byte
         {
@@ -674,10 +669,6 @@ namespace System.Net {
 
             [DllImport(KERNEL32, ExactSpelling=true, CharSet=CharSet.Unicode, SetLastError=true)]
             internal static extern unsafe SafeLoadLibrary LoadLibraryExW([In] string lpwLibFileName, [In] void* hFile, [In] uint dwFlags);
-
-            [DllImport(KERNEL32, ExactSpelling=true, CharSet=CharSet.Unicode, SetLastError=true)]
-            public static extern IntPtr GetModuleHandleW(string modName);
-
 #endif // !FEATURE_PAL
 
 
